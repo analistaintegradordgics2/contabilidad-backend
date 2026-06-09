@@ -8,12 +8,14 @@ from rest_framework.routers import DefaultRouter
 from apps.contabilidad.views.concepto import ConceptosViewSet
 from apps.contabilidad.views.cuenta import MayorViewSet
 from apps.contabilidad.views.tipodocumento import TiposDocumentosViewSet
+from apps.contabilidad.views.documento import DocumentoViewSet
 
 
 router = DefaultRouter()
 router.register(r'concepto', ConceptosViewSet, basename='concepto')
 router.register(r'cuenta', MayorViewSet, basename='cuenta')
 router.register(r'tipodocumento', TiposDocumentosViewSet, basename='tipodocumento')
+router.register(r'documentos', DocumentoViewSet, basename='documentos')
 
 urlpatterns = [
     path('', include(router.urls))]

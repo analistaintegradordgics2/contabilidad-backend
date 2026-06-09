@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.utils.ModelViewSetClass import ModelViewSetClass
 from apps.contabilidad.models.tipodocumento import TiposDocumentos, Fuentes, FormaPagoElectro, MedioPagoElectro, FacturacionElectronica
@@ -24,14 +25,20 @@ from apps.contabilidad.services.tipodocumento_service import TipoDocumentoServic
 class TiposDocumentosViewSet(ModelViewSetClass):
     queryset         = TiposDocumentos.objects.all().order_by('nombre')
     serializer_class = TiposDocumentosListSerializer
+    filter_backends = [DjangoFilterBackend]
 
-    def list(self, request, *args, **kwargs):
+    filterset_fields = [
+        'fuentes',
+        'estado'
+    ]
 
-        queryset = TiposDocumentos.objects.filter(estado=True)
-        return Response(
-            TiposDocumentosListSerializer(queryset, many=True).data,
-            status=status.HTTP_200_OK
-        )
+    # def list(self, request, *args, **kwargs):
+
+    #     queryset = TiposDocumentos.objects.filter(estado=True)
+    #     return Response(
+    #         TiposDocumentosListSerializer(queryset, many=True).data,
+    #         status=status.HTTP_200_OK
+    #     )
 
     def create(self, request, *args, **kwargs):
         tipo_id = request.data.get('id')

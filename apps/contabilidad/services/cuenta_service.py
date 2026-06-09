@@ -1,4 +1,4 @@
-from django.db.models import Value, Subquery, OuterRef, CharField
+from django.db.models import Value, Subquery, OuterRef, CharField, Q
 from django.db.models.functions import Concat
 from django.db.models.functions import Coalesce
 from django.db import transaction
@@ -145,12 +145,12 @@ class MayorService:
         if solo_auxiliar:
             queryset = queryset.filter(tipo='Auxiliar')
         if rango:
-            queryset = queryset.filter(codigol__range=rango)
+            queryset = queryset.filter(codigo__range=rango)
         if cxc:
             queryset = queryset.filter(cxc=True)
         if search:
             queryset = queryset.filter(
-                Q(codigol__istartswith=search) | Q(nombrel__istartswith=search)
+                Q(codigo__istartswith=search) | Q(nombre__istartswith=search)
             )
 
         return queryset.annotate(

@@ -5,23 +5,31 @@ from rest_framework.decorators import action
 from apps.contabilidad.models.documento import Documentos, Mov
 from apps.contabilidad.serializers.documento import *
 from apps.contabilidad.services.documento_service import *
+import pdb
 
 class DocumentoViewSet(ModelViewSet):
 
     queryset = Documentos.objects.all().order_by('-id')
     serializer_class = DocumentoSerializer
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request):
+        try:
 
-        documento = DocumentoService.crear(
-            request.data,
-            request.user
-        )
+            documento = DocumentoService.crear(
+                request.data,
+                request.user.id
+            )
+            return Response(
+                documento,
+                status=status.HTTP_201_CREATED
+            )
 
-        return Response(
-            DocumentoSerializer(documento).data,
-            status=status.HTTP_201_CREATED
-        )
+        except Exception as e:
+
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(methods=['get'], detail=True)
     def bitacora(self, request, pk=None):
