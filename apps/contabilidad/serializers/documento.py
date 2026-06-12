@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apps.contabilidad.models.documento import Documentos, Mov, PagoDocumento, FactElectronicaDocumento, DocumentosBita
+import pdb
 
 class MovSerializer(serializers.ModelSerializer):
     class Meta:
@@ -64,15 +65,101 @@ class DocumentoCreateSerializer(serializers.ModelSerializer):
             'gtotal',
             'movimientos',
         )
+class DocumentoDetailSerializer(serializers.ModelSerializer):
 
+    movimientos = MovSerializer(
+        source='mov_documentos',
+        many=True,
+        read_only=True
+    )
+    pagos = serializers.SerializerMethodField()
 
-    def update(self, instance, validated_data):
-        movimientos_data = validated_data.pop('mov_documentos', [])
-        for attr, val in validated_data.items():
-            setattr(instance, attr, val)
-        instance.save()
-        # Reemplazar movimientos
-        instance.mov_documentos.all().delete()
-        self._guardar_movimientos(instance, movimientos_data)
-        return instance
+    class Meta:
+        model = Documentos
 
+        fields = (
+            'id',
+            'numero',
+            'fecha',
+            'fecha_vencimiento',
+            'tipo_documento',
+            'concepto',
+            'detalle',
+            'personas',
+            'estado',
+            'subtotal',
+            'descuento',
+            'iva',
+            'total',
+            'gtotal',
+            'movimientos',
+            'pagos'
+        )
+
+    def get_pagos(self, documento):
+
+        pagos = {
+            'efectivo': {},
+            'consig': {},
+            'tarjeta': {},
+            'cheques': [],
+        }
+        
+        for pago in documento.pagos.all():
+
+            base = {
+                'id': pago.id,
+                'forma_pago': pago.forma_pago_id,
+                'medio_pago': pago.medio_pago_id,
+            }
+
+            try:
+                d = pago.detalle_efectivo
+                pagos['efectivo'] = {
+                    **base,
+                    'valor': float(d.valor)
+                }
+                continue
+            except:
+                pass
+
+            try:
+                d = pago.detalle_cheque
+                pagos['cheques'].append({
+                    **base,
+                    'banco': d.banco_id,
+                    'numero': d.numero,
+                    'fecha': d.fecha,
+                    'valor': float(d.valor)
+                })
+                continue
+            except:
+                pass
+
+            try:
+                d = pago.detalle_consignacion
+                pagos['consig'] = {
+                    **base,
+                    'banco': d.banco_id,
+                    'cuenta_bancaria': d.cuenta_bancaria_id,
+                    'numero': d.numero,
+                    'fecha': d.fecha,
+                    'valor': float(d.valor)
+                }
+                continue
+            except:
+                pass
+
+            try:
+                d = pago.detalle_tarjeta
+                pagos['tarjeta'] = {
+                    **base,
+                    'banco': d.banco_id,
+                    'cuenta_bancaria': d.cuenta_bancaria_id,
+                    'numero_tarjeta': d.numero_tarjeta,
+                    'valor': float(d.valor)
+                }
+            except:
+                pass
+
+        return pagos

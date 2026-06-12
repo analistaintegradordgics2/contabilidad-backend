@@ -34,29 +34,105 @@ class DocumentoService:
 
             # Contabilización
             cont = movimientos
-            CAMPOS_CLAVE = ("mayor_id", "persona_id", "concepto_id")
-            if len(cont) == 1 and all(cont[0].get(c) is None for c in CAMPOS_CLAVE):
-                cont = []
-            contabilizacion = json.dumps(cont)
+            # CAMPOS_CLAVE = ("mayor_id", "persona_id", "concepto_id")
+            # if len(cont) == 1 and all(cont[0].get(c) is None for c in CAMPOS_CLAVE):
+            #     cont = []
+            mov_json = json.dumps([
+                {
+                    'mov_id':        m.get('id', 0) or 0,
+                    'mayor_id':      m.get('mayor'),
+                    'persona_id':    m.get('persona'),
+                    'concepto_id':   m.get('concepto'),
+                    'detalle':       m.get('detalle', ''),
+                    'valor_db':      float(m.get('valor_db', 0)),
+                    'valor_cr':      float(m.get('valor_cr', 0)),
+                    'cc_id':         m.get('centro_costos'),
+                    'base':          float(m.get('base', 0)),
+                    'docref':        m.get('docref', ''),
+                    'nittercero_id': m.get('nittercero'),
+                }
+                for m in movimientos
+            ])
+            contabilizacion = mov_json
 
             if encabezado['tipo_documento'] != 4:
                 
-                cons = {}
-                tarj = {}
-                cheq = []
-                
-                sql = "select out_id, out_documento from addingresos (%s::integer,%s::integer,%s::date,%s::integer,%s::varchar,%s::varchar,%s::integer,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::integer,%s::varchar,%s::date,%s::integer,%s::integer,%s::varchar,%s::integer,%s::integer,%s::integer,%s::varchar,%s::varchar,%s::integer,%s::integer,%s::integer,%s::json,%s::json)"
+                # ─── Serializar pagos ───
+                pagos_list = []
+
+                # EFECTIVO
+                efectivo = pagos.get('efectivo', {})
+
+                if efectivo and efectivo.get('valor', 0):
+
+                    pagos_list.append({
+                        'tipo': 'efectivo',
+                        'forma_pago_id': 1,
+                        'medio_pago_id': efectivo.get('medio_pago'),
+                        'valor': float(efectivo.get('valor', 0)),
+                    })
+
+                # CHEQUES
+                for cheque in pagos.get('cheques', []):
+
+                    pagos_list.append({
+                        'tipo': 'cheque',
+                        'forma_pago_id': 4,
+                        'medio_pago_id': cheque.get('medio_pago'),
+                        'banco_id': cheque.get('banco'),
+                        'numero': cheque.get('numero', ''),
+                        'fecha': cheque.get('fecha'),
+                        'valor': float(cheque.get('valor', 0)),
+                    })
+
+                # CONSIGNACION
+                consig = pagos.get('consig', {})
+
+                if consig and consig.get('valor', 0):
+
+                    pagos_list.append({
+                        'tipo': 'consignacion',
+                        'forma_pago_id': 2,
+                        'medio_pago_id': consig.get('medio_pago'),
+                        'banco_id': consig.get('banco'),
+                        'cuenta_bancaria_id': consig.get('cuenta_bancaria'),
+                        'numero': consig.get('numero', ''),
+                        'fecha': consig.get('fecha'),
+                        'valor': float(consig.get('valor', 0)),
+                    })
+
+                # TARJETA
+                tarjeta = pagos.get('tarjeta', {})
+
+                if tarjeta and tarjeta.get('valor', 0):
+
+                    pagos_list.append({
+                        'tipo': 'tarjeta',
+                        'forma_pago_id': 3,
+                        'medio_pago_id': tarjeta.get('medio_pago'),
+                        'banco_id': tarjeta.get('banco'),
+                        'cuenta_bancaria_id': tarjeta.get('cuenta_bancaria'),
+                        'numero_tarjeta': tarjeta.get('numero_tarjeta', ''),
+                        'valor': float(tarjeta.get('valor', 0)),
+                    })
+
+                pagos_json = json.dumps(pagos_list)
+
                 # pdb.set_trace()
+                
+                sql = "select * from addingresos (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 params = (
-                    enca['id'], enca['tipo_documento'], enca['fecha'], enca['concepto'],
-                    enca['detalle'], 1, enca['persona'],
-                    0,
-                    0,  0,
-                    1, 1, 1,
-                    1, enca['fecha'], 1, 1,1,1,
-                    1, 1, 1,
-                    1, 1, 1,
-                    enca['usuario'], contabilizacion, cheq,
+                    encabezado.get('id') or 0,
+                    encabezado.get('tipo_documento'),
+                    encabezado.get('fecha'),
+                    encabezado.get('concepto'),
+                    encabezado.get('detalle', ''),
+                    encabezado.get('referencia', ''),
+                    encabezado.get('personas'),
+                    float(encabezado.get('gtotal', 0)),
+                    1,
+                    contabilizacion,
+                    pagos_json,
                 )
 
             else:
@@ -94,14 +170,15 @@ class DocumentoService:
                     contabilizacion, factura, enca["f_pago"], enca["medio_pago"],
                     None, None, mandato, enca.get("nota_parcial", False),
                 )
-            # pdb.set_trace()
             resultado = execute_procedure(sql, params)
 
         except Exception:
             return {"status": 404, "data": None}
 
-        doc = Documentos.objects.get(pk=resultado[0][0])
+        # doc = Documentos.objects.get(pk=resultado[0][0])
         # DocumentoService._post_procesar_documento(doc, resultado[0][0], enca, data)
+        # pdb.set_trace()
+
         return {"status": 200, "data": resultado}
 
 

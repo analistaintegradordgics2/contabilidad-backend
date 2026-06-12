@@ -31,6 +31,25 @@ class DocumentoViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+    @action(detail=False, methods=['get'], url_path='buscar/(?P<id>[^/.]+)')
+    def buscar(self, request, id= None):
+
+        iddocumento = id
+
+        documento = Documentos.objects.filter(
+            id=iddocumento
+        ).first()
+
+        if not documento:
+            return Response(
+                {'error': 'Documento no encontrado'},
+                status=404
+            )
+
+        return Response(
+            DocumentoDetailSerializer(documento).data
+        )
+
     @action(methods=['get'], detail=True)
     def bitacora(self, request, pk=None):
         bita = DocumentosBita.objects.filter(documentos_id=pk)
