@@ -33,11 +33,28 @@ class DocumentoSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         raise NotImplementedError("Usar DocumentoService")
 
-class DocumentosBitaSerializer(serializers.ModelSerializer):
+class DocumentoBitacoraSerializer(serializers.ModelSerializer):
+
+    usuario = serializers.CharField(
+        source='usuario.username',
+        read_only=True
+    )
+
+    estado = serializers.CharField(
+        source='estado.nombre',
+        read_only=True
+    )
+
     class Meta:
         model = DocumentosBita
-        fields = '__all__'
 
+        fields = (
+            'id',
+            'fecha',
+            'evento',
+            'usuario',
+            'estado'
+        )
 
 class MovSerializer(serializers.ModelSerializer):
     class Meta:
@@ -163,3 +180,28 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
                 pass
 
         return pagos
+
+class DocumentoListSerializer(serializers.ModelSerializer):
+
+    persona_nombre = serializers.CharField(
+        source='personas.n_completo',
+        read_only=True
+    )
+    persona_documento = serializers.CharField(
+        source='personas.documento',
+        read_only=True
+    )
+
+    class Meta:
+        model = Documentos
+
+        fields = (
+            'id',
+            'numero',
+            'fecha',
+            'persona_nombre',
+            'persona_documento',
+            'detalle',
+            'total',
+            'estado'
+        )
