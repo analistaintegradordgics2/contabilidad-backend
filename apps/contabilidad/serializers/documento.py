@@ -116,14 +116,22 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
     def get_pagos(self, documento):
 
         pagos = {
+            'tipo_pago': None,
             'efectivo': {},
             'consig': {},
             'tarjeta': {},
             'cheques': [],
+            'transferencia': {
+                'cuenta_origen': None,
+                'cuenta_destino': '',
+                'banco_destino': None,
+                'valor': 0
+            },
         }
         
         for pago in documento.pagos.all():
-
+            pagos['tipo_pago'] = pago.forma_pago_id
+            
             base = {
                 'id': pago.id,
                 'forma_pago': pago.forma_pago_id,
@@ -174,6 +182,19 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
                     'banco': d.banco_id,
                     'cuenta_bancaria': d.cuenta_bancaria_id,
                     'numero_tarjeta': d.numero_tarjeta,
+                    'valor': float(d.valor)
+                }
+            except:
+                pass
+
+            try:
+                d = pago.detalle_transferencia
+                pagos['transferencia'] = {
+                    **base,
+                    'banco_destino': d.banco_destino_id,
+                    'cuenta_destino': d.cuenta_destino,
+                    'cuenta_origen': d.cuenta_origen_id,
+                    'numero_cheque': d.numero_chque,
                     'valor': float(d.valor)
                 }
             except:

@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from apps.contabilidad.models.documento import Documentos, Mov
 from apps.contabilidad.serializers.documento import *
 from apps.contabilidad.services.documento_service import *
+from apps.contabilidad.services.documento_cierre_service import *
 import pdb
 
 class DocumentoViewSet(ModelViewSet):
@@ -59,7 +60,7 @@ class DocumentoViewSet(ModelViewSet):
         ).select_related(
             'usuario',
             'estado'
-        ).order_by('-fecha')
+        ).order_by('id')
 
         serializer = DocumentoBitacoraSerializer(
             auditorias,
@@ -132,3 +133,28 @@ class DocumentoViewSet(ModelViewSet):
         }
 
         return Response(results, status=status.HTTP_200_OK)
+    
+    @action(methods=['patch'], detail=True, url_path='cerrar')
+    def cerrar(self, request, pk=None):
+        try:
+            doc = DocumentoCierreService.cerrar(pk, request.user.id)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(DocumentoDetailSerializer(doc).data)
+
+    @action(methods=['patch'], detail=True, url_path='reabrir')
+    def reabrir(self, request, pk=None):
+        try:
+            doc = DocumentoCierreService.reabrir(pk, request.user.id)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(DocumentoDetailSerializer(doc).data)
+
+    @action(methods=['patch'], detail=True, url_path='anular')
+    def anular(self, request, pk=None):
+        observacion = request.data.get('observacion')
+        try:
+            doc = DocumentoCierreService.anular(pk, request.user.id, observacion)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(DocumentoDetailSerializer(doc).data)

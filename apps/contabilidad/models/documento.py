@@ -135,6 +135,13 @@ class PagoTarjeta(BaseModel):
     numero_tarjeta  = models.CharField(max_length=45)
     valor           = models.DecimalField(max_digits=18, decimal_places=2)   
 
+class PagoTransferencia(BaseModel):
+    pago            = models.OneToOneField(PagoDocumento, on_delete=models.CASCADE, related_name='detalle_transferencia')
+    valor           = models.DecimalField(max_digits=18, decimal_places=2)   
+    cuenta_origen   = models.ForeignKey(CuentaBancaria, on_delete=models.PROTECT, null=True, blank=True)
+    banco_destino   = models.ForeignKey(Banco, on_delete=models.PROTECT)
+    cuenta_destino  = models.CharField(max_length=100)
+    numero_cheque   = models.CharField(max_length=45)
 class Mov(models.Model):
     documento           = models.ForeignKey(Documentos,on_delete=models.CASCADE, related_name="mov_documentos")
     mayor               = models.ForeignKey(Mayor, on_delete=models.CASCADE, related_name="mov_mayor")

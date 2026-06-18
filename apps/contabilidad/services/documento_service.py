@@ -2,7 +2,9 @@ from django.db import transaction
 import json
 from apps.common_db.db import execute_procedure
 from decimal import Decimal
-from apps.contabilidad.models.documento import Documentos, Mov, PagoDocumento, FactElectronicaDocumento
+from django.db.models import Sum
+import datetime
+from apps.contabilidad.models.documento import Documentos, Mov, PagoDocumento, FactElectronicaDocumento, DocumentosBita, Estado
 import pdb
 class DocumentoService:
 
@@ -61,64 +63,80 @@ class DocumentoService:
                 pagos_list = []
 
                 # EFECTIVO
-                efectivo = pagos.get('efectivo', {})
+                if len(pagos) > 0:
+                    efectivo = pagos.get('efectivo', {})
 
-                if efectivo and efectivo.get('valor', 0):
+                    if efectivo and efectivo.get('valor', 0):
 
-                    pagos_list.append({
-                        'tipo': 'efectivo',
-                        'forma_pago_id': 1,
-                        'medio_pago_id': efectivo.get('medio_pago'),
-                        'valor': float(efectivo.get('valor', 0)),
-                    })
+                        pagos_list.append({
+                            'tipo': 'efectivo',
+                            'forma_pago_id': 1,
+                            'medio_pago_id': efectivo.get('medio_pago'),
+                            'valor': float(efectivo.get('valor', 0)),
+                        })
+                    # pdb.set_trace()
+                    # CHEQUES
+                    for cheque in pagos.get('cheques', []):
 
-                # CHEQUES
-                for cheque in pagos.get('cheques', []):
+                        pagos_list.append({
+                            'tipo': 'cheque',
+                            'forma_pago_id': 4,
+                            'medio_pago_id': cheque.get('medio_pago'),
+                            'banco_id': cheque.get('banco'),
+                            'numero': cheque.get('numero', ''),
+                            'fecha': cheque.get('fecha'),
+                            'valor': float(cheque.get('valor', 0)),
+                        })
 
-                    pagos_list.append({
-                        'tipo': 'cheque',
-                        'forma_pago_id': 4,
-                        'medio_pago_id': cheque.get('medio_pago'),
-                        'banco_id': cheque.get('banco'),
-                        'numero': cheque.get('numero', ''),
-                        'fecha': cheque.get('fecha'),
-                        'valor': float(cheque.get('valor', 0)),
-                    })
+                    # CONSIGNACION
+                    consig = pagos.get('consig', {})
 
-                # CONSIGNACION
-                consig = pagos.get('consig', {})
+                    if consig and consig.get('valor', 0):
 
-                if consig and consig.get('valor', 0):
+                        pagos_list.append({
+                            'tipo': 'consignacion',
+                            'forma_pago_id': 2,
+                            'medio_pago_id': consig.get('medio_pago'),
+                            'banco_id': consig.get('banco'),
+                            'cuenta_bancaria_id': consig.get('cuenta_bancaria'),
+                            'numero': consig.get('numero', ''),
+                            'fecha': consig.get('fecha'),
+                            'valor': float(consig.get('valor', 0)),
+                        })
+                    
+                    # TRANSFERENCIA
+                    transferencia = pagos.get('transferencia', {})
 
-                    pagos_list.append({
-                        'tipo': 'consignacion',
-                        'forma_pago_id': 2,
-                        'medio_pago_id': consig.get('medio_pago'),
-                        'banco_id': consig.get('banco'),
-                        'cuenta_bancaria_id': consig.get('cuenta_bancaria'),
-                        'numero': consig.get('numero', ''),
-                        'fecha': consig.get('fecha'),
-                        'valor': float(consig.get('valor', 0)),
-                    })
+                    if transferencia and transferencia.get('valor', 0):
 
-                # TARJETA
-                tarjeta = pagos.get('tarjeta', {})
+                        pagos_list.append({
+                            'tipo': 'transferencia',
+                            'forma_pago_id': 5,
+                            'cuenta_origen_id': transferencia.get('cuenta_origen'),
+                            'banco_destino_id': transferencia.get('banco'),
+                            'cuenta_destino': transferencia.get('cuenta_destino'),
+                            'numero_cheque': transferencia.get('numero_cheque', ''),
+                            'valor': float(transferencia.get('valor', 0)),
+                        })
 
-                if tarjeta and tarjeta.get('valor', 0):
+                    # TARJETA
+                    tarjeta = pagos.get('tarjeta', {})
 
-                    pagos_list.append({
-                        'tipo': 'tarjeta',
-                        'forma_pago_id': 3,
-                        'medio_pago_id': tarjeta.get('medio_pago'),
-                        'banco_id': tarjeta.get('banco'),
-                        'cuenta_bancaria_id': tarjeta.get('cuenta_bancaria'),
-                        'numero_tarjeta': tarjeta.get('numero_tarjeta', ''),
-                        'valor': float(tarjeta.get('valor', 0)),
-                    })
+                    if tarjeta and tarjeta.get('valor', 0):
+
+                        pagos_list.append({
+                            'tipo': 'tarjeta',
+                            'forma_pago_id': 3,
+                            'medio_pago_id': tarjeta.get('medio_pago'),
+                            'banco_id': tarjeta.get('banco'),
+                            'cuenta_bancaria_id': tarjeta.get('cuenta_bancaria'),
+                            'numero_tarjeta': tarjeta.get('numero_tarjeta', ''),
+                            'valor': float(tarjeta.get('valor', 0)),
+                        })
+                    # pdb.set_trace()
 
                 pagos_json = json.dumps(pagos_list)
 
-                # pdb.set_trace()
                 
                 sql = "select * from addingresos (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 params = (
@@ -129,7 +147,7 @@ class DocumentoService:
                     encabezado.get('detalle', ''),
                     encabezado.get('referencia', ''),
                     encabezado.get('personas'),
-                    float(encabezado.get('gtotal', 0)),
+                    float(encabezado.get('total', 0)),
                     1,
                     contabilizacion,
                     pagos_json,
@@ -170,6 +188,7 @@ class DocumentoService:
                     contabilizacion, factura, enca["f_pago"], enca["medio_pago"],
                     None, None, mandato, enca.get("nota_parcial", False),
                 )
+            # pdb.set_trace()
             resultado = execute_procedure(sql, params)
 
         except Exception:
@@ -201,3 +220,69 @@ class DocumentoService:
                 usuario_id=enca['usuario'],
                 fecha=datetime.datetime.now(),
             )
+
+    
+    @staticmethod
+    def validar_cierre(doc_id):
+        """
+        Valida que el documento esté en condiciones de cerrarse.
+        Lanza Exception con el mensaje correspondiente si falla alguna validación.
+        """
+        movimientos = Mov.objects.filter(documento_id=doc_id).select_related('mayor')
+
+        if not movimientos.exists():
+            raise Exception('No existen movimientos en el documento')
+
+        if movimientos.filter(valor_db=0, valor_cr=0).exists():
+            raise Exception('Hay movimientos sin valores')
+
+        totales = movimientos.aggregate(
+            total_db=Sum('valor_db'),
+            total_cr=Sum('valor_cr')
+        )
+        diferencia = (totales['total_db'] or 0) - (totales['total_cr'] or 0)
+        if abs(diferencia) > 0.01:
+            raise Exception('El movimiento está descuadrado')
+
+        inconsistentes = movimientos.filter(
+            mayor__isnull=True
+        ) | movimientos.filter(persona__isnull=True) | movimientos.filter(concepto__isnull=True)
+
+        if inconsistentes.exists():
+            raise Exception('El movimiento contiene cuentas, personas o conceptos inconsistentes')
+
+        for mov in movimientos:
+            mayor = mov.mayor
+
+            if mayor.tipo == 'GENERAL':   # ⚠️ ajusta al valor real de tu TextChoices
+                raise Exception(f'La cuenta {mayor.codigo} no es auxiliar')
+
+            if mayor.nittercero and not mov.nittercero_id:
+                raise Exception(f'La cuenta {mayor.codigo} exige un NIT de tercero')
+
+            if mayor.ccosto and not mov.centro_costos_id:
+                raise Exception(f'La cuenta {mayor.codigo} exige centro de costo')
+
+            if mayor.base and not mov.base:
+                raise Exception(f'La cuenta {mayor.codigo} exige una base')
+
+    @staticmethod
+    def cerrar(doc_id, usuario_id):
+        doc = Documentos.objects.get(pk=doc_id)
+
+        if doc.estado not in (Estado.ABIERTO, Estado.REABIERTO):
+            raise Exception('Solo se pueden cerrar documentos abiertos o reabiertos')
+
+        DocumentoService.validar_cierre(doc_id)   # ✅ nuevo
+
+        doc.estado = Estado.CERRADO
+        doc.save(update_fields=['estado'])
+
+        DocumentosBita.objects.create(
+            documentos_id=doc_id,
+            usuario_id=usuario_id,
+            fecha=datetime.datetime.now(),
+            evento=f'DOCUMENTO CERRADO No. {doc.numero}',
+            estado_id=doc.estado,
+        )
+        return doc
