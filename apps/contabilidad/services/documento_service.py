@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.db.models import Sum
 import datetime
 from apps.contabilidad.models.documento import Documentos, Mov, PagoDocumento, FactElectronicaDocumento, DocumentosBita, Estado
+from apps.contabilidad.models.tipodocumento import TiposDocumentos
 import pdb
 class DocumentoService:
 
@@ -31,6 +32,11 @@ class DocumentoService:
 
         sql = ""
         params = None
+
+        fuente = TiposDocumentos.objects.filter(
+            pk=encabezado['tipo_documento']
+        ).values_list('fuentes_id', flat=True).first()
+
         try:
             enca = encabezado
 
@@ -57,7 +63,7 @@ class DocumentoService:
             ])
             contabilizacion = mov_json
 
-            if encabezado['tipo_documento'] != 4:
+            if fuente != 4:
                 
                 # ─── Serializar pagos ───
                 pagos_list = []
@@ -154,41 +160,67 @@ class DocumentoService:
                 )
 
             else:
-                suma = data['factura']['sumatorias']
-                porc = data['factura']['porcentajes']
-                rete = data['factura']['retenciones']
-                factura = json.dumps(data['factura']['grid'])
-                contrato_id = None
+                factura_grid = json.dumps([
+                    {
+                        'concepto': item.get('concepto'),
+                        'cantidad': str(item.get('cantidad', 1)),
+                        'detalle':  item.get('detalle', ''),
+                        'piva':     float(item.get('iva', 0)),
+                        'valor':    float(item.get('valor', 0)),
+                        'orden':    i + 1,
+                        'prtefuente': 0,
+                        'prteica':    0,
+                        'prteiva':    0,
+                    }
+                    for i, item in enumerate(encabezado.get('items', []))
+                ])
 
-                # Una sola query, solo el campo necesario
-                doc_operacion = Documentos.objects.filter(id=enca['id']).values_list('operacion', flat=True).first()
-                fact_mandato = doc_operacion or 'GENERAL'
+                sql = """
+                    SELECT out_id, out_documento
+                    FROM addfacturas(
+                        %s,%s,%s,%s,%s,
+                        %s,%s,%s,%s,%s,%s,
+                        %s,%s,%s,%s,%s,%s,
+                        %s,%s,%s,%s,%s,%s,
+                        %s,%s
+                    )
+                """
 
-                mandato = enca.get('mandato', False)
-                if mandato:
-                    temp_cont = json.loads(contabilizacion)
-                    mov_inmu = next((f for f in temp_cont if f.get("inmu_id") is not None), None)
-                    if mov_inmu:
-                        contrato = Contrato.objects.filter(
-                            inmueble_id=mov_inmu["inmu_id"], estado_id=11
-                        ).first()
-                        if contrato:
-                            contrato_id = contrato.id
-                            fact_mandato = "ARRENDATARIO"
-
-                sql = "select out_id, out_documento from addfacturas (%s::integer,%s::integer,%s::date,%s::date,%s::integer,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::numeric,%s::varchar,%s::integer,%s::integer,%s::integer,%s::varchar,%s::varchar,%s::json,%s::json,%s::integer,%s::integer,%s::integer,%s::integer,%s::boolean,%s::boolean)"
-                params = (
-                    enca['id'], enca['tipo'], enca['fecha'], enca['fechaven'],
-                    enca['persona'], suma['subtotal'], porc['descuento'], suma['descuento'],
-                    suma['total'], suma['iva'], suma['grantotal'],
-                    porc['retefuente'], porc['reteiva'], porc['reteica'],
-                    rete['retefuente'], rete['reteiva'], rete['reteica'],
-                    suma['retenciones'], enca['detalle'], enca['usuario'],
-                    enca['referencia'], contrato_id, None, fact_mandato,
-                    contabilizacion, factura, enca["f_pago"], enca["medio_pago"],
-                    None, None, mandato, enca.get("nota_parcial", False),
+                total_retenciones = (
+                    float(encabezado.get('rtefte', 0)) +
+                    float(encabezado.get('rteiva', 0)) +
+                    float(encabezado.get('rteica', 0))
                 )
-            # pdb.set_trace()
+                # pdb.set_trace()
+
+                params = (
+                    encabezado.get('id') or 0,
+                    encabezado.get('tipo_documento'),
+                    '2026-06-20',
+                    '2026-06-20',
+                    encabezado.get('personas'),
+                    float(encabezado.get('subtotal',   0)),
+                    float(encabezado.get('pdescuento', 0)),
+                    float(encabezado.get('descuento',  0)),
+                    float(encabezado.get('subtotal',   0)),  # in_total (sin iva)
+                    float(encabezado.get('iva',        0)),
+                    float(encabezado.get('subtotal',     0)),
+                    float(encabezado.get('prtefte', 0)),
+                    float(encabezado.get('prteiva', 0)),
+                    float(encabezado.get('prteica', 0)),
+                    float(encabezado.get('rtefte',  0)),
+                    float(encabezado.get('rteiva',  0)),
+                    float(encabezado.get('rteica',  0)),
+                    total_retenciones,
+                    encabezado.get('detalle', ''),
+                    encabezado.get('usuario', 1),
+                    encabezado.get('fpago',1),
+                    encabezado.get('medio_pago',1),
+                    mov_json,
+                    factura_grid,
+                    bool(encabezado.get('nota_parcial', False)),
+                )
+                # pdb.set_trace()
             resultado = execute_procedure(sql, params)
 
         except Exception:
