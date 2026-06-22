@@ -5,6 +5,8 @@ from rest_framework import status
 from apps.contabilidad.models.cuenta import Mayor
 from .saldo_service import SaldosService
 from apps.contabilidad.models.saldo import SaldosNits
+from apps.contabilidad.models.parametros import CentroCostos
+from apps.contabilidad.serializers.centrocostos import CentroCostosSerializer
 from django.db.models import Sum
 from apps.parametros.services.empresa_service import EmpresaService
 from apps.utils.render import Render
@@ -312,6 +314,7 @@ class ConsultaService:
                             'mov_id', mov_id,
                             'mayor_id', mayor_id)) from getauxcodnitconc(%s, %s, %s, %s, %s, %s, %s);
                     """
+                    # pdb.set_trace()
                     params = [
                         mayordesde.codigo,
                         mayorhasta.codigo,
@@ -523,6 +526,14 @@ class ConsultaService:
 
         pdf = Render.render_pdfkit('pdf/contabilidad/consultasaux.html', params, nombre)
         return pdf
+
+    def centro_costos():
+
+        query = CentroCostos.objects.filter(estado__iexact="activo").order_by('codigo')
+
+        data = CentroCostosSerializer(query, many=True).data
+
+        return Response(data, status=status.HTTP_200_OK)
             
 class ConsultaAuxiliarFormatter:
 

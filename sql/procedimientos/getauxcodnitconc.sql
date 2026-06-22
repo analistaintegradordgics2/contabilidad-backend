@@ -164,7 +164,6 @@ BEGIN
                 doc.fuentes_id as fuentes_id,
                 enc.fecha as fecha,
                 mov.base as base,
-                mov.inmueble_id as inmueble_id,
                 mov.id as mov_id,
                 mov.mayor_id as mayor_id
             FROM cont_documentos enc
@@ -179,7 +178,7 @@ BEGIN
               AND (in_personaid IS NULL OR in_personaid = 0 OR mov.persona_id = in_personaid)
               AND mov.concepto_id = in_concepto
               AND cs.maneja_nits = true
-        	ORDER BY enc.fecha, enc.numero, mov.inmueble_id, mov.concepto_id asc
+        	ORDER BY enc.fecha, enc.numero, mov.concepto_id asc
         LOOP
             sumasaldo := coalesce(sumasaldo, 0) + (coalesce(curdatos1.valor_db, 0) - coalesce(curdatos1.valor_cr, 0));
 
