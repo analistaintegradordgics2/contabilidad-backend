@@ -1,0 +1,324 @@
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if model.tipo == 1 %}
+    <title>AUXILIAR POR CÓDIGO</title>
+    {%endif%}
+
+    {% if model.tipo == 2 %}
+    <title>AUXILIAR POR CÓDIGO Y NIT</title>
+    {%endif%}
+
+    {% if model.tipo == 3 %}
+    <title>AUXILIAR POR RANGO DE CÓDIGO</title>
+    {%endif%}
+
+    {% if model.tipo == 4 %}
+    <title>AUXILIAR POR NIT/CUENTA</title>
+    {%endif%}
+
+    {% if model.tipo == 5 %}
+    <title>AUXILIAR POR NIT</title>
+    {%endif%}
+</head>
+
+<body>
+    <div>
+        <img src="{{ empresa.logo }}" width="180px" height="82px">
+        <table class="encabezado">
+            <thead>
+                <tr>
+                    <!--  <th style="width: 20%; border: 1px solid black">
+                        <div>
+                            LOGO
+                            <img src="@/frontend/src/assets/orbis.png" alt="">
+                        </div>
+                    </th> -->
+                    <th colspan="2" style="width: 80%;">
+                        <label>{{empresa.nombre}}</label><br>
+                        <label>NIT: {{empresa.nit}}</label><br>
+                        {% if model.tipo == 1 %}
+                        <label>AUXILIAR POR CÓDIGO</label><br>
+                        <label>CÓDIGO: {{model.codigonom.nombre1}} - {{model.nommayor}}</label><br>
+                        <label>
+                            AÑO {{model.año}} - MES INICIO: {{model.mesini|numero_mes_letra}} - MES FIN:
+                            {{model.mesfin|numero_mes_letra}}
+                        </label>
+                        {%endif%}
+
+                        {% if model.tipo == 2 %}
+                        <label>AUXILIAR POR CÓDIGO Y NIT</label><br>
+                        <label>
+                            CÓDIGO: {{model.codigonom.nombre1}} - {{model.nommayor}} - NIT: {{model.ccpersona}} -
+                            {{model.nompersona}}
+                        </label><br>
+                        <label>
+                            AÑO {{model.año}} - MES INICIO: {{model.mesini|numero_mes_letra}} - MES FIN:
+                            {{model.mesfin|numero_mes_letra}}
+                        </label>
+                        {%endif%}
+
+                        {% if model.tipo == 3 %}
+                            <label>AUXILIAR POR RANGO DE CÓDIGO</label><br>
+                            <label>
+                                CUENTA {{model.codigonom.nombre1}} HASTA {%if model.codigonom.nombre2 != None%} {{model.codigonom.nombre2}} {%else%} {{model.codigonom.nombre1}} {%endif%}
+                            </label><br>
+                            {% if model.ccosto == True %}
+                            <label>CENTRO DE COSTOS: {{model.cccodigo}} - {{model.ccnombre}}</label><br>
+                            {%endif%}
+                            {% if model.rango_fecha %}
+                            <label>
+                                FECHA INICIO: {{model.fechaini}} - FECHA FIN: {{model.fechafin}}
+                            </label>
+                            {%else%}
+                            <label>
+                                AÑO {{model.año}} - MES INICIO: {{model.mesini|numero_mes_letra}} - MES FIN:
+                                {{model.mesfin|numero_mes_letra}}
+                            </label>
+                            {%endif%}
+                        {%endif%}
+
+                        {% if model.tipo == 4 %}
+                        <label>AUXILIAR POR NIT/CUENTA</label><br>
+                        <label>
+                            NIT: {{model.ccpersona}} - {{model.nompersona}}
+                        </label><br>
+                        {% if model.ccosto == True %}
+                        <label>CENTRO DE COSTOS: {{model.cccodigo}} - {{model.ccnombre}}</label><br>
+                        {%endif%}
+                        <label>
+                            AÑO {{model.año}} - MES INICIO: {{model.mesini|numero_mes_letra}} - MES FIN:
+                            {{model.mesfin|numero_mes_letra}}
+                        </label>
+                        {%endif%}
+
+                        {% if model.tipo == 5 %}
+                        <label>AUXILIAR POR NIT</label><br>
+                        <label>
+                            NIT: {{model.ccpersona}} - {{model.nompersona}}
+                        </label><br>
+                        <label>
+                            AÑO {{model.año}} - MES INICIO: {{model.mesini|numero_mes_letra}} - MES FIN:
+                            {{model.mesfin|numero_mes_letra}}
+                        </label>
+                        {%endif%}
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <table style="margin-top: 20px; width: 100%;" class="tabla">
+            <thead>
+                <tr>
+                    <th>TIPO</th>
+                    <th>NUMERO</th>
+                    <th>FECHA</th>
+                    <th>CONC</th>
+                    {% if model.tipo == 3 %}
+                    <th width="7%">NIT</th>
+                    <th width="15%">NOMBRE</th>
+                    {%endif%}
+                    <th width="25%">DETALLE</th>
+                    <th>DÉBITOS</th>
+                    <th>CRÉDITOS</th>
+                    <th>SALDOS</th>
+                    {%if filtros.incbase == True%}
+                    <th>BASE</th>
+                    {%endif%}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                {%if item.color == 1 %}
+                    <tr style="background-color: #fef8ea; color: black; font-weight: bold;">
+                {%elif item.color == 2 %}
+                    <tr style="background-color: white; color: white; font-weight: bold;">
+                {%elif item.color == 3 %}
+                    <tr style="background-color: #ebf9f0; color: #484848; font-weight: bold;">
+                {%elif item.color == 4 %}
+                    <tr style="background-color: lightblue; color: mediumblue; font-weight: bold;">
+                {%else%}
+                    <tr style="background-color: lightgoldenrodyellow; color: black;">
+                {%endif%}
+                    <!-- <td>{{item.tipo}}</td> -->
+                    <td class="tdl" style="padding-left: 5px;" >
+                        {% if item.tipo != None %}
+                        {{item.tipo}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {% if item.numero != None %}
+                        {{item.numero}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {% if item.fecha != None %}
+                        {{item.fecha}}
+                        {%endif%}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.concepto != None %}
+                        {{item.concepto}}
+                        {%endif%}
+                    </td>
+                    {% if model.tipo == 3 %}
+                    <td class="tdl">
+                        {%if item.nits != None%}
+                        {{item.nits}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {%if item.nombre != None%}
+                        {{item.nombre}}
+                        {%endif%}
+                    </td>
+                    {%endif%}
+                    <td class="tdl">
+                        {% if item.detalle != None %}
+                        {{item.detalle}}
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;">
+                        {% if item.valor_db != None %}
+                        $ {{item.valor_db|intcomma}}
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;">
+                        {% if item.valor_cr != None %}
+                        $ {{item.valor_cr|intcomma}}
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;padding-right: 3px;">
+                        {% if item.saldo != None %}
+                        $ {{item.saldo|intcomma}}
+                        {%endif%}
+                    </td>
+                    {%if filtros.incbase == True%}
+                    <td style="text-align: right;padding-right: 3px;">
+                        {% if item.base != None %}
+                        $ {{item.base|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                    {%endif%}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <hr style="border: 1px solid black;">
+        <hr style="border: 1px solid black;">
+        <table style="margin-top: 20px;">
+            <tbody>
+                <tr>
+                    <td colspan="5"></td>
+                    <td colspan="2" style="text-align: right;"><strong>SALDO ANTERIOR</strong></td>
+                    <td style="text-align: right;">
+                        {%if sumas.saldoinidb != None%}
+                        $ {{sumas.saldoinidb|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;">
+                        {%if sumas.saldoinicr != None%}
+                        $ {{sumas.saldoinicr|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5"></td>
+                    <td colspan="2" style="text-align: right;"><strong>MOVIMIENTOS</strong></td>
+                    <td style="text-align: right;">
+                        {%if sumas.summovdb != None%}
+                        $ {{sumas.summovdb|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;">
+                        {%if sumas.summovcr != None%}
+                        $ {{sumas.summovcr|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                </tr>
+                {%if filtros.incbase == True%}
+                <tr>
+                    <td colspan="5"></td>
+                    <td colspan="2" style="text-align: right;"><strong>BASE</strong></td>
+                    <td style="text-align: right;"></td>
+                    <td style="text-align: right;">
+                        {%if sumas.summovbase != None%}
+                        $ {{sumas.summovbase|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                </tr>
+                {%endif%}
+                <tr>
+                    <td colspan="5"></td>
+                    <td colspan="2" style="text-align: right;"><strong>NUEVO SALDO</strong></td>
+                    <td style="text-align: right;">
+                        {%if sumas.saldofindb != None%}
+                        $ {{sumas.saldofindb|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;">
+                        {%if sumas.saldofincr != None%}
+                        $ {{sumas.saldofincr|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+<style>
+    @page {
+        size: legal landscape;
+        margin-left: 1cm;
+        margin-top: 1cm;
+        margin-right: 1cm;
+        margin-bottom: 1cm;
+    }
+    
+    .encabezado label {
+        font-size: 12px;
+    }
+
+    .tabla>thead>tr>th {
+        height: 20px;
+        /* border: 1px solid black; */
+        border-top: 1px solid black;
+        border-bottom: 1px solid black;
+        padding-top: 3.5px;
+        background-color: #e9ecef;
+    }
+
+    .tabla>tbody>tr>td {
+        /* height: 22px; */
+        /* border: 1px solid black; */
+        padding-top: 3.5px;
+    }
+
+    .tdl {
+        padding-left: 2px;
+    }
+</style>

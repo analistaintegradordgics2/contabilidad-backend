@@ -544,3 +544,12 @@ class ControlErrores(BaseModel):
     class Meta:
         """Meta class."""
         db_table = 'public_control_errores'
+    
+class ProcedimientoSync(models.Model):
+    nombre = models.CharField(max_length=50, help_text='Nombre del procedimiento')
+    hash = models.CharField(max_length=64, help_text='Hash del procedimiento (para validar si es el mismo o si se cambió)')
+    fecha_sync = models.DateTimeField()
+    
+    class Meta:
+        """Meta class."""
+        db_table = 'procedimientos_sync'

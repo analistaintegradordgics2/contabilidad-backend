@@ -35,6 +35,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
 
+DJANGO_APPS = [
+    'django.contrib.humanize',
+]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -50,7 +54,7 @@ INSTALLED_APPS = [
     'apps.contabilidad',
     'apps.parametros',
     'apps.public'
-]
+] + DJANGO_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -68,16 +72,29 @@ ROOT_URLCONF = 'config.urls'
 MEDIA_ROOT = str(ROOT_DIR('media'))
 MEDIA_URL = '/media/'
 
+
+#Teplates
+DIR_CSS = str(APPS_DIR.path('templates/css/'))
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [
+            str(APPS_DIR.path('templates')),
+        ],
         'OPTIONS': {
+            'debug': DEBUG,
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ],
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
             ],
         },
@@ -137,6 +154,65 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+DIR_LOGGING = os.path.join(str(ROOT_DIR), 'logs')
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} [{name}:{lineno}] {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+
+        'error_file': {
+            'class': 'config.handler.DailyFileHandler',
+            'log_dir': DIR_LOGGING,
+            'formatter': 'verbose',
+            'level': 'ERROR',
+        },
+    },
+
+    'root': {
+        'handlers': ['console', 'error_file'],
+        'level': 'INFO',
+    },
+
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+
+        'django.request': {
+            'handlers': ['console', 'error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+
+        'django.server': {
+            'handlers': ['console', 'error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+
+        'django.security.DisallowedHost': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
