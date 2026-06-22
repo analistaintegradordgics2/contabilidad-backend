@@ -7,6 +7,7 @@ from apps.utils.ModelViewSetClass import ModelViewSetClass
 from apps.contabilidad.models.cuenta import Mayor
 from apps.contabilidad.serializers.cuenta import MayorSerializer, MayorHistorySerializer
 from apps.contabilidad.services.cuenta_service import *
+from apps.utils.views import Views
 
 import pdb
 
@@ -110,4 +111,12 @@ class MayorViewSet(ModelViewSetClass):
             item = Mayor.objects.filter(pk=mayor_id).first()
         return Response(MayorService.format_mayor_select(item, include_model=True))
 
-    
+    @action(methods=['get'], detail=False, url_path='select_solo_cutabanco')
+    def select_solo_cutabanco(self, request):
+        return Response(Views.select(
+            request=request,
+            filtro={'codigo__icontains': 'search', 'nombre__icontains': 'search'},
+            model= Mayor.objects.filter(tipo="Auxiliar", estado=True, codigo__range=(1110, 11209999)).annotate(codigo_nombre=Concat('codigo', Value(' - '), 'nombre')).order_by('codigo_nombre'),
+            values=['id', 'codigo', 'codigo_nombre'],
+            limit=10
+        ))

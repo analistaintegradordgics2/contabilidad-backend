@@ -4,7 +4,7 @@ from apps.common_db.db import execute_procedure
 from rest_framework import status
 from apps.contabilidad.models.cuenta import Mayor
 from .saldo_service import SaldosService
-from apps.contabilidad.models.saldo import SaldosNits
+from apps.contabilidad.models.saldo import SaldosNits, Saldos
 from django.db.models import Sum
 from apps.parametros.services.empresa_service import EmpresaService
 from apps.utils.render import Render
@@ -335,7 +335,7 @@ class ConsultaService:
         personaid = model['persona']
         anio = model['año']
         filmesini = SaldosService._obtener_campo_saldo_inicio(model['mesini'])
-        filmesfin = SaldosService._obtener_campo_saldo_inicio(model['mesfin'])
+        filmesfin = SaldosService._obtener_campo_saldo_fin(model['mesfin'])
         
         if model['tipo'] == 1 or model['tipo'] == 3 :
             querySaldos = SaldosNits.objects.filter(mayor_id=mayorid, anio=anio).aggregate(Sum(filmesini), Sum(filmesfin)).values()
@@ -469,7 +469,155 @@ class ConsultaService:
         nombreinforme = ConsultaAuxiliarFormatter._get_nombre_informe(request_data)
         
         return Render.export_excel(model, nombreinforme)
-            
+
+    @staticmethod
+    def filtro_aux_banco(model):
+        try:
+            with transaction.atomic():
+                sql = """
+                    select json_agg(json_build_object(
+                        'id', id,
+                        'tipo', tipo,
+                        'numero', numero,
+                        'fecha', to_char(date(fecha), 'dd/mm/yyyy'),
+                        'fechac', to_char(date(fechac), 'dd/mm/yyyy'),
+                        'docref', docref,
+                        'idconc', idconc,
+                        'nrocg', nrocg,
+                        'detalle', detalle,
+                        'cedula', cedula,
+                        'persona', persona,
+                        'valor_db', valor_db,
+                        'valor_cr', valor_cr,
+                        'color', color,
+                        'fuentes_id', fuentes_id,
+                        'saldo',saldo,
+                        'order_insercion',order_insercion)) from getauxiliarbancos (%s, %s, %s, %s);
+                    """
+                params = [
+                    model['año'],
+                    model['mesini'],
+                    model['mesfin'],
+                    model['codigo']
+                ]
+                resultado = execute_procedure(sql=sql, params=params)
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
+        if resultado and resultado[0] is not None:
+            return resultado[0][0]
+        return []
+
+    @staticmethod
+    def consulta_saldos_aux_banco(model):
+        mayorid = model['codigo']
+        anio = model['año']
+        filmesini = SaldosService._obtener_campo_saldo_inicio(model['mesini'])
+        filmesfin = SaldosService._obtener_campo_saldo_fin(model['mesfin'])
+        
+        return Saldos.objects.filter(mayor_id=mayorid, anio=anio).aggregate(Sum(filmesini), Sum(filmesfin)).values()
+
+    @staticmethod
+    def exportar_consulta_filtro_aux_banco(request_data):
+        sumas = request_data["sumas"]
+        modelo = request_data["model"]
+        model = []
+
+        for item in request_data["data"]:
+            ConsultaAuxiliarFormatter._procesar_detalles(item, 'exportar')
+
+            model.append(
+                ConsultaAuxiliarFormatter._armar_movimiento_bancos(
+                    item['tipo'],
+                    item['numero'],
+                    item['fecha'],
+                    item['fechac'],
+                    item['nrocg'],
+                    item['docref'],
+                    item['detalle'],
+                    item['cedula'],
+                    item['persona'],
+                    item['valor_db'],
+                    item['valor_cr'],
+                    item['saldo'],
+                )
+            )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento_bancos(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "SALDO ANTERIOR",
+                sumas["saldoinidb"],
+                sumas["saldoinicr"],
+                None,
+            )
+        )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento_bancos(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "MOVIMIENTOS",
+                sumas["summovdb"],
+                sumas["summovcr"],
+                None,
+            )
+        )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento_bancos(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "NUEVO SALDO",
+                sumas["saldofindb"],
+                sumas["saldofincr"],
+                None,
+            )
+        )
+
+        dataReturn = Render.export_excel(model, 'CONSULTA DE AUXILIAR POR BANCOS: {} - {}'.format(
+            modelo["codigonom"]["nombre1"], modelo["nommayor"]))
+
+        return dataReturn
+
+    @staticmethod
+    def imprimir_consulta_aux_banco(request_data):
+        data = ConsultaService.filtro_aux_banco(request_data['model'])
+        sumas = request_data["sumas"]
+        for item in data:
+            item = ConsultaAuxiliarFormatter._procesar_detalles(item, 'imprimir')
+        
+        empresa = EmpresaService.obtener_datos_empresa()
+
+        nombre = "consultasauxbanco"
+        params = {
+            'data': data,
+            'empresa': empresa,
+            'model': request_data['model'],
+            'sumas': sumas
+        }
+
+        pdf = Render.render_pdfkit('pdf/contabilidad/consultasauxbanco.html', params, nombre)
+        return pdf
+    
 class ConsultaAuxiliarFormatter:
 
     def _procesar_detalles(item, tipo_proceso=None):
@@ -514,7 +662,6 @@ class ConsultaAuxiliarFormatter:
 
         return nombreinforme
     
-    @staticmethod
     def _armar_movimiento(tipo, numero, ref, fecha, doc_ref, concepto, detalle, debito, credito):
         return {
             'tipo': tipo or '',
@@ -526,4 +673,20 @@ class ConsultaAuxiliarFormatter:
             'detalle': detalle or '',
             'debito': debito if debito is not None else '',
             'credito': credito if credito is not None else '',
+        }
+
+    def _armar_movimiento_bancos(tipo, numero, fecha, fecha_cg, nro_cg, doc_ref, detalle, nit, persona, debito, credito, saldo):
+        return {
+            'tipo': tipo or '',
+            'numero': numero or '',
+            'fecha': fecha or '',
+            'fecha_cg': fecha_cg or '',
+            'nro_cg': '' if nro_cg in [None, 'NULL'] else nro_cg,
+            'doc_ref': doc_ref or '',
+            'detalle': detalle or '',
+            'nit': nit or '',
+            'persona': persona or '',
+            'debito': debito if debito is not None else '',
+            'credito': credito if credito is not None else '',
+            'saldo': saldo if saldo is not None else '',
         }
