@@ -8,6 +8,8 @@ from apps.contabilidad.serializers.documento import *
 from apps.contabilidad.services.documento_service import *
 from apps.contabilidad.services.documento_cierre_service import *
 import pdb
+from django.db.models import Q, Sum, F
+
 
 class DocumentoViewSet(ModelViewSet):
 
@@ -76,6 +78,13 @@ class DocumentoViewSet(ModelViewSet):
             'personas',
             'tipo_documento'
         )
+        
+        search = request.GET.get('buscar')
+        if search != "" and search != None:
+            qs = qs.filter(
+                (Q(personas__documento__icontains=search) | Q(personas__n_completo__icontains=search) | Q(numero__icontains=search) | Q(detalle__icontains=search)),
+                fecha__range=[request.GET.get('fecha_inicio'), request.GET.get('fecha_fin')]
+            )
 
         tipo_documento = request.GET.get('tipo_documento')
 
@@ -84,6 +93,11 @@ class DocumentoViewSet(ModelViewSet):
                 tipo_documento__fuentes=tipo_documento
             )
 
+        tipo_busqueda = request.GET.get('tipobusqueda')
+
+        if tipo_busqueda:
+            qs = qs.filter( tipo_documento_id=tipo_busqueda)
+            
         documento = request.GET.get('documento')
 
         if documento:
@@ -95,7 +109,7 @@ class DocumentoViewSet(ModelViewSet):
 
         if usuario:
             qs = qs.filter(
-                created_by_id=usuario
+                uc_id=usuario
             )
 
         fecha_inicio = request.GET.get('fecha_inicio')

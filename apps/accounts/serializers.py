@@ -84,6 +84,11 @@ class UserFindSerializer(serializers.ModelSerializer):
             return f"{dominio.valor.lower()}media/{archivo.src}"
 
         return None
+    
+    n_completo= serializers.SerializerMethodField()
+    def get_n_completo(self, obj):
+        n_completo = f"{obj.first_name} {obj.last_name}"
+        return n_completo
 
     class Meta:
         model = User
@@ -99,6 +104,7 @@ class UserFindSerializer(serializers.ModelSerializer):
             'info_persona',
             'logoempresa',
             'firma',
+            'n_completo'
         )
 
 class CustomTokenSerializer(TokenObtainPairSerializer):

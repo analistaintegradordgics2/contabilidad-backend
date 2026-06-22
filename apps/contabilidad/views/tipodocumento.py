@@ -132,3 +132,7 @@ class TiposDocumentosViewSet(ModelViewSetClass):
             )
 
         return super().destroy(request, *args, **kwargs)
+    
+    @action(detail=False, methods=['POST'], url_path='filtro')
+    def filtro(self, request, *args, **kwargs):
+        return TipoDocumentoService.filtro(request.data)
