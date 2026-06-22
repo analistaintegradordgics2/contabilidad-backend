@@ -174,7 +174,7 @@ class DocumentosBita(models.Model):
         db_table = 'cont_documentos_bita'
 
 class DetalleFacturas(models.Model):
-    documentos      = models.ForeignKey(Documentos,on_delete=models.CASCADE)
+    documentos      = models.ForeignKey(Documentos,on_delete=models.CASCADE, related_name="detalle_facturas")
     cantidad        = models.CharField(max_length=45, blank=True, null=True)
     detalle         = models.CharField(max_length=300, blank=True, null=True)
     valor           = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)

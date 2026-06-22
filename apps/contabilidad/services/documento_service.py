@@ -220,7 +220,7 @@ class DocumentoService:
                     factura_grid,
                     bool(encabezado.get('nota_parcial', False)),
                 )
-                # pdb.set_trace()
+            # pdb.set_trace()
             resultado = execute_procedure(sql, params)
 
         except Exception:

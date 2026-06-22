@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.contabilidad.models.documento import Documentos, Mov, PagoDocumento, FactElectronicaDocumento, DocumentosBita
+from apps.contabilidad.models.documento import Documentos, Mov, DetalleFacturas, PagoDocumento, FactElectronicaDocumento, DocumentosBita
 import pdb
 
 class MovSerializer(serializers.ModelSerializer):
@@ -65,6 +65,18 @@ class MovSerializer(serializers.ModelSerializer):
             'docref', 'base', 'centro_costos', 'nittercero',
         )
 
+class FacturaDetalleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DetalleFacturas
+        fields = (
+            'id',
+            'concepto',
+            'cantidad',
+            'detalle',
+            'piva',
+            'valor'
+        )
 
 class DocumentoCreateSerializer(serializers.ModelSerializer):
     movimientos = MovSerializer(
@@ -90,7 +102,11 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
         read_only=True
     )
     pagos = serializers.SerializerMethodField()
-
+    items = FacturaDetalleSerializer(
+        source='detalle_facturas',
+        many=True,
+        read_only=True
+    )
     class Meta:
         model = Documentos
 
@@ -103,6 +119,8 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
             'concepto',
             'detalle',
             'personas',
+            'direccion',
+            'telefono',
             'estado',
             'subtotal',
             'descuento',
@@ -110,7 +128,8 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
             'total',
             'gtotal',
             'movimientos',
-            'pagos'
+            'pagos',
+            'items'
         )
 
     def get_pagos(self, documento):
