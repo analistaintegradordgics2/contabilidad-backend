@@ -88,7 +88,6 @@ BEGIN
 	sumasaldo := saldoi;
 	sumadb := CASE WHEN saldoi > 0 THEN saldoi ELSE 0 END;
 	sumacr := CASE WHEN saldoi < 0 THEN saldoi * -1 ELSE 0 END;
-	
 	--, mov.concepto_id
 	for curdatos1 in
 		SELECT 
