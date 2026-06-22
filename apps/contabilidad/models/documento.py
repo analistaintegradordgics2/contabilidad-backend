@@ -160,6 +160,7 @@ class Mov(models.Model):
     fecha_conciliacion  = models.DateTimeField(blank=True, null=True)
     mes_anio_conciliado = models.TextField(blank=True, null=True)
     user_conciliacion   = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True, related_name="mov_conciliacion_user")
+    dcierre             = models.IntegerField(blank=True, null=True)
     
 
 class DocumentosBita(models.Model):

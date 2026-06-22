@@ -35,6 +35,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
 
+DJANGO_APPS = [
+    'django.contrib.humanize',
+]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -50,7 +54,7 @@ INSTALLED_APPS = [
     'apps.contabilidad',
     'apps.parametros',
     'apps.public'
-]
+] + DJANGO_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -68,16 +72,29 @@ ROOT_URLCONF = 'config.urls'
 MEDIA_ROOT = str(ROOT_DIR('media'))
 MEDIA_URL = '/media/'
 
+
+#Teplates
+DIR_CSS = str(APPS_DIR.path('templates/css/'))
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [
+            str(APPS_DIR.path('templates')),
+        ],
         'OPTIONS': {
+            'debug': DEBUG,
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ],
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
             ],
         },

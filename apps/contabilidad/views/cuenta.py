@@ -8,6 +8,8 @@ from apps.contabilidad.models.cuenta import Mayor
 from apps.contabilidad.serializers.cuenta import MayorSerializer, MayorHistorySerializer
 from apps.contabilidad.services.cuenta_service import *
 
+import pdb
+
 class MayorViewSet(ModelViewSetClass):
     queryset = Mayor.objects.all().order_by('codigo')
     serializer_class = MayorSerializer
@@ -101,5 +103,11 @@ class MayorViewSet(ModelViewSetClass):
             'activas': MayorSerializer(Mayor.objects.filter(estado=True).order_by("codigo"), many=True).data,
             'inactivas': MayorSerializer(Mayor.objects.filter(estado=False).order_by("codigo"), many=True).data
         }, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, *args, **kwargs):
+        mayor_id = kwargs['pk']
+        if mayor_id:
+            item = Mayor.objects.filter(pk=mayor_id).first()
+        return Response(MayorService.format_mayor_select(item, include_model=True))
 
     
