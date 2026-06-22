@@ -65,7 +65,7 @@ class ConceptosViewSet(ModelViewSetClass):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     
-    @action(methods=['POST'], detail=False, url_path='selectnew/(?P<search>[^/.]+)')
+    @action(methods=['POST'], detail=False, url_path='selectnew')
     def selectnew(self, request, search=None):
         concepto_id = request.data.get('id')
         search = request.data.get('search', '')
