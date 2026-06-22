@@ -355,7 +355,7 @@ class ConsultaService:
         data = ConsultaService.filtro_aux(model, filtro)
 
         for item in data:
-            item = ConsultaAuxiliarFormatter.procesar_detalles(item, 'imprimir')
+            item = ConsultaAuxiliarFormatter._procesar_detalles(item, 'imprimir')
         
         empresa = EmpresaService.obtener_datos_empresa()
 
@@ -383,7 +383,7 @@ class ConsultaService:
             if request_data["tipo"] in [3,7] and item['id'] == None and item['detalle'] != None and ':::' in item['detalle']:
                 codigo = item['detalle'].split(" ")[0]
             
-            item = ConsultaAuxiliarFormatter.procesar_detalles(item, 'exportar_excel')
+            item = ConsultaAuxiliarFormatter._procesar_detalles(item, 'exportar_excel')
 
             params = {
                 'codigo': '',
@@ -409,51 +409,90 @@ class ConsultaService:
             if request_data['filtro']['incbase'] == True:
                 params["base"] = item["base"] if item["base"] != None else 0
             model.append(params)
-        model.append({
-            'tipo': "",
-            'numero': "",
-            'ref': "",
-            'fecha': "",
-            'doc_ref': "",
-            'concepto': "",
-            'detalle': "SALDO ANTERIOR",
-            'debito': request_data["sumas"]["saldoinidb"] if request_data["sumas"]["saldoinidb"] != None else 0,
-            'credito': request_data["sumas"]["saldoinicr"] if request_data["sumas"]["saldoinicr"] != None else 0,
-        })
-        model.append({
-            'tipo': "",
-            'numero': "",
-            'ref': "",
-            'fecha': "",
-            'doc_ref': "",
-            'concepto': "",
-            'detalle': "MOVIMIENTOS",
-            'debito': request_data["sumas"]["summovdb"],
-            'credito': request_data["sumas"]["summovcr"],
-        })
-        model.append({
-            'tipo': "",
-            'numero': "",
-            'ref': "",
-            'fecha': "",
-            'doc_ref': "",
-            'concepto': "",
-            'detalle': "BASE",
-            'debito': "",
-            'credito': request_data["sumas"]["summovbase"],
-        })
-        model.append({
-            'tipo': "",
-            'numero': "",
-            'ref': "",
-            'fecha': "",
-            'doc_ref': "",
-            'concepto': "",
-            'detalle': "NUEVO SALDO",
-            'debito': request_data["sumas"]["saldofindb"] if request_data["sumas"]["saldofindb"] != None else 0,
-            'credito': request_data["sumas"]["saldoinicr"] if request_data["sumas"]["saldoinicr"] != None else 0,
-        })
-        nombreinforme = ""
+        
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "SALDO ANTERIOR",
+                request_data["sumas"]["saldoinidb"] if request_data["sumas"]["saldoinidb"] is not None else 0,
+                request_data["sumas"]["saldoinicr"] if request_data["sumas"]["saldoinicr"] is not None else 0,
+            )
+        )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "MOVIMIENTOS",
+                request_data["sumas"]["summovdb"],
+                request_data["sumas"]["summovcr"],
+            )
+        )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "BASE",
+                None,
+                request_data["sumas"]["summovbase"],
+            )
+        )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "NUEVO SALDO",
+                request_data["sumas"]["saldofindb"] if request_data["sumas"]["saldofindb"] is not None else 0,
+                request_data["sumas"]["saldoinicr"] if request_data["sumas"]["saldoinicr"] is not None else 0,
+            )
+        )
+
+        nombreinforme = ConsultaAuxiliarFormatter._get_nombre_informe(request_data)
+        
+        return Render.export_excel(model, nombreinforme)
+            
+class ConsultaAuxiliarFormatter:
+
+    def _procesar_detalles(item, tipo_proceso=None):
+        if item['detalle'] != None:
+            item['detalle'] = item['detalle'].replace("JANUARY", "ENERO")
+            item['detalle'] = item['detalle'].replace("FEBRUARY", "FEBRERO")
+            item['detalle'] = item['detalle'].replace("MARCH", "MARZO")
+            item['detalle'] = item['detalle'].replace("APRIL", "ABRIL")
+            item['detalle'] = item['detalle'].replace("MAY", "MAYO")
+            item['detalle'] = item['detalle'].replace("JUNE", "JUNIO")
+            item['detalle'] = item['detalle'].replace("JULY", "JULIO")
+            item['detalle'] = item['detalle'].replace("AUGUST", "AGOSTO")
+            item['detalle'] = item['detalle'].replace("SEPTEMBER", "SEPTIEMBRE")
+            item['detalle'] = item['detalle'].replace("OCTOBER", "OCTUBRE")
+            item['detalle'] = item['detalle'].replace("NOVEMBER", "NOVIEMBRE")
+            item['detalle'] = item['detalle'].replace("DECEMBER", "DICIEMBRE")
+            # se recorta el texto del detalle si tiene mas de 100 caracteres
+            if tipo_proceso == 'imprimir' and len(item['detalle']) > 100:
+                item['detalle'] = item['detalle'][:100] + "..."
+
+        return item
+    
+    def _get_nombre_informe(request_data):
         if request_data['tipo'] == 1:
             nombreinforme = "CONSULTA CÓDIGO: {} - {}".format(request_data["model"]["nommayor"],
                                                               request_data["model"]["codigonom"]["nombre1"])
@@ -473,28 +512,18 @@ class ConsultaService:
             nombreinforme = "CONSULTA NIT: {} - {}".format(request_data["model"]["ccpersona"],
                                                            request_data["model"]["nompersona"])
 
-        
-        
-        return Render.export_excel(model, nombreinforme)
-            
-class ConsultaAuxiliarFormatter:
-
-    def procesar_detalles(item, tipo_proceso=None):
-        if item['detalle'] != None:
-            item['detalle'] = item['detalle'].replace("JANUARY", "ENERO")
-            item['detalle'] = item['detalle'].replace("FEBRUARY", "FEBRERO")
-            item['detalle'] = item['detalle'].replace("MARCH", "MARZO")
-            item['detalle'] = item['detalle'].replace("APRIL", "ABRIL")
-            item['detalle'] = item['detalle'].replace("MAY", "MAYO")
-            item['detalle'] = item['detalle'].replace("JUNE", "JUNIO")
-            item['detalle'] = item['detalle'].replace("JULY", "JULIO")
-            item['detalle'] = item['detalle'].replace("AUGUST", "AGOSTO")
-            item['detalle'] = item['detalle'].replace("SEPTEMBER", "SEPTIEMBRE")
-            item['detalle'] = item['detalle'].replace("OCTOBER", "OCTUBRE")
-            item['detalle'] = item['detalle'].replace("NOVEMBER", "NOVIEMBRE")
-            item['detalle'] = item['detalle'].replace("DECEMBER", "DICIEMBRE")
-            # se recorta el texto del detalle si tiene mas de 100 caracteres
-            if tipo_proceso == 'imprimir' and len(item['detalle']) > 100:
-                item['detalle'] = item['detalle'][:100] + "..."
-
-        return item
+        return nombreinforme
+    
+    @staticmethod
+    def _armar_movimiento(tipo, numero, ref, fecha, doc_ref, concepto, detalle, debito, credito):
+        return {
+            'tipo': tipo or '',
+            'numero': numero or '',
+            'ref': ref or '',
+            'fecha': fecha or '',
+            'doc_ref': doc_ref or '',
+            'concepto': concepto or '',
+            'detalle': detalle or '',
+            'debito': debito if debito is not None else '',
+            'credito': credito if credito is not None else '',
+        }
