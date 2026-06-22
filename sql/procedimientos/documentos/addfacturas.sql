@@ -373,7 +373,7 @@ BEGIN
         ),
         VarEstado
     );
-
+    --gregre
     out_documento := COALESCE(out_documento, Vardoc);
 
 EXCEPTION WHEN OTHERS THEN
