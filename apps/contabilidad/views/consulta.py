@@ -20,3 +20,7 @@ class ConsultasViewSet(viewsets.ViewSet):
     @action(methods=['POST'], detail=False, url_path='imprimir_consulta_aux')
     def imprimir_consulta_aux(self, request):
         return ConsultaService.imprimir_consulta_aux(request.data)
+    
+    @action(detail=False, methods=['POST'], url_path='exportar_consulta_filtro_aux')
+    def exportar_consulta_filtro_aux(self, request, *args, **kwargs):
+        return ConsultaService.exportar_consulta_filtro_aux(request.data)
