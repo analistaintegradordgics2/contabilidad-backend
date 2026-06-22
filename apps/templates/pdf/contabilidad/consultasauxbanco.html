@@ -1,0 +1,227 @@
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUXILIAR POR BANCOS</title>
+</head>
+
+<body>
+    <div>
+        <img src="{{ empresa.logo }}" width="180px" height="82px">
+        <table class="encabezado">
+            <thead>
+                <tr>
+                    <!-- <th style="width: 20%; border: 1px solid black">
+                        <div>
+                            LOGO
+                            <img src="@/frontend/src/assets/orbis.png" alt="">
+                        </div>
+                    </th> -->
+                    <th>
+                        <label>{{empresa.nombre}}</label><br>
+                        <label>NIT: {{empresa.nit}}</label><br>
+                        <label>AUXILIAR POR BANCOS</label><br>
+                        <label>CÓDIGO: {{model.codigonom.nombre1}} - {{model.nommayor}}</label><br>
+                        <label>
+                            AÑO {{model.año}} - MES INICIO: {{model.mesini|numero_mes_letra}} - MES FIN:
+                            {{model.mesfin|numero_mes_letra}}
+                        </label>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <table style="margin-top: 20px;" class="tabla">
+            <thead>
+                <tr>
+                    <th>TIPO</th>
+                    <th>NUMERO</th>
+                    <th>FECHA</th>
+                    <th>FECHACG</th>
+                    <th>NROCG</th>
+                    <th width="30%">DETALLE</th>
+                    <th>CEDULA</th>
+                    <th width="30%">PERSONA</th>
+                    <th>DÉBITOS</th>
+                    <th>CRÉDITOS</th>
+                    <th>SALDO</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                {%if item.color == 1 %}
+                    <tr style="background-color: #FFDF80; color: #826431; font-weight: bold;">
+                {%elif item.color == 2 %}
+                    <tr style="background-color: white; color: white; font-weight: bold;">
+                {%elif item.color == 3 %}
+                    <tr style="background-color: #BBCEA4; color: #008000; font-weight: bold;">
+                {%elif item.color == 4 %}
+                    <tr style="background-color: lightblue; color: mediumblue; font-weight: bold;">
+                {%else%}
+                    <tr style="background-color: lightgoldenrodyellow; color: black;">
+                {%endif%}
+                    <!-- <td>{{item.tipo}}</td> -->
+                    <td class="tdl">
+                        {% if item.tipo != None %}
+                        {{item.tipo}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {% if item.numero != None %}
+                        {{item.numero}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {% if item.fecha != None %}
+                        {{item.fecha}}
+                        {%endif%}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.fechac != None %}
+                        {{item.fechac}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {% if item.nrocg != None and item.nrocg|lower != 'null'%}
+                        {{item.nrocg}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {% if item.detalle != None %}
+                        {{item.detalle}}
+                        {%endif%}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.cedula != None %}
+                        {{item.cedula}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl" style="padding-left: 5px;" >
+                        {% if item.persona != None %}
+                        {{item.persona}}
+                        {%endif%}
+                    </td>
+                    <td class="tdr" style="text-align: right;">
+                        {% if item.valor_db != None %}
+                        $ {{item.valor_db|intcomma}}
+                        {%endif%}
+                    </td>
+                    <td class="tdr" style="text-align: right;">
+                        {% if item.valor_cr != None %}
+                        $ {{item.valor_cr|intcomma}}
+                        {%endif%}
+                    </td>
+                    <td class="tdr" style="text-align: right;">
+                        {% if item.saldo != None %}
+                        $ {{item.saldo|intcomma}}
+                        {%endif%}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <hr style="border: 1px solid black;">
+        <hr style="border: 1px solid black;">
+        <table style="margin-top: 20px;">
+            <tbody>
+                <tr>
+                    <td colspan="5"></td>
+                    <td colspan="2" style="text-align: right;"><strong>SALDO ANTERIOR</strong></td>
+                    <td style="text-align: right;">
+                        {%if sumas.saldoinidb != None%}
+                        $ {{sumas.saldoinidb|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;">
+                        {%if sumas.saldoinicr != None%}
+                        $ {{sumas.saldoinicr|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5"></td>
+                    <td colspan="2" style="text-align: right;"><strong>MOVIMIENTOS</strong></td>
+                    <td style="text-align: right;">
+                        {%if sumas.summovdb != None%}
+                        $ {{sumas.summovdb|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;">
+                        {%if sumas.summovcr != None%}
+                        $ {{sumas.summovcr|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5"></td>
+                    <td colspan="2" style="text-align: right;"><strong>NUEVO SALDO</strong></td>
+                    <td style="text-align: right;">
+                        {%if sumas.saldofindb != None%}
+                        $ {{sumas.saldofindb|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                    <td style="text-align: right;">
+                        {%if sumas.saldofincr != None%}
+                        $ {{sumas.saldofincr|intcomma}}
+                        {%else%}
+                        $ 0
+                        {%endif%}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+<style>
+    @page {
+        size: legal landscape;
+        margin-left: 1cm;
+        margin-top: 1cm;
+        margin-right: 1cm;
+        margin-bottom: 1cm;
+    }
+
+    .encabezado label {
+        font-size: 12px;
+    }
+
+    .tabla>thead>tr>th {
+        height: 30px;
+        /* border: 1px solid black; */
+        border-top: 1px solid black;
+        border-bottom: 1px solid black;
+        padding-top: 3.5px;
+        background-color: #e9ecef;
+    }
+
+    .tabla>tbody>tr>td {
+        /* height: 22px; */
+        /* border: 1px solid black; */
+        padding-top: 3.5px;
+    }
+
+    .tdl {
+        padding-left: 2px;
+    }
+
+    .tdr {
+        padding-right: 2px;
+    }
+</style>

@@ -15,7 +15,7 @@ class ConsultasViewSet(viewsets.ViewSet):
         model = request.data.get('model', {})
         return Response({
             'sumsaldos': ConsultaService.consulta_saldos_aux(model),
-        }, status=status.HTTP_200_OK)
+        })
     
     @action(methods=['POST'], detail=False, url_path='imprimir_consulta_aux')
     def imprimir_consulta_aux(self, request):
@@ -28,3 +28,22 @@ class ConsultasViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['POST'], url_path='exportar_consulta_filtro_aux')
     def exportar_consulta_filtro_aux(self, request, *args, **kwargs):
         return ConsultaService.exportar_consulta_filtro_aux(request.data)
+    
+    @action(detail=False, methods=['POST'], url_path='consulta_filtro_aux_banco')
+    def consulta_filtro_aux_banco(self, request, *args, **kwargs):
+        return Response(ConsultaService.filtro_aux_banco(request.data.get('model', {})))
+    
+    @action(methods=['POST'], detail=False, url_path='consulta_saldos_aux_banco')
+    def consulta_saldos_aux_banco(self, request):
+        model = request.data.get('model', {})
+        return Response({
+            'sumsaldos': ConsultaService.consulta_saldos_aux_banco(model),
+        })
+    
+    @action(detail=False, methods=['POST'], url_path='exportar_consulta_filtro_aux_banco')
+    def exportar_consulta_filtro_aux_banco(self, request, *args, **kwargs):
+        return ConsultaService.exportar_consulta_filtro_aux_banco(request.data)
+    
+    @action(methods=['POST'], detail=False, url_path='imprimir_consulta_aux_banco')
+    def imprimir_consulta_aux_banco(self, request):
+        return ConsultaService.imprimir_consulta_aux_banco(request.data)
