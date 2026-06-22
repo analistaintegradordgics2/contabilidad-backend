@@ -358,7 +358,7 @@ class ConsultaService:
         data = ConsultaService.filtro_aux(model, filtro)
 
         for item in data:
-            item = ConsultaAuxiliarFormatter.procesar_detalles(item)
+            item = ConsultaAuxiliarFormatter._procesar_detalles(item, 'imprimir')
         
         empresa = EmpresaService.obtener_datos_empresa()
 
@@ -371,159 +371,6 @@ class ConsultaService:
             'filtros': filtro
         }
 
-        if request_data["tipo_impresion"] == 2:
-            # Extracto
-            total_debito = 0
-            total_credito = 0
-            total_comision = 0
-            total_iva = 0
-            total_otros = 0
-            total_pagos = 0
-
-            concepto_comision = int(Parametros.objects.filter(parametro='concepto_comision').first().valor)
-            concepto_iva = int(Parametros.objects.filter(parametro='concepto_iva').first().valor)
-            concepto_pago_propietario = int(Parametros.objects.filter(parametro='concepto_pago_propietario').first().valor)
-
-            data_extracto = []
-            for i, item in enumerate(data):
-                # pdb.set_trace()
-                if (i + 1) < len(data):
-                    if item["concepto"] == concepto_comision:
-                        total_comision = total_comision + item["valor_db"]
-                    elif item["concepto"] == concepto_iva:
-                        total_iva = total_iva + item["valor_db"]
-                    elif item["concepto"] == concepto_pago_propietario:
-                        total_pagos = total_pagos + (item["valor_db"] if item["valor_db"] != None else 0)
-
-                    # Nelson lugo 03/09/2024 - Se agrega esta validacion para que solo tenga en cuenta los movimientos mas no los saldos
-                    if item["id"] != None:
-                        total_debito = total_debito + item["valor_db"]
-                        total_credito = total_credito + item["valor_cr"]
-                        total_otros = total_otros + item["valor_db"]
-
-                    data_extracto.append({
-                        "detalle": item["detalle"],
-                        "valor_db": item["valor_db"],
-                        "valor_cr": item["valor_cr"],
-                        "concepto_id": int(item["concepto"]) if item["concepto"] != None else "",
-                        "fecha_documento": item["fecha"] if item["fecha"] != None else "",
-                        "numero_documento": item["numero"] if item["numero"] != None else "",
-                        "tipo_documento": item["tipo"] if item["tipo"] != None else "",
-                        "color": item["color"],
-                    })
-            
-            # Nelson Lugo 03/09/2024 - Se le suma al valor total debito y credito el saldo inicial
-            if len(data) > 0 :
-                total_debito += data[0]["valor_db"]
-                total_credito += data[0]["valor_cr"]
-            # pdb.set_trace()
-            total_debito = round(total_debito, 1)
-            total_credito = round(total_credito, 1)
-            total_comision = round(total_comision, 1)
-            total_iva = round(total_iva, 1)
-            total_otros = round(total_otros, 1)
-            total_pagos = round(total_pagos, 1)
-            total_cancelar = round(total_credito - total_debito, 1)
-
-            resumen = {
-                "total_debito": total_debito,
-                "total_credito": total_credito,
-                "total_comision": total_comision,
-                "total_iva": total_iva,
-                "total_otros": total_otros,
-                "total_pagos": total_pagos,
-                "total_cancelar": total_cancelar
-            }
-
-            obj_persona = Persona.objects.get(pk=request_data["model"]["persona"])
-
-            numero = NumeroA()
-            mespago = numero.mes_letra("0{}".format(request_data['model']['mesini']) if request_data['model']['mesini'] < 10 else str(request_data['model']['mesini']))
-            mespago = "{} {}".format(mespago, datetime.date.today().strftime("%Y"))
-
-            cta_prop = Parametros.objects.filter(parametro='cta_prop_id').first().valor
-            cta_arr = Parametros.objects.filter(parametro='cta_arr_id').first().valor
-            tipo_estado_cuenta = "ESTADO DE CUENTA"
-            prop_arren = "n"
-            modelIn = model
-            if modelIn["codigo"] == int(cta_prop) :
-                tipo_estado_cuenta = "ESTADO DE CUENTA DE PROPIETARIO"
-                prop_arren = "p"
-            
-            if modelIn["codigo"] == int(cta_arr) :
-                tipo_estado_cuenta = "ESTADO DE CUENTA DE ARRENDATARIO"
-                prop_arren = "a"
-            
-            numero = NumeroA()
-            mes_inicio = numero.mes_letra(f"0{modelIn['mesini']}" if modelIn["mesini"] < 10 else modelIn["mesini"])
-            mes_fin = numero.mes_letra(f"0{modelIn['mesfin']}" if modelIn["mesini"] < 10 else modelIn["mesini"])
-
-            persona = PersonaFormatter._get_data_persona_pago(obj_persona)
-
-            params = {
-                "empresa": empresa,
-                "persona": persona,
-                "data": data_extracto,
-                "mespago": "",
-                "observacion": "",
-                "resumen": resumen,
-                "tipo": "P",
-                "extracto_total": False,
-                "inmuebles": [],
-                "encabezado": {
-                    "tipo": "auxiliar",
-                    "titulo": tipo_estado_cuenta,
-                    "tipo_estado_cuenta": prop_arren,
-                    "mes_inicio": mes_inicio,
-                    "mes_fin": mes_fin,
-                    "anio": modelIn["año"],
-                }
-            }
-            pdf = Render.render('pdf/contrato/extractos.html', {"datos": [params]}, "Extracto propietarios")
-
-            if request_data["enviar_correo"] == True:
-
-                ruta_tmp = os.path.join(settings.MEDIA_ROOT, "tmp")
-                if os.path.exists(ruta_tmp):
-                    shutil.rmtree(ruta_tmp)
-                
-                os.makedirs(ruta_tmp, exist_ok=True)
-
-                today = datetime.date.today()
-                tt = today.timetuple()
-                monthText = lists.months[tt.tm_mon]
-                dayWeekText = lists.weeks[tt.tm_wday]
-                self_ciudad_empresa = get_ciudad_inmo()
-                datos_email = {
-                    'fecha': '{}, {} {} de {} {}'.format(self_ciudad_empresa, dayWeekText, tt.tm_mday, monthText, tt.tm_year),
-                    'persona': obj_persona.n_completo,
-                    'mespago': "",
-                    'tipo': "p",
-                    'empresa': empresa
-                }
-
-                subject = '{} {}'.format(tipo_estado_cuenta, obj_persona.n_completo)
-                template = settings.MEDIA_ROOT + '/../apps/templates/pdf/pagos/plantilla_email_extractos.html'
-
-                archivo = settings.MEDIA_ROOT + "/tmp/{}_extracto.pdf".format(obj_persona.documento)
-                pdfs = []
-
-                with open(archivo, "wb") as file:  # Abrimos el archivo en modo escritura
-                    file.write(pdf.content)
-                    file.close()
-
-                pdfs.append(archivo)
-                emails = request_data["email"].split(';')
-
-                #@TODO
-                # # LeidyB - Se envia como parametro tipo = 3 para correo de propietarios
-                # try:
-                #     send_email_client(template, datos_email, subject, emails, pdfs, {"tipo": 3})
-                # except:
-                #     pass
-
-            return pdf
-
         pdf = Render.render_pdfkit('pdf/contabilidad/consultasaux.html', params, nombre)
         return pdf
 
@@ -534,10 +381,109 @@ class ConsultaService:
         data = CentroCostosSerializer(query, many=True).data
 
         return Response(data, status=status.HTTP_200_OK)
+    
+    @staticmethod
+    def exportar_consulta_filtro_aux(request_data):
+        model = []
+        codigo = None
+        if request_data['model'].get('codigonom') != None and request_data['model']['codigonom'].get('nombre1') != None:
+            codigo = request_data['model']['codigonom']['nombre1']
+        elif request_data['model'].get('codigo') != None:
+            codigo = str(request_data['model']['codigo'])
+        for item in request_data['data']:
+            if request_data["tipo"] in [3,7] and item['id'] == None and item['detalle'] != None and ':::' in item['detalle']:
+                codigo = item['detalle'].split(" ")[0]
+            
+            item = ConsultaAuxiliarFormatter._procesar_detalles(item, 'exportar_excel')
+
+            params = {
+                'codigo': '',
+                'tipo': item['tipo'],
+                'numero': item['numero'],
+                'fecha': item['fecha'],
+                'doc_ref': item['docref'],
+                'concepto': item['concepto'],
+            }
+            if codigo != None and isinstance(item.get('id'), int) and item['id'] != 99:
+                params['codigo'] = codigo
+
+            if request_data["tipo"] == 3:
+                params['nit'] = item['nits']
+                params['nombre'] = item['nombre']
+            
+            params['detalle'] = item['detalle']
+            params['base'] = item['base']
+            params['debito'] = item['valor_db']
+            params['credito'] = item['valor_cr']
+            params['saldo'] = item['saldo']
+
+            if request_data['filtro']['incbase'] == True:
+                params["base"] = item["base"] if item["base"] != None else 0
+            model.append(params)
+        
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "SALDO ANTERIOR",
+                request_data["sumas"]["saldoinidb"] if request_data["sumas"]["saldoinidb"] is not None else 0,
+                request_data["sumas"]["saldoinicr"] if request_data["sumas"]["saldoinicr"] is not None else 0,
+            )
+        )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "MOVIMIENTOS",
+                request_data["sumas"]["summovdb"],
+                request_data["sumas"]["summovcr"],
+            )
+        )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "BASE",
+                None,
+                request_data["sumas"]["summovbase"],
+            )
+        )
+
+        model.append(
+            ConsultaAuxiliarFormatter._armar_movimiento(
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                "NUEVO SALDO",
+                request_data["sumas"]["saldofindb"] if request_data["sumas"]["saldofindb"] is not None else 0,
+                request_data["sumas"]["saldoinicr"] if request_data["sumas"]["saldoinicr"] is not None else 0,
+            )
+        )
+
+        nombreinforme = ConsultaAuxiliarFormatter._get_nombre_informe(request_data)
+        
+        return Render.export_excel(model, nombreinforme)
             
 class ConsultaAuxiliarFormatter:
 
-    def procesar_detalles(item):
+    def _procesar_detalles(item, tipo_proceso=None):
         if item['detalle'] != None:
             item['detalle'] = item['detalle'].replace("JANUARY", "ENERO")
             item['detalle'] = item['detalle'].replace("FEBRUARY", "FEBRERO")
@@ -552,5 +498,43 @@ class ConsultaAuxiliarFormatter:
             item['detalle'] = item['detalle'].replace("NOVEMBER", "NOVIEMBRE")
             item['detalle'] = item['detalle'].replace("DECEMBER", "DICIEMBRE")
             # se recorta el texto del detalle si tiene mas de 100 caracteres
-            if len(item['detalle']) > 100:
+            if tipo_proceso == 'imprimir' and len(item['detalle']) > 100:
                 item['detalle'] = item['detalle'][:100] + "..."
+
+        return item
+    
+    def _get_nombre_informe(request_data):
+        if request_data['tipo'] == 1:
+            nombreinforme = "CONSULTA CÓDIGO: {} - {}".format(request_data["model"]["nommayor"],
+                                                              request_data["model"]["codigonom"]["nombre1"])
+        elif request_data['tipo'] == 2 or request_data['tipo'] == 6:
+            nombreinforme = "CONSULTA CÓDIGO Y NIT: CÓDIGO: {} - NIT: {} - {}".format(
+                request_data["model"]["nommayor"], request_data["model"]["ccpersona"],
+                request_data["model"]["nompersona"])
+        elif request_data['tipo'] == 3:
+            nombreinforme = "CONSULTA CÓDIGO: {} - {}".format(request_data["model"]["codigonom"]["nombre1"],
+                                                              request_data["model"]["codigonom"]["nombre2"] if
+                                                              request_data["model"]["codigonom"]["nombre2"] != None else
+                                                              request_data["model"]["codigonom"]["nombre1"])
+        elif request_data['tipo'] == 4:
+            nombreinforme = "CONSULTA NIT/CUENTA: {} - {}".format(request_data["model"]["ccpersona"],
+                                                                  request_data["model"]["nompersona"])
+        elif request_data['tipo'] == 5:
+            nombreinforme = "CONSULTA NIT: {} - {}".format(request_data["model"]["ccpersona"],
+                                                           request_data["model"]["nompersona"])
+
+        return nombreinforme
+    
+    @staticmethod
+    def _armar_movimiento(tipo, numero, ref, fecha, doc_ref, concepto, detalle, debito, credito):
+        return {
+            'tipo': tipo or '',
+            'numero': numero or '',
+            'ref': ref or '',
+            'fecha': fecha or '',
+            'doc_ref': doc_ref or '',
+            'concepto': concepto or '',
+            'detalle': detalle or '',
+            'debito': debito if debito is not None else '',
+            'credito': credito if credito is not None else '',
+        }

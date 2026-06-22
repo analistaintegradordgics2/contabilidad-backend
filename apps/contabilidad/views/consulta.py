@@ -24,3 +24,7 @@ class ConsultasViewSet(viewsets.ViewSet):
     @action(methods=['GET'], detail=False, url_path='centro_costos')
     def centro_costos(self, request, *args, **kwargs):
         return ConsultaService.centro_costos()
+    
+    @action(detail=False, methods=['POST'], url_path='exportar_consulta_filtro_aux')
+    def exportar_consulta_filtro_aux(self, request, *args, **kwargs):
+        return ConsultaService.exportar_consulta_filtro_aux(request.data)
