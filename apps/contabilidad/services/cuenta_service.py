@@ -143,7 +143,7 @@ class MayorService:
         if estado:
             queryset = queryset.filter(estado__icontains=estado)
         if solo_auxiliar:
-            queryset = queryset.filter(tipo='Auxiliar')
+            queryset = queryset.filter(tipo='AUXILIAR')
         if rango:
             queryset = queryset.filter(codigo__range=rango)
         if cxc:

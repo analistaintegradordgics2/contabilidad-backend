@@ -32,6 +32,7 @@ class PersonLaboralSerializer(serializers.ModelSerializer):
 class PersonaModelSerializer(serializers.ModelSerializer):
 
     ciudad_nombre = serializers.CharField(source='ciudad_expedicion.nombre', read_only=True)
+    tipo_documento_nombre = serializers.CharField(source='tipo_documento.nombre', read_only=True)
     rsocial = serializers.CharField(source='n_completo', read_only=True)
 
     uc_id = serializers.IntegerField(read_only=False, allow_null=True, required=False)

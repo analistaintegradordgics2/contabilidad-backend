@@ -171,9 +171,8 @@ class TiposDocumentosHistorySerializer(serializers.ModelSerializer):
 # SELECT
 # ─────────────────────────────────────
 class TiposDocumentosSelectSerializer(serializers.ModelSerializer):
-    """Liviano para dropdowns"""
-    label = serializers.SerializerMethodField()
 
+    label = serializers.SerializerMethodField()
     def get_label(self, obj):
         return f"{obj.prefijo or ''} - {obj.nombre}" if obj.prefijo else obj.nombre
 

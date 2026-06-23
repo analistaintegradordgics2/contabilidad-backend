@@ -324,6 +324,7 @@ class ConsultaService:
                         model['mesfin'],
                         model['concepto'],
                     ]
+                    # pdb.set_trace()
                     resultado = execute_procedure(sql=sql, params=params)
             except Exception:
                 return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
@@ -339,13 +340,14 @@ class ConsultaService:
         anio = model['año']
         filmesini = SaldosService._obtener_campo_saldo_inicio(model['mesini'])
         filmesfin = SaldosService._obtener_campo_saldo_fin(model['mesfin'])
+        querySaldos = ""
         
         if model['tipo'] == 1 or model['tipo'] == 3 :
             querySaldos = SaldosNits.objects.filter(mayor_id=mayorid, anio=anio).aggregate(Sum(filmesini), Sum(filmesfin)).values()
         elif model['tipo'] == 2 :
             querySaldos = SaldosNits.objects.filter(mayor_id=mayorid, personas_id=personaid, anio=anio).aggregate(Sum(filmesini), Sum(filmesfin)).values()
         elif model['tipo'] == 4 :
-            querySaldos = SaldosNits.objects.filter(personas_id=personaid, anio=anio).exclude(mayor_id=838).aggregate(Sum(filmesini)).values()
+            querySaldos = SaldosNits.objects.filter(personas_id=personaid, anio=anio).aggregate(Sum(filmesini)).values()
 
         return querySaldos
     

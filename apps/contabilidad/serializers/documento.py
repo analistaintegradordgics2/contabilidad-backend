@@ -107,6 +107,16 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
         many=True,
         read_only=True
     )
+
+    correo = serializers.SerializerMethodField()
+    def get_correo(self, obj):
+        correo = obj.personas.email if obj.personas_id != None else "" 
+        return correo 
+    
+    tipo_documento_persona = serializers.SerializerMethodField()
+    def get_tipo_documento_persona(self, obj):
+        tipo_documento_persona = obj.personas.tipo_documento.nombre if obj.personas_id != None else "" 
+        return tipo_documento_persona 
     class Meta:
         model = Documentos
 
@@ -120,7 +130,10 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
             'detalle',
             'personas',
             'direccion',
+            'correo',
             'telefono',
+            'ciudad',
+            'tipo_documento_persona',
             'estado',
             'subtotal',
             'descuento',

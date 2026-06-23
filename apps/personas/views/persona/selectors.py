@@ -1,4 +1,4 @@
-from django.db.models import Q, F, Value
+from django.db.models import Q, F, Value, CharField
 from django.db.models.functions import Concat
 from django.shortcuts import get_object_or_404
 
@@ -113,3 +113,26 @@ def get_personas_por_tipo(tipos):
     ).distinct()
 
     return _base_select(qs)
+
+def buscar_personas_table(search='', estado=1):
+
+    queryset = Persona.objects.filter(
+        estado=estado
+    )
+
+    if search:
+
+        queryset = queryset.annotate(
+            search_tabla=Concat(
+                'documento',
+                Value(' '),
+                'n_completo',
+                Value(' '),
+                'email',
+                output_field=CharField()
+            )
+        ).filter(
+            Q(search_tabla__icontains=search)
+        )
+
+    return queryset.order_by('n_completo')

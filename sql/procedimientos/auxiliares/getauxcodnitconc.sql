@@ -1,7 +1,7 @@
 -- DROP FUNCTION public.getauxcodnitconc(varchar, varchar, int4, int4, int4, int4, int4);
 
 CREATE OR REPLACE FUNCTION public.getauxcodnitconc(in_codigoid character varying, in_codigo2id character varying, in_personaid integer, in_anio integer, in_mesd integer, in_mesh integer, in_concepto integer)
- RETURNS TABLE(id integer, tipo character varying, numero character varying, fecha date, docref character varying, concepto character varying, detalle character varying, valor_db numeric, valor_cr numeric, saldo numeric, color integer, fuentes_id integer, ordenf date, base numeric, inmueble_id integer, direccion text, mov_id integer, mayor_id integer)
+ RETURNS TABLE(id integer, tipo character varying, numero character varying, fecha date, docref character varying, concepto character varying, detalle character varying, valor_db numeric, valor_cr numeric, saldo numeric, color integer, fuentes_id integer, ordenf date, base numeric, mov_id integer, mayor_id integer)
  LANGUAGE plpgsql
 AS $function$
 DECLARE
@@ -48,8 +48,6 @@ BEGIN
         fuentes_id integer,
         ordenf date,
         base decimal(18,2),
-        inmueble_id integer,
-        direccion text,
         mov_id integer,
         mayor_id integer
     ) ON COMMIT DROP;
@@ -207,14 +205,12 @@ BEGIN
             INSERT INTO cur_aux (
                 id, tipo, numero, fecha, docref, concepto, detalle,
                 valor_db, valor_cr, saldo, color, fuentes_id, ordenf, base,
-                inmueble_id, direccion, mov_id, mayor_id
+                mov_id, mayor_id
             )
             VALUES (
                 curdatos1.id, curdatos1.tipo, curdatos1.numero, curdatos1.fecha, curdatos1.docref,
                 curdatos1.concepto, curdatos1.detalle, curdatos1.valor_db, curdatos1.valor_cr,
                 sumasaldo, curdatos1.color, curdatos1.fuentes_id, curdatos1.fecha, curdatos1.base,
-                curdatos1.inmueble_id,
-                (SELECT ii.direccion FROM inmueble_inmuebles ii WHERE ii.id = curdatos1.inmueble_id),
                 curdatos1.mov_id, curdatos1.mayor_id
             );
 

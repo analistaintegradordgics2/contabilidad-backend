@@ -196,8 +196,8 @@ class DocumentoService:
                 params = (
                     encabezado.get('id') or 0,
                     encabezado.get('tipo_documento'),
-                    '2026-06-20',
-                    '2026-06-20',
+                    encabezado.get('fecha'),
+                    encabezado.get('fecha_vencimiento'),
                     encabezado.get('personas'),
                     float(encabezado.get('subtotal',   0)),
                     float(encabezado.get('pdescuento', 0)),

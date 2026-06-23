@@ -14,10 +14,11 @@ from .selectors import (
     select_email_personas,
     buscar_personas_avanzado,
     get_persona_by_id,
-    get_personas_por_tipo
+    get_personas_por_tipo,
+    buscar_personas_table
 )
 
-from .services import PersonaService
+from apps.personas.services.persona_service import PersonaService
 
 
 class PersonaViewSet(ModelViewSetClass):
@@ -129,25 +130,6 @@ class PersonaViewSet(ModelViewSetClass):
         ])
 
 
-
-    # LISTA NEGRA
-
-    @action(detail=False, methods=['post'], url_path='lista-negra')
-    def lista_negra(self, request):
-
-        persona_id = request.data.get('persona_id')
-        lista_negra = request.data.get('lista_negra', False)
-
-        persona = PersonaService.cambiar_lista_negra(
-            persona_id,
-            lista_negra
-        )
-
-        return Response(
-            PersonaModelSerializer(persona).data,
-            status=status.HTTP_200_OK
-        )
-
     # POR TIPO PERSONA
 
     @action(detail=False, methods=['post'], url_path='por-tipo')
@@ -170,3 +152,23 @@ class PersonaViewSet(ModelViewSetClass):
                 return Response('documento disponible')
         else:
             return Response('dato invalido')
+    
+    @action(methods=['get'], detail=False, url_path='buscar')
+    def buscar(self, request):
+
+        search = request.GET.get('search', '')
+        estado = int(request.GET.get('estado', 1))
+
+        queryset = buscar_personas_table(
+            search=search,
+            estado=estado
+        )
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = PersonaModelSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = PersonaModelSerializer(queryset, many=True)
+        return Response(serializer.data)
