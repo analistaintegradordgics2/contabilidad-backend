@@ -25,6 +25,7 @@ router.register(r'tipo_contacto', TipoContactoViewSet, basename='tipo_contacto')
 router.register(r'contribuyente', ContribuyenteViewSet, basename='contribuyentes')
 router.register(r'tributario', TributarioViewSet, basename='tributarios')
 router.register(r'telefono', TelefonoViewSet, basename='telefono')
+router.register(r'usuarios', UsuariosViewSet, basename='usuarios')
 
 urlpatterns = [
     path('', include(router.urls))

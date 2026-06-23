@@ -2,6 +2,9 @@
 
 from apps.contabilidad.models.tipodocumento import TiposDocumentos, ResolucionFacturacion, FacturacionElectronica
 from apps.contabilidad.serializers.tipodocumento import TiposDocumentosSerializer
+from rest_framework import status
+from rest_framework.response import Response
+import collections.abc
 
 
 class TipoDocumentoService:
@@ -131,3 +134,20 @@ class TipoDocumentoService:
             consecutivo_actual = 0,
             activa             = True
         )
+
+    @staticmethod
+    def filtro(request_data):
+        # pdb.set_trace()
+        if 'tipo_filtro' in request_data and request_data['tipo_filtro'] == 'personalizado':
+            query = TiposDocumentos.objects.filter(estado=True).filter(**request_data['filtros']).order_by('nombre')
+        elif isinstance(request_data['id'], collections.abc.Sequence) :
+            query = TiposDocumentos.objects.filter(fuentes_id__in=request_data['id'], estado=True).order_by('nombre')
+        else :
+            query = TiposDocumentos.objects.filter(fuentes_id=request_data['id'],estado=True).order_by('nombre')
+        data = TiposDocumentosSerializer(query, many=True).data
+        try :
+            if request_data['mostrar'] == True :
+                data.append({'id': 0, 'nombre': "Mostrar Todos "})
+        except :
+            pass
+        return Response(data, status=status.HTTP_200_OK)

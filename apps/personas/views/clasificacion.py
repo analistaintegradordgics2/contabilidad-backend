@@ -2,10 +2,12 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-
+from django.contrib.auth import get_user_model
 from apps.utils.ModelViewSetClass import ModelViewSetClass
 from apps.personas.serializers.clasificacion import *
-
+from apps.accounts.serializers import UserFindSerializer
+# from apps.accounts.serializers import User
+User = get_user_model()
 
 
 class TipoDocumentoViewSet(viewsets.ModelViewSet):
@@ -69,3 +71,7 @@ class TipoPersonaViewSet(ModelViewSetClass):
         return Response(queryset.values('id', 'nombre'))
 
 
+class UsuariosViewSet(viewsets.ModelViewSet):
+    def list(self, request, *args, **kwargs):
+        users = User.objects.filter(is_active=True)
+        return Response(UserFindSerializer(users, many=True).data)
