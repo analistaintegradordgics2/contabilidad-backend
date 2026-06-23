@@ -1,3 +1,5 @@
+import pdb
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -80,11 +82,10 @@ class MayorViewSet(ModelViewSetClass):
         return Response([MayorService.format_mayor_select(i) for i in queryset])
 
     @action(methods=['POST'], detail=False, url_path='selectnew')
-    def selectnew(self, request):
+    def selectnew(self, request, search=None):
         mayor_id = request.data.get('id')
         search   = request.data.get('search', '')
         todas    = request.data.get('todas', False)
-
         if mayor_id:
             item = Mayor.objects.filter(pk=mayor_id).first()
             return Response([MayorService.format_mayor_select(item, include_model=True)])
