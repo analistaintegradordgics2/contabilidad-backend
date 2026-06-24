@@ -385,6 +385,60 @@ class ConsultaService:
         return Response(data, status=status.HTTP_200_OK)
     
     @staticmethod
+    def filtro_balance_general(model):
+        try:
+            with transaction.atomic():
+                sql = """
+                    select json_agg(json_build_object(
+                        'codigo', codigo,
+                        'nombre', nombre,
+                        'parcial', parcial,
+                        'total', total,
+                        'color', color,
+                        'tipo_cuenta',tipo_cuenta)) 
+                    from getbalgeneral (%s,%s,%s);"""
+                
+                params = [
+                    model['tipo'],
+                    model['año'],
+                    model['mesini']
+                ]
+                resultado = execute_procedure(sql=sql, params=params)
+                if resultado[0][0] != None:
+                    return resultado[0][0]
+                else:
+                    return []
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
+    
+    @staticmethod
+    def imprimir_consulta_balance_general(model):
+        data = ConsultaService.filtro_balance_general(model)
+        empresa = EmpresaService.obtener_datos_empresa()
+
+        nombre = "consultabalancegeneral"
+        totales = {
+            'parcial': 0,
+            'total': 0,
+        }
+
+        for item in data:
+            item['parcial'] = 0 if item['parcial'] == None else item['parcial']
+            item['total'] = 0 if item['total'] == None else item['total']
+
+            totales['parcial'] = totales['parcial'] + item['parcial']
+            totales['total'] = totales['total'] + item['total']
+        
+        params = {
+            'data': data,
+            'empresa': empresa,
+            'model': model,
+            'totales': totales
+        }
+        pdf = Render.render_pdfkit('pdf/contabilidad/consultabalancegeneral.html', params, nombre)
+        return pdf
+    
+    @staticmethod
     def exportar_consulta_filtro_aux(request_data):
         model = []
         codigo = None
@@ -631,6 +685,45 @@ class ConsultaService:
         pdf = Render.render_pdfkit('pdf/contabilidad/consultasauxbanco.html', params, nombre)
         return pdf
     
+    @staticmethod
+    def exportar_consulta_balance_general(request_data):
+        numero = NumeroA()
+        request_data['model']['mesfin'] = numero.mes_letra(
+            "0{}".format(request_data['model']['mesfin']) if request_data['model']['mesfin'] < 10 else str(
+                request_data['model']['mesfin']))
+        model = []
+
+        totales = {
+            'parcial': 0,
+            'total': 0,
+        }
+
+        for item in request_data['data']:
+            item['parcial'] = 0 if item['parcial'] == None else item['parcial']
+            item['total'] = 0 if item['total'] == None else item['total']
+
+            totales['parcial'] = totales['parcial'] + item['parcial']
+            totales['total'] = totales['total'] + item['total']
+
+            model.append({
+                'codigo': item['codigo'],
+                'nombre': item['nombre'],
+                'parcial': item['parcial'],
+                'total': item['total']
+            })
+
+        model.append({
+            'codigo': None,
+            'nombre': None,
+            'parcial': totales['parcial'],
+            'total': totales['total']
+        })
+
+        dataReturn = Render.export_excel(model, 'INFORME DE BALANCE GENERAL AÑO: {} - MES: {}'.format(
+            request_data['model']['año'], request_data['model']['mesfin']))
+
+        return dataReturn
+
 class ConsultaAuxiliarFormatter:
 
     def _procesar_detalles(item, tipo_proceso=None):

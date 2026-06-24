@@ -47,3 +47,15 @@ class ConsultasViewSet(viewsets.ViewSet):
     @action(methods=['POST'], detail=False, url_path='imprimir_consulta_aux_banco')
     def imprimir_consulta_aux_banco(self, request):
         return ConsultaService.imprimir_consulta_aux_banco(request.data)
+    
+    @action(methods=['POST'], detail=False, url_path='consulta_balance_general')
+    def consulta_balance_general(self, request):
+        return Response(ConsultaService.filtro_balance_general(request.data['model']))
+    
+    @action(methods=['POST'], detail=False, url_path='imprimir_consulta_balance_general')
+    def imprimir_consulta_balance_general(self, request):
+        return ConsultaService.imprimir_consulta_balance_general(request.data['model'])
+    
+    @action(detail=False, methods=['POST'], url_path='exportar_consulta_balance_general')
+    def exportar_consulta_balance_general(self, request, *args, **kwargs):
+        return ConsultaService.exportar_consulta_balance_general(request.data)

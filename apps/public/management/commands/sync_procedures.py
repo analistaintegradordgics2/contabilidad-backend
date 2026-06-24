@@ -73,7 +73,7 @@ class Command(BaseCommand):
                 with transaction.atomic():
 
                     # Ejecutar procedure
-                    cursor.execute(contenido)
+                    self._ejecutar_procedure(cursor, nombre, contenido)
 
                     if row:
 
@@ -123,3 +123,25 @@ class Command(BaseCommand):
                         f'{nombre}: ERROR -> {e}'
                     )
                 )
+
+    def _ejecutar_procedure(self, cursor, nombre, contenido):
+        try:
+            cursor.execute('SAVEPOINT antes_create')
+            cursor.execute(contenido)
+            cursor.execute('RELEASE SAVEPOINT antes_create')
+
+        except Exception as e:
+            msg = str(e).lower()
+            cursor.execute('ROLLBACK TO SAVEPOINT antes_create')
+
+            if 'tipo de retorno' in msg or 'return type' in msg:
+                self.stdout.write(
+                    self.style.WARNING(f'{nombre}: tipo de retorno cambió, intentando DROP...')
+                )
+                try:
+                    cursor.execute(f'DROP FUNCTION IF EXISTS {nombre};')
+                    cursor.execute(contenido)
+                except Exception as ee:
+                    raise Exception('No se pudo eliminar el procedimiento... Posiblemente algún otro procedimiento/trigger/vista... dependa de él.')
+            else:
+                raise

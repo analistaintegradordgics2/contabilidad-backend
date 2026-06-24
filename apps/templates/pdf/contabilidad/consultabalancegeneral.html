@@ -1,0 +1,129 @@
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BALANCE GENERAL</title>
+</head>
+
+<body>
+    <div>
+        <img src="{{ empresa.logo }}" width="180px" height="82px">
+        <table class="encabezado">
+            <thead>
+                <tr>
+                    <th colspan="2" style="width: 80%;">
+                        <label>{{empresa.nombre}}</label><br>
+                        <label>NIT: {{empresa.nit}}</label><br>
+                        <label>BALANCE GENERAL</label><br>
+                        <label>
+                            AÑO {{model.año}} - MES: {{model.mesini|numero_mes_letra}}
+                        </label>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <table style="margin-top: 20px; border: 1px solid lightgray;" class="tabla">
+            <thead>
+                <tr>
+                    <th style="text-align: center;">NOMBRE DE LA CUENTA</th>
+                    <th style="text-align: center;">PARCIAL</th>
+                    <th style="text-align: center;">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                {%if item.codigo != None and item.codigo != ""%}
+                {% if item.codigo|length <= 4 %} 
+                <tr style="font-weight: bold;">
+                    {%else%}
+                    {% if item.codigo == 'TOTAL' %}
+                    <tr style="text-align: center; background-color: rgb(212, 211, 211)">
+                    {%else%}
+                    <tr>
+                    {%endif%}
+                        {%endif%}
+                        <td class="tdl">
+                            {% if item.codigo == 'TOTAL' %}
+                                Total {{item.nombre|lower|title }}
+                            {%else%}
+                                {{item.nombre}}
+                            {%endif%}
+                        </td>
+                        <td style="text-align: right; padding-right: 2px;">
+                            {% if item.parcial != None %}
+                            $ {{item.parcial|intcomma}}
+                            {%endif%}
+                        </td>
+                        <td style="text-align: right; padding-right: 2px;">
+                            {% if item.total != None %}
+                            $ {{item.total|intcomma}}
+                            {%endif%}
+                        </td>
+                    </tr>
+                    {%endif%}
+                    {% endfor %}
+            </tbody>
+        </table>
+        <table style="margin-top: 15px;">
+            <tbody>
+                <tr>
+                    <td></td>
+                    <td style="font-weight: bold; text-align: right; padding-right: 2px;">Totales:</td>
+                    <td style="font-weight: bold; text-align: right; padding-right: 2px;">$ {{totales.parcial|numero_a_positivo|intcomma}}</td>
+                    <td style="font-weight: bold; text-align: right; padding-right: 2px;">$ {{totales.total|numero_a_positivo|intcomma}}</td>
+                </tr>
+            </tbody>
+        </table>
+        <table style="margin-top: 70px;">
+            <tbody>
+                <tr>
+                    <td width="33.33%" style="text-align: center;">
+                        _____________________________<br>
+                        Firma representante legal
+                    </td>
+                    <td width="33.33%" style="text-align: center;">
+                        ____________________________<br>
+                        Firma contador
+                    </td>
+                    <td width="33.33%" style="text-align: center;">
+                        _____________________________<br>
+                        Firma revisor fiscal
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+<style>
+    .encabezado label {
+        font-size: 12px;
+    }
+
+    .tabla>thead>tr>th {
+        height: 30px;
+        padding-top: 3.5px;
+        background-color: #e9ecef;
+    }
+
+    .tabla>tbody>tr>td {
+        /* height: 22px; */
+        /* border: 1px solid black; */
+        padding-top: 3.5px;
+    }
+
+    .tdl {
+        padding-left: 2px;
+    }
+
+    .tdr {
+        padding-right: 2px;
+    }
+</style>
