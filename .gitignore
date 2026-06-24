@@ -22,6 +22,7 @@ sdist/
 var/
 wheels/
 media/*/
+!media/iconos/
 *.egg-info/
 .installed.cfg
 *.egg
