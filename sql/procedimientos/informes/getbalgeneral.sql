@@ -37,7 +37,7 @@ BEGIN
 	
 	-- Traer los Datos del Activo
 	INSERT INTO cur_bal
-	SELECT a."codigoL" AS codigo, a."nombreL" AS nombre, null AS parcial, 
+	SELECT a."codigo" AS codigo, a."nombre" AS nombre, null AS parcial, 
 			CASE
 			    WHEN in_mes = 1  THEN b.sal01
 				WHEN in_mes = 2  THEN b.sal02
@@ -53,15 +53,15 @@ BEGIN
 				WHEN in_mes = 12 THEN b.sal12 
 			END AS total, 1 AS color,
 			a.tipo as tipo_cuenta
-		FROM cont_mayor a, cont_saldos b 
-		WHERE a."codigoL" = '1' 
+		FROM contabilidad_mayor a, contabilidad_saldos b 
+		WHERE a."codigo" = '1' 
 		AND b.anio = in_anio 
 		AND a.id = b.mayor_id 
-		ORDER BY a."codigoL";
+		ORDER BY a."codigo";
 
 	--- Traer Detalle Activo
 	INSERT INTO cur_bal
-	SELECT RTRIM(a."codigoL") AS codigo, CONCAT(lpad('',LENGTH(RTRIM(a."codigoL")),' '), a."nombreL") AS nombre,
+	SELECT RTRIM(a."codigo") AS codigo, CONCAT(lpad('',LENGTH(RTRIM(a."codigo")),' '), a."nombre") AS nombre,
 		CASE
 			WHEN in_mes = 1  THEN b.sal01
 			WHEN in_mes = 2  THEN b.sal02
@@ -77,17 +77,17 @@ BEGIN
 			WHEN in_mes = 12 THEN b.sal12 
 		END AS parcial, null AS total, CASE WHEN RTRIM(lower(a.tipo)) = 'general' THEN 11 ELSE 12 END AS color,
 		a.tipo as tipo_cuenta
-	FROM cont_mayor AS a, cont_saldos AS b 
-	WHERE LEFT(RTRIM(a."codigoL"), 1)::VARCHAR = '1' 
-	AND LENGTH(RTRIM(a."codigoL")) <= in_tipocon 
-	AND LENGTH(RTRIM(a."codigoL")) > 1 
+	FROM contabilidad_mayor AS a, contabilidad_saldos AS b 
+	WHERE LEFT(RTRIM(a."codigo"), 1)::VARCHAR = '1' 
+	AND LENGTH(RTRIM(a."codigo")) <= in_tipocon 
+	AND LENGTH(RTRIM(a."codigo")) > 1 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id 
-	ORDER BY a."codigoL";
+	ORDER BY a."codigo";
 	
 	--- Traer El Total del Activo
 	INSERT INTO cur_bal 
-	SELECT 'TOTAL' AS codigo, a."nombreL" AS nombre, null AS parcial,
+	SELECT 'TOTAL' AS codigo, a."nombre" AS nombre, null AS parcial,
 		CASE
 			WHEN in_mes = 1  THEN b.sal01
 			WHEN in_mes = 2  THEN b.sal02
@@ -103,11 +103,11 @@ BEGIN
 			WHEN in_mes = 12 THEN b.sal12
 		END AS total, 1 AS color,
 		a.tipo as tipo_cuenta
-	FROM cont_mayor a, cont_saldos b 
-	WHERE a."codigoL" = '1' 
+	FROM contabilidad_mayor a, contabilidad_saldos b 
+	WHERE a."codigo" = '1' 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id 
-	ORDER BY a."codigoL";
+	ORDER BY a."codigo";
 	
 	--- Crear variable para sumar el activo
 	SELECT 
@@ -125,8 +125,8 @@ BEGIN
 			WHEN in_mes = 11 THEN b.sal11
 			WHEN in_mes = 12 THEN b.sal12
 		END INTO nactivo
-	 FROM cont_mayor a, cont_saldos b 
-	 WHERE a."codigoL" = '1' 
+	 FROM contabilidad_mayor a, contabilidad_saldos b 
+	 WHERE a."codigo" = '1' 
 	 AND b.anio = in_anio 
 	 AND a.id = b.mayor_id;
 	 
@@ -139,7 +139,7 @@ BEGIN
  	-- Traer los Datos del Pasivo
 
 	INSERT INTO cur_bal 
-	SELECT a."codigoL" AS codigo, a."nombreL" AS nombre, null AS parcial, 
+	SELECT a."codigo" AS codigo, a."nombre" AS nombre, null AS parcial, 
 		CASE
 			WHEN in_mes = 1  THEN b.sal01
 			WHEN in_mes = 2  THEN b.sal02
@@ -155,15 +155,15 @@ BEGIN
 			WHEN in_mes = 12 THEN b.sal12
 		END * -1 AS total, 2 AS color,
 		a.tipo as tipo_cuenta
-	FROM cont_mayor a, cont_saldos b 
-	WHERE a."codigoL" = '2' 
+	FROM contabilidad_mayor a, contabilidad_saldos b 
+	WHERE a."codigo" = '2' 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id 
-	ORDER BY a."codigoL";
+	ORDER BY a."codigo";
 	
 	 -- Traer el Detalle del  Pasivo
 	INSERT INTO cur_bal 
-	SELECT a."codigoL" AS codigo, CONCAT(lpad('',LENGTH(RTRIM(a."codigoL")),' '), a."nombreL") AS nombre, 
+	SELECT a."codigo" AS codigo, CONCAT(lpad('',LENGTH(RTRIM(a."codigo")),' '), a."nombre") AS nombre, 
 		case
 			WHEN in_mes = 1  THEN b.sal01
 			WHEN in_mes = 2  THEN b.sal02
@@ -179,17 +179,17 @@ BEGIN
 			WHEN in_mes = 12 THEN b.sal12
 	END * -1 AS parcial, null AS total, CASE WHEN RTRIM(lower(a.tipo)) = 'general' THEN 21 ELSE 22 END AS color,
 	a.tipo as tipo_cuenta
-	FROM cont_mayor a, cont_saldos b 
-	WHERE LEFT(RTRIM(a."codigoL"), 1)::VARCHAR = '2' 
-	AND LENGTH(RTRIM(a."codigoL"))::NUMERIC <= in_tipocon 
-	AND LENGTH(RTRIM(a."codigoL")) > 1 
+	FROM contabilidad_mayor a, contabilidad_saldos b 
+	WHERE LEFT(RTRIM(a."codigo"), 1)::VARCHAR = '2' 
+	AND LENGTH(RTRIM(a."codigo"))::NUMERIC <= in_tipocon 
+	AND LENGTH(RTRIM(a."codigo")) > 1 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id 
 	ORDER BY codigo;
 	
 	-- Totalizar el Pasivo
 	INSERT INTO cur_bal 
-	SELECT 'TOTAL' AS codigo, a."nombreL" AS nombre, null AS parcial, 
+	SELECT 'TOTAL' AS codigo, a."nombre" AS nombre, null AS parcial, 
 		CASE
 			WHEN in_mes = 1  THEN b.sal01
 			WHEN in_mes = 2  THEN b.sal02
@@ -205,11 +205,11 @@ BEGIN
 			WHEN in_mes = 12 THEN b.sal12
 		END * -1 AS total, 2 AS color,
 		a.tipo as tipo_cuenta
-	FROM cont_mayor a, cont_saldos b 
-	WHERE a."codigoL" = '2' 
+	FROM contabilidad_mayor a, contabilidad_saldos b 
+	WHERE a."codigo" = '2' 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id 
-	ORDER BY a."codigoL";
+	ORDER BY a."codigo";
 	
 	-- Cuantificar el Pasivo
 	SELECT 
@@ -227,8 +227,8 @@ BEGIN
 			WHEN in_mes = 11 THEN b.sal11
 			WHEN in_mes = 12 THEN b.sal12
 		END * -1 INTO npasivo
-	FROM cont_mayor a, cont_saldos b 
-	WHERE a."codigoL" = '2' 
+	FROM contabilidad_mayor a, contabilidad_saldos b 
+	WHERE a."codigo" = '2' 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id; 
 	
@@ -243,7 +243,7 @@ BEGIN
 	-- Traer los Datos del Patrimonio
 
 	INSERT INTO cur_bal 
-	SELECT a."codigoL" AS codigo, a."nombreL" AS nombre, null AS parcial, 
+	SELECT a."codigo" AS codigo, a."nombre" AS nombre, null AS parcial, 
 		CASE
 			WHEN in_mes = 1  THEN b.sal01
 			WHEN in_mes = 2  THEN b.sal02
@@ -259,15 +259,15 @@ BEGIN
 			WHEN in_mes = 12 THEN b.sal12
 		END AS total, 3 AS color,
 		a.tipo as tipo_cuenta
-	FROM cont_mayor a, cont_saldos b 
-	WHERE a."codigoL"= '3' 
+	FROM contabilidad_mayor a, contabilidad_saldos b 
+	WHERE a."codigo"= '3' 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id 
 	ORDER BY codigo;
 	
 	--Traer Detalle Patrimonio
 	INSERT INTO cur_bal 
-	SELECT a."codigoL" AS codigo, CONCAT(lpad('',LENGTH(RTRIM(a."codigoL")),' '), a."nombreL") AS nombre, 
+	SELECT a."codigo" AS codigo, CONCAT(lpad('',LENGTH(RTRIM(a."codigo")),' '), a."nombre") AS nombre, 
 		CASE
 			WHEN in_mes = 1  THEN b.sal01
 			WHEN in_mes = 2  THEN b.sal02
@@ -283,10 +283,10 @@ BEGIN
 			WHEN in_mes = 12 THEN b.sal12
 		END AS parcial, 0 AS total, CASE WHEN RTRIM(lower(a.tipo)) = 'general' THEN 31 ELSE 32 END AS color,
 		a.tipo as tipo_cuenta
-	FROM cont_mayor a, cont_saldos b 
-	WHERE LEFT(RTRIM(a."codigoL"), 1)::VARCHAR = '3' 
-	AND LENGTH(RTRIM(a."codigoL")) <= in_tipocon 
-	AND LENGTH(RTRIM(a."codigoL")) > 1 
+	FROM contabilidad_mayor a, contabilidad_saldos b 
+	WHERE LEFT(RTRIM(a."codigo"), 1)::VARCHAR = '3' 
+	AND LENGTH(RTRIM(a."codigo")) <= in_tipocon 
+	AND LENGTH(RTRIM(a."codigo")) > 1 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id 
 	ORDER BY codigo;
@@ -307,8 +307,8 @@ BEGIN
 			WHEN in_mes = 11 THEN b.sal11
 			WHEN in_mes = 12 THEN b.sal12
 		END INTO npatrimonio
-	FROM cont_mayor a, cont_saldos b 
-	WHERE a."codigoL" = '3' 
+	FROM contabilidad_mayor a, contabilidad_saldos b 
+	WHERE a."codigo" = '3' 
 	AND b.anio = in_anio 
 	AND a.id = b.mayor_id;
 	 
