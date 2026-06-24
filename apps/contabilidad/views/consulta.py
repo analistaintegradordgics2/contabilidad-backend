@@ -2,14 +2,19 @@ from apps.utils.ModelViewSetClass import ModelViewSetClass
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from apps.contabilidad.services.consulta_service import *
+from apps.contabilidad.services.consultas.auxiliar_service import ConsultaService
+from apps.contabilidad.services.consultas.informe_service import InformeService
+from rest_framework import status
 
 class ConsultasViewSet(viewsets.ViewSet):
     
     @action(methods=['POST'], detail=False, url_path='consulta_filtro_aux')
     def consulta_filtro_aux(self, request):
-        return Response(ConsultaService.filtro_aux(request.data['model'], request.data['filtro']))
-    
+        try:
+            return Response(ConsultaService.filtro_aux(request.data['model'], request.data['filtro']))
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
+
     @action(methods=['POST'], detail=False, url_path='consulta_saldos_aux')
     def consulta_saldos_aux(self, request):
         model = request.data.get('model', {})
@@ -19,7 +24,10 @@ class ConsultasViewSet(viewsets.ViewSet):
     
     @action(methods=['POST'], detail=False, url_path='imprimir_consulta_aux')
     def imprimir_consulta_aux(self, request):
-        return ConsultaService.imprimir_consulta_aux(request.data)
+        try:
+            return ConsultaService.imprimir_consulta_aux(request.data)
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
     
     @action(methods=['GET'], detail=False, url_path='centro_costos')
     def centro_costos(self, request, *args, **kwargs):
@@ -31,7 +39,10 @@ class ConsultasViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['POST'], url_path='consulta_filtro_aux_banco')
     def consulta_filtro_aux_banco(self, request, *args, **kwargs):
-        return Response(ConsultaService.filtro_aux_banco(request.data.get('model', {})))
+        try:
+            return Response(ConsultaService.filtro_aux_banco(request.data.get('model', {})))
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
     
     @action(methods=['POST'], detail=False, url_path='consulta_saldos_aux_banco')
     def consulta_saldos_aux_banco(self, request):
@@ -46,28 +57,37 @@ class ConsultasViewSet(viewsets.ViewSet):
     
     @action(methods=['POST'], detail=False, url_path='imprimir_consulta_aux_banco')
     def imprimir_consulta_aux_banco(self, request):
-        return ConsultaService.imprimir_consulta_aux_banco(request.data)
+        try:
+            return ConsultaService.imprimir_consulta_aux_banco(request.data)
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
     
     @action(methods=['POST'], detail=False, url_path='consulta_balance_general')
     def consulta_balance_general(self, request):
-        return Response(ConsultaService.filtro_balance_general(request.data['model']))
+        return Response(InformeService.filtro_balance_general(request.data['model']))
     
     @action(methods=['POST'], detail=False, url_path='imprimir_consulta_balance_general')
     def imprimir_consulta_balance_general(self, request):
-        return ConsultaService.imprimir_consulta_balance_general(request.data['model'])
+        return InformeService.imprimir_consulta_balance_general(request.data['model'])
     
     @action(detail=False, methods=['POST'], url_path='exportar_consulta_balance_general')
     def exportar_consulta_balance_general(self, request, *args, **kwargs):
-        return ConsultaService.exportar_consulta_balance_general(request.data)
+        return InformeService.exportar_consulta_balance_general(request.data)
 
     @action(methods=['POST'], detail=False, url_path='consulta_balance_prueba')
     def consulta_balance_prueba(self, request):
-        return Response(ConsultaService.filtro_balance_prueba(request.data['model']))
+        try:
+            return Response(InformeService.filtro_balance_prueba(request.data['model']))
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
     
     @action(methods=['POST'], detail=False, url_path='imprimir_consulta_balance_prueba')
     def imprimir_consulta_balance_prueba(self, request):
-        return ConsultaService.imprimir_consulta_balance_prueba(request.data)
+        try:
+            return InformeService.imprimir_consulta_balance_prueba(request.data)
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
     
     @action(detail=False, methods=['POST'], url_path='exportar_consulta_balance_prueba')
     def exportar_consulta_balance_prueba(self, request, *args, **kwargs):
-        return ConsultaService.exportar_consulta_balance_prueba(request.data)   
+        return InformeService.exportar_consulta_balance_prueba(request.data)   
