@@ -8,30 +8,29 @@ from apps.parametros.models.parametrizacion import Mes
 class InformeService:
     @staticmethod
     def filtro_balance_general(model):
-        try:
-            with transaction.atomic():
-                sql = """
-                    select json_agg(json_build_object(
-                        'codigo', codigo,
-                        'nombre', nombre,
-                        'parcial', parcial,
-                        'total', total,
-                        'color', color,
-                        'tipo_cuenta',tipo_cuenta)) 
-                    from getbalgeneral (%s,%s,%s);"""
-                
-                params = [
-                    model['tipo'],
-                    model['año'],
-                    model['mesini']
-                ]
-                resultado = execute_procedure(sql=sql, params=params)
-                if resultado[0][0] != None:
-                    return resultado[0][0]
-                else:
-                    return []
-        except Exception:
-            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
+        sql = """
+            select json_agg(json_build_object(
+                'codigo', codigo,
+                'nombre', nombre,
+                'parcial', parcial,
+                'total', total,
+                'color', color,
+                'tipo_cuenta',tipo_cuenta)) 
+            from getbalgeneral (%s,%s,%s);"""
+        
+        params = [
+            model['tipo'],
+            model['año'],
+            model['mesini']
+        ]
+        
+        with transaction.atomic():
+            resultado = execute_procedure(sql=sql, params=params)
+        
+        if resultado[0][0] != None:
+            return resultado[0][0]
+        else:
+            return []
     
     @staticmethod
     def imprimir_consulta_balance_general(model):

@@ -64,11 +64,17 @@ class ConsultasViewSet(viewsets.ViewSet):
     
     @action(methods=['POST'], detail=False, url_path='consulta_balance_general')
     def consulta_balance_general(self, request):
-        return Response(InformeService.filtro_balance_general(request.data['model']))
+        try:
+            return Response(InformeService.filtro_balance_general(request.data['model']))
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
     
     @action(methods=['POST'], detail=False, url_path='imprimir_consulta_balance_general')
     def imprimir_consulta_balance_general(self, request):
-        return InformeService.imprimir_consulta_balance_general(request.data['model'])
+        try:
+            return InformeService.imprimir_consulta_balance_general(request.data['model'])
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
     
     @action(detail=False, methods=['POST'], url_path='exportar_consulta_balance_general')
     def exportar_consulta_balance_general(self, request, *args, **kwargs):
