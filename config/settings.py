@@ -11,23 +11,30 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import pdb, os, environ
 from pathlib import Path
+
+
 ROOT_DIR = environ.Path(__file__) - 2
 APPS_DIR = ROOT_DIR.path('apps')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$26_2xy++r9h*go!9w6y(1fbfvxa+jxbo3sx8ovu_+z=&+pc_g'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS',
+    default=["localhost", "127.0.0.1"]
+)
 
 AUTH_USER_MODEL = 'accounts.Usuario'
 
@@ -103,18 +110,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'contabilidad',
-        'USER': 'postgres',
-        'PASSWORD': '0RI315.',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': env('DB_NAME'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST'),
+        'PORT': env('DB_PORT'),
     }
 }
 
