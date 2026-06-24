@@ -1,0 +1,213 @@
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BALANCE DE PRUEBA</title>
+</head>
+
+<body >
+    <div >
+      
+        <img src="{{ empresa.logo }}" width="180px" height="82px">
+        <table class="encabezado">
+            <thead>
+                <tr>
+                    <!-- <th style="width: 20%; border: 1px solid black">
+                        <div>
+                            LOGO
+                            <img src="@/frontend/src/assets/orbis.png" alt="">
+                        </div>
+                    </th> -->
+                    <th colspan="2" style="width: 80%;">
+                        <label>{{empresa.nombre}}</label><br>
+                        <label>NIT: {{empresa.nit}}</label><br>
+                        <label>BALANCE DE PRUEBA</label><br>
+                        <label>
+                            DESDE : {% if model.consolidado %}{{ model.mesini|numero_mes_letra }}{% else %}ENERO{% endif %}
+                          - HASTA : {% if model.consolidado %}{{ model.mesfin|numero_mes_letra }}{% else %}{{ model.mesini|numero_mes_letra }}{% endif %} <br>
+                            AÑO {{ model.año }}
+                        </label>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <div id="headerContent">  
+            <div id="footer_content">Página <pdf:pagenumber>
+                de <pdf:pagecount>
+            </div>
+        </div>
+        <table style="margin-top: 20px; border: 1px solid lightgray;" class="tabla">
+            <thead>
+                <tr>
+                    <th width="9%" style="text-align: center;">CÓDIGO</th>
+                    <th width="35%" style="text-align: center;">NOMBRE</th>
+                    <th width="14%" style="text-align: center;">SALDO INICIAL</th>
+                    <th width="14%" style="text-align: center;">DÉBITO</th>
+                    <th width="14%" style="text-align: center;">CRÉDITO</th>
+                    <th width="14%" style="text-align: center;">SALDO FINAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                {% if item.codigo|length <= 4 %}
+                <tr style="font-weight: bold;">
+                {%else%}
+                <tr>
+                {%endif%}
+                    <td class="tdl">
+                        {% if item.codigo != None %}
+                        {{item.codigo}}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {% if item.nombre != None %}
+                        {{item.nombre}}
+                        {%endif%}
+                    </td>
+                    <td class="tdr" style="text-align: right;">
+                        {% if item.saldoi != None %}
+                        $ {{item.saldoi|intcomma}}
+                        {%endif%}
+                    </td>
+                    <td class="tdr" style="text-align: right;">
+                        {% if item.debitos != None %}
+                        $ {{item.debitos|intcomma}}
+                        {%endif%}
+                    </td>
+                    <td class="tdr" style="text-align: right;">
+                        {% if item.creditos != None %}
+                        $ {{item.creditos|intcomma}}
+                        {%endif%}
+                    </td>
+                    <td class="tdr" style="text-align: right;">
+                        {% if item.saldof != None %}
+                        $ {{item.saldof|intcomma}}
+                        {%endif%}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- {{totales}} -->
+        <table style="margin-top: 15px;">
+            <tbody>
+                <tr>
+                    <td width="9%" style="padding: 3px 0px; text-align: left;" class="tdl"></td>
+                    <td width="35%" style="padding: 3px 0px; text-align: right; font-weight: bold;" class="tdl">TOTALES:</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.totales.inicial|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.totales.debito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.totales.credito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.totales.final|numero_a_positivo|intcomma}}</td>
+                </tr>
+                <tr>
+                    <td width="9%" style="padding: 3px 0px; text-align: left;" class="tdl"></td>
+                    <td width="35%" style="padding: 3px 0px; text-align: right; font-weight: bold;" class="tdl">INGRESOS:</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.ingresos.inicial|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.ingresos.debito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.ingresos.credito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.ingresos.final|numero_a_positivo|intcomma}}</td>
+                </tr>
+                <tr>
+                    <td width="9%" style="padding: 3px 0px; text-align: left;" class="tdl"></td>
+                    <td width="35%" style="padding: 3px 0px; text-align: right; font-weight: bold;" class="tdl">GASTOS:</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.gastos.inicial|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.gastos.debito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.gastos.credito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.gastos.final|numero_a_positivo|intcomma}}</td>
+                </tr>
+                <tr>
+                    <td width="9%" style="padding: 3px 0px; text-align: left;" class="tdl"></td>
+                    <td width="35%" style="padding: 3px 0px; text-align: right; font-weight: bold;" class="tdl">RESULTADOS:</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.resultados_uno.ingr_gast_sin|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.resultados_uno.ingr_gast_deb|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.resultados_uno.ingr_gast_cr|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.resultados_uno.ingr_gast_sfi|numero_a_positivo|intcomma}}</td>
+                </tr>
+                <tr>
+                    <td width="9%" style="padding: 3px 0px; text-align: left;" class="tdl"></td>
+                    <td width="35%" style="padding: 3px 0px; text-align: right; font-weight: bold;" class="tdl">TOTAL ACTIVOS:</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.activos.inicial|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.activos.debito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.activos.credito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.activos.final|numero_a_positivo|intcomma}}</td>
+                </tr>
+                <tr>
+                    <td width="9%" style="padding: 3px 0px; text-align: left;" class="tdl"></td>
+                    <td width="35%" style="padding: 3px 0px; text-align: right; font-weight: bold;" class="tdl">TOTAL PASIVO + PATRIMONIO:</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.total_pasivo_patrimonio.inicial|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.total_pasivo_patrimonio.debito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.total_pasivo_patrimonio.credito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.total_pasivo_patrimonio.final|numero_a_positivo|intcomma}}</td>
+                </tr>
+                <tr>
+                    <td width="9%" style="padding: 3px 0px; text-align: left;" class="tdl"></td>
+                    <td width="35%" style="padding: 3px 0px; text-align: right; font-weight: bold;" class="tdl">RESULTADO:</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.resultado_dos.inicial|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.resultado_dos.debito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.resultado_dos.credito|numero_a_positivo|intcomma}}</td>
+                    <td width="14%" style="padding: 3px 0px; text-align: right;" class="tdr">$ {{totales.resultado_dos.final|numero_a_positivo|intcomma}}</td>
+                </tr>
+            </tbody>           
+        </table>
+    </div>
+</body>
+
+</html>
+<style>
+    .encabezado label {
+        font-size: 12px;
+    }
+
+    .tabla>thead>tr>th {
+        height: 30px;
+        /* border: 1px solid black; */
+        padding-top: 3.5px;
+        background-color: #e9ecef;
+    }
+
+    .tabla>tbody>tr>td {
+        /* height: 22px; */
+        /* border: 1px solid black; */
+        padding-top: 3.5px;
+    }
+
+    .tdl {
+        padding-left: 2px;
+    }
+
+    .tdr {
+        padding-right: 2px;
+    }
+    #footer_content {
+        text-align: right; /* Alinea el texto a la derecha */
+        font-size: 12px; /* Tamaño opcional */
+        position: fixed; /* Mantiene el pie de página fijo */
+        bottom: 10px; /* Lo coloca al fondo */
+        right: 20px; /* Ajusta la distancia del borde derecho */
+        width: 100%; /* Asegura que ocupe todo el ancho */
+    }
+    @page {
+            size: legal portrait;
+            margin-left: 1cm;
+            margin-top: 2cm;
+            margin-right: 1cm;
+            margin-bottom: 1cm;
+
+            @frame header_frame {
+                -pdf-frame-content: headerContent;
+                text-align: right;
+                bottom: 0.5cm;
+                margin-left: 1cm;
+                margin-top: 0.5cm;
+                margin-right: 1cm;
+            }
+        }
+   
+</style>

@@ -59,3 +59,15 @@ class ConsultasViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['POST'], url_path='exportar_consulta_balance_general')
     def exportar_consulta_balance_general(self, request, *args, **kwargs):
         return ConsultaService.exportar_consulta_balance_general(request.data)
+
+    @action(methods=['POST'], detail=False, url_path='consulta_balance_prueba')
+    def consulta_balance_prueba(self, request):
+        return Response(ConsultaService.filtro_balance_prueba(request.data['model']))
+    
+    @action(methods=['POST'], detail=False, url_path='imprimir_consulta_balance_prueba')
+    def imprimir_consulta_balance_prueba(self, request):
+        return ConsultaService.imprimir_consulta_balance_prueba(request.data)
+    
+    @action(detail=False, methods=['POST'], url_path='exportar_consulta_balance_prueba')
+    def exportar_consulta_balance_prueba(self, request, *args, **kwargs):
+        return ConsultaService.exportar_consulta_balance_prueba(request.data)   

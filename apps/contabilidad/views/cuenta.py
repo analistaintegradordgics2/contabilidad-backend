@@ -110,6 +110,8 @@ class MayorViewSet(ModelViewSetClass):
         mayor_id = kwargs['pk']
         if mayor_id:
             item = Mayor.objects.filter(pk=mayor_id).first()
+            if not item:
+                return Response({'error': 'La cuenta no existe'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(MayorService.format_mayor_select(item, include_model=True))
 
     @action(methods=['get'], detail=False, url_path='select_solo_cutabanco')
