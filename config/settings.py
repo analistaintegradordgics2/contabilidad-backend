@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'apps.personas',
     'apps.contabilidad',
     'apps.parametros',
-    'apps.public'
+    'apps.public',
+    'apps.afiliados'
 ] + DJANGO_APPS
 
 MIDDLEWARE = [

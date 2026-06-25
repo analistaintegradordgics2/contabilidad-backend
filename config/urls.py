@@ -10,7 +10,7 @@ urlpatterns = [
         path('public/', include(('apps.public.urls', 'public'), namespace='public')),
         path('personas/', include(('apps.personas.urls', 'personas'), namespace='personas')),
         path('parametros/', include(('apps.parametros.urls', 'parametros'), namespace='parametros')),
-        path('contabilidad/', include(('apps.contabilidad.urls', 'contabilidad'), namespace='contabilidad'))
-     
+        path('contabilidad/', include(('apps.contabilidad.urls', 'contabilidad'), namespace='contabilidad')),
+        path('afiliados/', include(('apps.afiliados.urls', 'afiliados'), namespace='afiliados'))
     ])),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -89,3 +89,11 @@ class GeneradorConsultas(BaseModel):
     estado = models.BooleanField(default=True)
     tipo_excel = models.TextField(blank=True, null=True, help_text="Saber si es por hojas el excel")
 
+class TipoContrato(models.Model):
+    nombre = models.CharField(max_length=50)
+    activo = models.BooleanField(default=True)
+
+class Aplicativo(models.Model):
+    nombre = models.CharField(max_length=50)
+    activo = models.BooleanField(default=True)
+

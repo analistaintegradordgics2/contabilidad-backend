@@ -18,6 +18,7 @@ router.register(r'parametroswhatsapp', ParametrosWhatsappViewSet, basename='para
 router.register(r'generador_consultas', GeneradorConsultasViewSet, basename='generador_consultas')
 router.register(r'ciudad_empresa', CiudadEmpresaViewSet, basename='ciudad_empresa')
 router.register(r'mes_anio', MesAnioViewSet, basename='mes_anio')
+router.register(r'afiliado', AfiliadosViewSet, basename='afiliado')
 
 urlpatterns = [
     path('', include(router.urls))

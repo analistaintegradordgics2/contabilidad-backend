@@ -978,3 +978,16 @@ class MesAnioViewSet(viewsets.ModelViewSet):
         query = query.data
         
         return Response(query, status=status.HTTP_200_OK)
+
+class AfiliadosViewSet(viewsets.ViewSet):
+
+    @action(methods=['GET'], detail=False, url_path='tipo_contrato')
+    def tipo_contrato(self, request):
+        query = list(TipoContrato.objects.filter(activo=True).values("id", "nombre"))
+        return Response(query)
+
+    @action(methods=['GET'], detail=False, url_path='aplicativo')
+    def tipo_contrato(self, request):
+        query = list(Aplicativo.objects.filter(activo=True).values("id", "nombre"))
+        return Response(query)
+    
