@@ -23,7 +23,7 @@ class PersonaService:
         telefonos = persona_data['telefonos']
         direcciones = persona_data['direcciones']
         tributario = persona_data['tributario']
-        tipos = data.get('tipopersonas', [])
+        tipos = persona_data['tipos_persona']
 
         persona = PersonaService._guardar_persona(persona_data)
 
@@ -42,7 +42,6 @@ class PersonaService:
             DirecionModelSerializer,
             campo_validacion="descripcion"
         )
-
         PersonaService._guardar_tipos(persona, tipos)
 
         PersonaService._guardar_tributario(
