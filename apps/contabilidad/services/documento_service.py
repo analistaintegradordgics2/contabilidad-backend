@@ -178,7 +178,7 @@ class DocumentoService:
                 sql = """
                     SELECT out_id, out_documento
                     FROM addfacturas(
-                        %s,%s,%s,%s,%s,
+                        %s,%s,%s,%s,%s,%s,
                         %s,%s,%s,%s,%s,%s,
                         %s,%s,%s,%s,%s,%s,
                         %s,%s,%s,%s,%s,%s,
@@ -191,7 +191,6 @@ class DocumentoService:
                     float(encabezado.get('rteiva', 0)) +
                     float(encabezado.get('rteica', 0))
                 )
-                # pdb.set_trace()
 
                 params = (
                     encabezado.get('id') or 0,
@@ -199,6 +198,7 @@ class DocumentoService:
                     encabezado.get('fecha'),
                     encabezado.get('fecha_vencimiento'),
                     encabezado.get('personas'),
+                    encabezado.get('referencia', ''),
                     float(encabezado.get('subtotal',   0)),
                     float(encabezado.get('pdescuento', 0)),
                     float(encabezado.get('descuento',  0)),
