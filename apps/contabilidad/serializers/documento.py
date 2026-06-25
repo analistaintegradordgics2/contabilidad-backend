@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apps.contabilidad.models.documento import Documentos, Mov, DetalleFacturas, PagoDocumento, FactElectronicaDocumento, DocumentosBita
+from apps.contabilidad.serializers.tipodocumento import TiposDocumentosListSerializer
 import pdb
 
 class MovSerializer(serializers.ModelSerializer):
@@ -117,12 +118,19 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
     def get_tipo_documento_persona(self, obj):
         tipo_documento_persona = obj.personas.tipo_documento.nombre if obj.personas_id != None else "" 
         return tipo_documento_persona 
+    
+    obj_tipodocumento = serializers.SerializerMethodField()
+    def get_obj_tipodocumento(self, obj):
+        if obj.tipo_documento_id:
+            return TiposDocumentosListSerializer(obj.tipo_documento).data
+        return None 
     class Meta:
         model = Documentos
 
         fields = (
             'id',
             'numero',
+            'referencia',
             'fecha',
             'fecha_vencimiento',
             'tipo_documento',
@@ -142,7 +150,8 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
             'gtotal',
             'movimientos',
             'pagos',
-            'items'
+            'items',
+            'obj_tipodocumento'
         )
 
     def get_pagos(self, documento):
