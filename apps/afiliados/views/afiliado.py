@@ -26,6 +26,10 @@ class AfiliadoViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def update(self, request, *args, **kwargs):
+        # pdb.set_trace()
+        request.data['aplicativo'] = request.data['aplicativo']['id']
+        request.data['persona'] = request.data['persona']['id']
+        request.data['tipo_contrato'] = request.data['tipo_contrato']['id']
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -987,7 +987,7 @@ class AfiliadosViewSet(viewsets.ViewSet):
         return Response(query)
 
     @action(methods=['GET'], detail=False, url_path='aplicativo')
-    def tipo_contrato(self, request):
+    def aplicativo(self, request):
         query = list(Aplicativo.objects.filter(activo=True).values("id", "nombre"))
         return Response(query)
     
