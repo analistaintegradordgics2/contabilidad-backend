@@ -1,6 +1,6 @@
--- DROP FUNCTION public.addfacturas(in int4, in int4, in date, in date, in int4, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in varchar, in int4, in int4, in int4, in json, in json, in bool, out int4, out varchar);
+-- DROP FUNCTION public.addfacturas(in int4, in int4, in date, in date, in int4, in varchar, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in numeric, in varchar, in int4, in int4, in int4, in json, in json, in bool, out int4, out varchar);
 
-CREATE OR REPLACE FUNCTION public.addfacturas(in_id_factura integer, in_tipo_documento integer, in_fecha date, in_fecha_venc date, in_persona_id integer, in_subtotal numeric, in_pdescuento numeric, in_descuento numeric, in_total numeric, in_iva numeric, in_gtotal numeric, in_prtefte numeric, in_prteiva numeric, in_prteica numeric, in_rtefte numeric, in_rteiva numeric, in_rteica numeric, in_retenciones numeric, in_detalle character varying, in_usuario integer, in_forma_pago integer, in_medio_pago integer, in_preconta json, in_detalle_fac json, in_nota_parcial boolean DEFAULT false, OUT out_id integer, OUT out_documento character varying)
+CREATE OR REPLACE FUNCTION public.addfacturas(in_id_factura integer, in_tipo_documento integer, in_fecha date, in_fecha_venc date, in_persona_id integer, referencia character varying, in_subtotal numeric, in_pdescuento numeric, in_descuento numeric, in_total numeric, in_iva numeric, in_gtotal numeric, in_prtefte numeric, in_prteiva numeric, in_prteica numeric, in_rtefte numeric, in_rteiva numeric, in_rteica numeric, in_retenciones numeric, in_detalle character varying, in_usuario integer, in_forma_pago integer, in_medio_pago integer, in_preconta json, in_detalle_fac json, in_nota_parcial boolean DEFAULT false, OUT out_id integer, OUT out_documento character varying)
  RETURNS record
  LANGUAGE plpgsql
 AS $function$
@@ -48,8 +48,8 @@ BEGIN
         pd.ciudad_id
     INTO lc_nombre, lc_dir, lc_tel, lc_movil, lc_ciudad
     FROM personas_persona p
-	inner join personas_direccion pd on pd.persona_id = p.id and pd.incluir_a_factura is true
-	inner join personas_telefono pt on pt.persona_id = p.id
+	left join personas_direccion pd on pd.persona_id = p.id and pd.incluir_a_factura is true
+	left join personas_telefono pt on pt.persona_id = p.id
     WHERE p.id = in_persona_id;
 
     -- ══════════════════════════════════════════
@@ -71,7 +71,7 @@ BEGIN
             nombre, direccion, telefono, movil, ciudad,
             fpago,
             nota_parcial,
-            estado, numero, concepto_id
+            estado, numero, concepto_id, referencia
         ) VALUES (
             NOW(), NOW(),
             in_fecha, in_fecha_venc,
@@ -86,7 +86,7 @@ BEGIN
             lc_nombre, lc_dir, lc_tel, lc_movil, lc_ciudad,
             in_forma_pago,
             in_nota_parcial,
-            1, '', 1  -- estado ABIERTO, número se actualiza después
+            1, '', 1 , referencia -- estado ABIERTO, número se actualiza después
         ) RETURNING id INTO out_id;
 
     ELSE
