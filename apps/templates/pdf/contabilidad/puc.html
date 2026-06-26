@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan único de cuenta</title>
+</head>
+
+<body>
+    <img src="{{ empresa.logo }}" width="180px" height="82px">
+    <table class="encabezado">
+        <thead>
+            <tr>
+                <!-- <th style="width: 20%; border: 1px solid black">
+                    <div>
+                        LOGO
+                        <img src="@/frontend/src/assets/orbis.png" alt="">
+                    </div>
+                </th> -->
+                <th colspan="2" style="width: 80%;">
+                    <label>{{empresa.nombre}}</label><br>
+                    <label>NIT: {{empresa.nit}}</label><br>
+                    <label>PLÁN UNICO DE CUENTAS - {{estado}}</label><br>
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div style="margin-top: 15px;">
+        <label><strong>TIPO</strong></label>
+        <br>
+        <label><strong>GN: </strong>GENERAL |</label>
+        <label><strong>AUX: </strong>AUXILIAR</label>
+        <br>
+        <label><strong>NATURALEZA</strong></label>
+        <br>
+        <label><strong>DB: </strong>CUENTA NIIF |</label>
+        <label><strong>CD: </strong>CUENTA NIIF</label>
+        <br>
+        <label><strong>PARAMETRIZACIÓN</strong></label>
+        <br>
+        <label><strong>CNF: </strong>CUENTA NIIF |</label>
+        <label><strong>CDC: </strong>CENTRO DE COSTOS |</label>
+        <label><strong>CPC: </strong>CUENTA POR COBRAR |</label>
+        <label><strong>CPP: </strong>CUENTA POR PAGAR |</label>
+        <label><strong>MNT: </strong>MANEJA NITS</label>
+        <br>
+        <label><strong>FDE: </strong>FLUJO DE EFECTIVOS |</label>
+        <label><strong>SBR: </strong>SOLICITA BASE RETENCIÓN |</label>
+        <label><strong>NTC: </strong>NIT TERCERO</label>
+        <br>
+        <table class="tdata" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <th rowspan="2" width="12%">CUENTA</th>
+                    <th rowspan="2" width="37%">NOMBRE</th>
+                    <th colspan="2">TIPO</th>
+                    <th colspan="2">NATURALEZA</th>
+                    <th rowspan="2" width="4%">CNF</th>
+                    <th rowspan="2" width="4%">CDC</th>
+                    <th rowspan="2" width="4%">CPC</th>
+                    <th rowspan="2" width="4%">CPP</th>
+                    <th rowspan="2" width="4%">MNT</th>
+                    <th rowspan="2" width="4%">FDE</th>
+                    <th rowspan="2" width="4%">SBR</th>
+                    <th rowspan="2" width="4%">NTC</th>
+                </tr>
+                <tr>
+                    <th width="4%">GN</th>
+                    <th width="4%">AUX</th>
+                    <th width="5.5%">DB</th>
+                    <th width="5.5%">CD</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                <tr>
+                    {% if item.codigol|length == 1 %}
+                    <td style="font-size: 11px; font-weight: bold;">
+                        {% elif item.codigol|length == 2 %}
+                    <td style="font-size: 10px; font-weight: bold;">
+                        {% elif item.codigol|length > 2 %}
+                    <td style="font-size: 8.5px;">
+                        {% else %}
+                    <td>
+                        {% endif %} {{item.codigol}}
+                    </td>
+                    {% if item.codigol|length == 1 %}
+                    <td style="font-size: 11px; font-weight: bold;">
+                        {% elif item.codigol|length == 2 %}
+                    <td style="font-size: 10px; font-weight: bold;">
+                        {% elif item.codigol|length > 2 %}
+                    <td style="font-size: 8.5px;">
+                        {% else %}
+                    <td>
+                        {% endif %} {{item.nombrel}}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.tipo == "AUXILIAR" %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.tipo == "GENERAL" %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.naturaleza == "CRÉDITO" %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.naturaleza == "DEBITO" %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.niif == True %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.ccosto == True %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.cxc == True %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.cxp == True %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.nits == True %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.conceptos_fc != None %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.base == True %} &#10004 {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item.nittercero == True %} &#10004 {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+
+<style>
+    .titulo {
+        text-align: center;
+        font-size: 16px;
+    }
+
+    table.tdata {
+        border: 1px solid lightgray;
+    }
+
+    table.tdata tr>th {
+        background-color: #e9ecef;
+    }
+
+    tr>th {
+        padding-top: 5px;
+        vertical-align: center;
+    }
+
+    tr>td {
+        padding-top: 4px;
+        padding-left: 3px;
+    }
+
+    .encabezado label {
+        font-size: 12px;
+    }
+</style>

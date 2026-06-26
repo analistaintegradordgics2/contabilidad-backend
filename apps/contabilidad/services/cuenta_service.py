@@ -4,7 +4,8 @@ from django.db.models.functions import Coalesce
 from django.db import transaction
 from apps.contabilidad.models.cuenta import Mayor
 from apps.contabilidad.serializers.cuenta import MayorSerializer
-
+from apps.parametros.services.empresa_service import EmpresaService
+from apps.utils.render import Render
 
 class MayorService:
 
@@ -168,3 +169,43 @@ class MayorService:
         if include_model:
             result['model'] = MayorSerializer(item).data
         return result
+    
+    @staticmethod
+    def imprimir_puc(data, tipo):
+        empresa = EmpresaService.obtener_datos_empresa()
+        nombre = "plan_único_de_cuenta"
+        params = {
+            'empresa': empresa,
+            'data': data,
+            'estado': tipo
+        }
+        pdf = Render.render_pdfkit('pdf/contabilidad/puc.html', params, nombre)
+        return pdf
+    
+    @staticmethod
+    def exportarExcel(query, request):
+        model = []
+        for item in query:
+            model.append({
+                'cuenta': item.codigo,
+                'nombre': item.nombre,
+                'general': "SI" if item.tipo == "GENERAL" else None,
+                'auxiliar': "SI" if item.tipo == "AUXILIAR" else None,
+                'debito': "SI" if item.naturaleza == "DEBITO" else None,
+                'credito': "SI" if item.naturaleza == "CRÉDITO" or item.naturaleza == "CREDITO" else None,
+                # 'ctaniif': "SI" if item.niif == True else None,
+                'centrocosto': "SI" if item.maneja_ccosto == True else None,
+                'ctaporpagar': "SI" if item.cuenta_cxc == True else None,
+                'ctaporcobrar': "SI" if item.cuenta_cxp == True else None,
+                'nits': "SI" if item.maneja_nits == True else None,
+                'flujoefectivo': "SI" if item.flujocaja != None else None,
+                'baseretencion': "SI" if item.maneja_base == True else None,
+                'nittercero': "SI" if item.nittercero == True else None
+            })
+        model.append({
+            'cuenta': "Exportado por: {} {}".format(request.user.first_name, request.user.last_name)
+        })
+
+        dataReturn = Render.export_excel(model, 'Plán unico de cuestas - {}'.format(request.data['tipo'].capitalize()))
+
+        return dataReturn

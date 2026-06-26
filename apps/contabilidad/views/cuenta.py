@@ -123,3 +123,20 @@ class MayorViewSet(ModelViewSetClass):
             values=['id', 'codigo', 'codigo_nombre'],
             limit=10
         ))
+    
+    def filter_mayor_porestado(self, tipo):
+        if tipo == 'activas':
+            return self.get_queryset().filter(estado=True)
+        else:
+            return self.get_queryset().filter(estado=False)
+    
+    @action(methods=['GET'], detail=False, url_path='imprimir_puc')
+    def imprimir_puc(self, request, *args, **kwargs):
+        query = self.filter_mayor_porestado(request.GET['tipo'])
+        data = MayorSerializer(query, many=True).data
+        return MayorService.imprimir_puc(data, request.GET['tipo'].upper())
+    
+    @action(methods=['POST'], detail=False, url_path='exportarexcel')
+    def exportarExcel(self, request, *args, **kwargs):
+        query = self.filter_mayor_porestado(request.data['tipo'])
+        return MayorService.exportarExcel(query, request)
