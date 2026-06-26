@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from apps.contabilidad.services.consultas.auxiliar_service import ConsultaService
 from apps.contabilidad.services.consultas.informe_service import InformeService
 from rest_framework import status
+from apps.utils.util import NumeroA
 
 class ConsultasViewSet(viewsets.ViewSet):
     
@@ -97,3 +98,47 @@ class ConsultasViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['POST'], url_path='exportar_consulta_balance_prueba')
     def exportar_consulta_balance_prueba(self, request, *args, **kwargs):
         return InformeService.exportar_consulta_balance_prueba(request.data)   
+    
+    @action(methods=['POST'], detail=False, url_path='consulta_estado_resultados')
+    def consulta_estado_resultados(self, request):
+        try:
+            return Response(InformeService.filtro_estado_resultados(request.data['model']))
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
+        
+    @action(methods=['POST'], detail=False, url_path='imprimir_consulta_estado_resultados')
+    def imprimir_consulta_estado_resultados(self, request):
+        try:
+            return InformeService.imprimir_consulta_estado_resultados(request.data['model'])
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
+        
+    @action(detail=False, methods=['POST'], url_path='exportar_consulta_estado_resultados')
+    def exportar_consulta_estado_resultados(self, request, *args, **kwargs):
+        numero = NumeroA()
+        request.data['model']['mesfin'] = numero.mes_letra(request.data['model']['mesfin'])
+        return InformeService.exportar_consulta_estado_resultados(request.data)  
+    
+    @action(methods=['POST'], detail=False, url_path='consulta_comprobrante_diario')
+    def consulta_comprobrante_diario(self, request):
+        query = []
+        try:
+            query.append(InformeService.filtro_comprobante_diario(request.data['model'], 1))
+            query.append(InformeService.filtro_comprobante_diario(request.data['model'], 2))
+            return Response(query)
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=False, methods=['POST'], url_path='exportar_consulta_comprobrante_diario')
+    def exportar_consulta_comprobrante_diario(self, request, *args, **kwargs):
+        return InformeService.exportar_consulta_comprobrante_diario(request.data)
+    
+    @action(methods=['POST'], detail=False, url_path='imprimir_consulta_comprobrante_diario')
+    def imprimir_consulta_comprobrante_diario(self, request):
+        try:
+            request.data['model']['usuario'] = "{} {}".format(request.user.first_name, request.user.last_name).lower().capitalize()
+            return InformeService.imprimir_consulta_comprobrante_diario(request.data)
+        except Exception:
+            return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
+
+        

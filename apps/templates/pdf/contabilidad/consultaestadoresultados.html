@@ -1,0 +1,199 @@
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if model.mesacu == True %}
+    <title>ESTADO DE RESULTADOS PARA EL MES DE {{model.mesini|numero_mes_letra}} Y ACUMULADO</title>
+    {%else%}
+    <title>ESTADO DE RESULTADOS ACUMULADO</title>
+    {%endif%}
+</head>
+
+<body>
+    <div>
+        <img src="{{ empresa.logo }}" width="180px" height="82px">
+        <table class="encabezado">
+            <thead>
+                <tr>
+                   <!--  <th style="width: 20%; border: 1px solid black">
+                        <div>
+                            LOGO
+                            <img src="@/frontend/src/assets/orbis.png" alt="">
+                        </div>
+                    </th> -->
+                    <th colspan="2" style="width: 80%;">
+                        <label>{{empresa.nombre}}</label><br>
+                        <label>NIT: {{empresa.nit}}</label><br>
+                        {% if model.mesacu == True %}
+                        <label>ESTADO DE RESULTADOS PARA EL MES DE {{model.mesini|numero_mes_letra}} Y
+                            ACUMULADO</label><br>
+                        {%else%}
+                        <label>ESTADO DE RESULTADOS</label><br>
+                        {%endif%}
+                        <label>
+                            AÑO {{model.año}} - MES: {{model.mesini|numero_mes_letra}}
+                        </label>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <table style="margin-top: 20px; border: 1px solid lightgray;" class="tabla">
+            <thead>
+                <tr>
+                    <th width="10%" style="text-align: left; padding-left: 2px;">CÓDIGO</th>
+                    <th style="text-align: left; padding-left: 2px;">NOMBRE DE LA CUENTA</th>
+                    
+                    {% if model.ccosto == True %}
+                        {% for item in data %}
+                            {% if item.CC %}
+                                {% if forloop.first %}
+                                    {% for cc in item.CC %}
+                                        <th style="text-align: left; padding-left: 2px;"> {{ cc }} </th>
+                                    {% endfor %}
+                                {%endif%}
+                            {%endif%}
+                        {% endfor %}
+                    {%endif%}
+
+                    {% if model.mesacu == True %}
+                    <th width="10%" style="text-align: left; padding-left: 2px;">PARCIAL {{model.mesini|numero_mes_letra}}</th>
+                    {%else%}
+                        {% if model.ccosto != True %}
+                            <th width="14%" style="text-align: left; padding-left: 2px;">PARCIAL ACUM.</th>
+                        {%endif%}
+                    {%endif%}
+                    <th width="14%" style="text-align: left; padding-left: 2px;">TOTAL ACUM.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                {% if item.codigo != None and item.codigo != ""%}
+                <tr>
+                    <!-- <td>{{item.tipo}}</td> -->
+                    <td class="tdl">
+                        {% if item.codigo != None %}
+                        {% if item.codigo|length == 1 %}
+                        <span style="font-size: 11px; font-weight: bold;">{{item.codigo}}</span>
+                        {% elif item.codigo|length == 2 %}
+                        <span style="font-size: 10px; font-weight: bold;">{{item.codigo}}</span>
+                        {% elif item.codigo|length == 4 %}
+                        <span style="font-size: 10px; font-weight: bold;">{{item.codigo}}</span>
+                        {% elif item.codigo == 'TOTAL' %}
+                        <span style="font-size: 10px; font-weight: bold;">{{item.codigo}}</span>
+                        {% elif item.color == 3 %}
+                        <span style="font-size: 10px; font-weight: bold;">{{item.codigo}}</span>
+                        {% elif item.codigo|length > 4 %}
+                        <span style="font-size: 8.5px;">{{item.codigo}}</span>
+                        {% else %}
+                        {{item.codigo}}
+                        {% endif %}
+                        {%endif%}
+                    </td>
+                    <td class="tdl">
+                        {% if item.codigo != None %}
+                        {% if item.codigo|length == 1 %}
+                        <span style="font-size: 11px; font-weight: bold;">{{item.nombre}}</span>
+                        {% elif item.codigo|length == 2 %}
+                        <span style="font-size: 10px; font-weight: bold;">{{item.nombre}}</span>
+                        {% elif item.codigo|length == 4 %}
+                        <span style="font-size: 10px; font-weight: bold;">{{item.nombre}}</span>
+                        {% elif item.codigo == 'TOTAL' %}
+                        <span style="font-size: 10px; font-weight: bold;">{{item.nombre}}</span>
+                        {% elif item.color == 3 %}
+                        <span style="font-size: 10px; font-weight: bold;">{{item.nombre}}</span>
+                        {% elif item.codigo|length > 4 %}
+                        <span style="font-size: 8.5px;">{{item.nombre}}</span>
+                        {% else %}
+                        {{item.nombre}}
+
+                        {% endif %}
+                        {%endif%}
+                    </td>
+                    {% if model.ccosto == True %}
+                        {% if item.CC %}
+                            {% for cc in item.CC %}
+                                <td class="tdr" style="text-align: right;">
+                                    {% for pru,value in item.items %}
+                                        {% if pru == cc %}
+                                            ${{ value | intcomma}} 
+                                        {%endif%}
+                                    {% endfor %}
+                                </td>
+                            {% endfor %}
+                        {%else%}
+                            {% for item in data %}
+                                {% if item.CC %}
+                                    {% if forloop.first %}
+                                        {% for cc in item.CC %}
+                                            <td class="tdr" style="text-align: right;"> </td>
+                                        {% endfor %}
+                                    {%endif%}
+                                {%endif%}
+                            {% endfor %}
+                        {%endif%}
+                    {%endif%}
+                    {% if model.ccosto != True %}
+                        <td class="tdr" style="text-align: right;">
+                            {% if item.parcial != None %}
+                            $ {{item.parcial|intcomma}}
+                            {%endif%}
+                        </td>
+                    {%endif%}
+                    <td class="tdr" style="text-align: right;">
+                        {% if item.total != None %}
+                        <span style="font-size: 10px; font-weight: bold;">$ {{item.total|intcomma}}</span>
+                        {%endif%}
+                    </td>
+                    
+                </tr>
+                {%endif%}
+                {% endfor %}
+            </tbody>
+        </table>
+        <table style="margin-top: 50px;">
+            <tbody>
+                <tr style="padding-left: 40px" >
+                    <td width="50%">FIRMA REPRESENTANTE LEGAL: ____________________</td>
+                    <td width="40%">FIRMA CONTADOR: ___________________</td>
+                </tr>
+                <tr style="padding-left: 40px;padding-top: 20px" >
+                    <td >FIRMA REVISOR FISCAL: _____________________</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+<style>
+    .encabezado label {
+        font-size: 12px;
+    }
+
+    .tabla>thead>tr>th {
+        height: 30px;
+        /* border: 1px solid black; */
+        padding-top: 3.5px;
+        background-color: #e9ecef;
+    }
+
+    .tabla>tbody>tr>td {
+        /* height: 22px; */
+        /* border: 1px solid black; */
+        padding-top: 3.5px;
+    }
+
+    .tdl {
+        padding-left: 2px;
+    }
+
+    .tdr {
+        padding-right: 2px;
+    }
+</style>
