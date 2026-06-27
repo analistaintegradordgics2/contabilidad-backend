@@ -13,6 +13,7 @@ class ConceptoCausacion(BaseModel):
     concepto = models.ForeignKey(Concepto, on_delete=models.CASCADE)
     mayor = models.ForeignKey(Mayor, on_delete=models.CASCADE)
     iva = models.BooleanField(default=False)
+    cta_iva = models.ForeignKey(Mayor, on_delete=models.CASCADE, related_name='cuenta_iva_concepto')
     iva_incluido = models.BooleanField(default=False)
     agrupar = models.BooleanField(default=False)
     activo = models.BooleanField(default=True)
