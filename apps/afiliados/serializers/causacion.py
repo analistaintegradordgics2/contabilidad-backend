@@ -26,6 +26,13 @@ class ConceptoCausacionSerializer(serializers.ModelSerializer):
 
 class AfiliadoConceptoCausacionSerializer(serializers.ModelSerializer):
 
+    nombreConcepto = serializers.SerializerMethodField('get_n_concepto', read_only=True)
+    def get_n_concepto(self, obj):
+        try:
+            return obj.concepto.nombre
+        except:
+            return {}
+
     class Meta:
         model = AfiliadoConceptoCausacion
         fields = '__all__'
