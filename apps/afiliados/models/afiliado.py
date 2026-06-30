@@ -16,5 +16,6 @@ class Afiliado(BaseModel):
     activo = models.BooleanField(default=True)
     persona = models.ForeignKey(Persona, on_delete=models.CASCADE, related_name='afiliado_persona')
 
+
     class Meta:
         db_table = 'afiliados_afiliado'
