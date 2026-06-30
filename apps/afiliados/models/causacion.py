@@ -17,6 +17,7 @@ class ConceptoCausacion(BaseModel):
     iva_incluido = models.BooleanField(default=False)
     agrupar = models.BooleanField(default=False)
     activo = models.BooleanField(default=True)
+    es_retencion = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'afiliados_concepto_causacion'
