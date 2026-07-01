@@ -104,6 +104,14 @@ class querySQL:
 
     # Nelson Lugo
     def validar_rango_resolucion(tipo_documento_id:int, num_facturas:int):
+
+        if num_facturas < 0 :
+            return {
+                "disponibles": 0,
+                "msg": "Número de facturas a facturar no enviadas",
+                "status": False,
+                'tipo_factura_id': tipo_documento_id
+            }
         
         tipo_documento = TiposDocumentos.objects.filter(id=tipo_documento_id, estado=True).first()
         if not tipo_documento:
@@ -116,14 +124,6 @@ class querySQL:
 
         facturas_disponibles = tipo_documento.resoluciones.filter(tipo_documento_id=tipo_documento_id).annotate(facturas_disponibles=F('rango_final') - F('consecutivo_actual')).values_list('facturas_disponibles', flat=True)
         resultado = facturas_disponibles[0]
-
-        if num_facturas < 0 :
-            return {
-                "disponibles": 0,
-                "msg": "Número de facturas a facturar no enviadas",
-                "status": False,
-                'tipo_factura_id': tipo_documento_id
-            }
         
         if resultado <= 0 :
             return {
@@ -139,7 +139,7 @@ class querySQL:
             return {
                 "disponibles": resultado,
                 "msg": "Numeración insuficiente para {}. Cantidad de facturas disponibles: {}".format(tipo_documento.nombre.capitalize(), resultado),
-                "status": True if total >= 0 else False,
+                "status": False,
                 'tipo_factura_id': tipo_documento_id
             }
 
