@@ -8,7 +8,7 @@ from rest_framework.routers import DefaultRouter
 
 # Views
 from apps.afiliados.views.afiliado import AfiliadoViewSet
-from apps.afiliados.views.causacion import AfiliadoCausacionViewSet
+from apps.afiliados.views.facturacion import AfiliadoCausacionViewSet
 
 router = DefaultRouter()
 router.register(r'afiliado', AfiliadoViewSet, basename='afiliado')
