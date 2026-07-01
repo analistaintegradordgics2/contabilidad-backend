@@ -18,7 +18,7 @@ class ConceptoCausacion(BaseModel):
     iva_incluido = models.BooleanField(default=False)
     agrupar = models.BooleanField(default=False)
     activo = models.BooleanField(default=True)
-    es_retencion = models.BooleanField(default=False),
+    es_retencion = models.BooleanField(default=False)
     tipo_retencion = models.ForeignKey(TipoRetencion, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
