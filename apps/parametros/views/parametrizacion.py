@@ -50,6 +50,7 @@ class ConfAnioViewSet(viewsets.ModelViewSet):
 class ParametrosViewSet(viewsets.ModelViewSet):
     queryset = Parametros.objects.all()
     serializer_class = ParametrosModelSerializer
+    pagination_class = None
 
     @action(methods=['GET'], detail=False, url_path='tarifa_comision_inmobiliaria')
     def tarifa_comision_inmobiliaria(self, request, *args, **kwargs):
