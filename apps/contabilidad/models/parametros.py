@@ -32,3 +32,9 @@ class EstadoDocumento(models.Model):
     class Meta:
         db_table = 'contabilidad_estados'
 
+class TipoRetencion(models.Model):
+    nombre = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'contabilidad_tipos_retenciones'
+

@@ -4,6 +4,7 @@ from apps.utils.models import BaseModel
 from apps.contabilidad.models.tipodocumento import TiposDocumentos
 from apps.contabilidad.models.concepto import Concepto
 from apps.contabilidad.models.cuenta import Mayor
+from apps.contabilidad.models.parametros import TipoRetencion
 from apps.afiliados.models.afiliado import Afiliado
 from apps.contabilidad.models.documento import Documentos
 
@@ -18,7 +19,8 @@ class ConceptoCausacion(BaseModel):
     iva_incluido = models.BooleanField(default=False)
     agrupar = models.BooleanField(default=False)
     activo = models.BooleanField(default=True)
-    es_retencion = models.BooleanField(default=False)
+    es_retencion = models.BooleanField(default=False),
+    tipo_retencion = models.ForeignKey(TipoRetencion, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         db_table = 'afiliados_concepto_causacion'
