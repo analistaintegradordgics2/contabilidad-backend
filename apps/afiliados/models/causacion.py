@@ -19,7 +19,7 @@ class ConceptoCausacion(BaseModel):
     iva_incluido = models.BooleanField(default=False)
     agrupar = models.BooleanField(default=False)
     activo = models.BooleanField(default=True)
-    es_retencion = models.BooleanField(default=False),
+    es_retencion = models.BooleanField(default=False)
     tipo_retencion = models.ForeignKey(TipoRetencion, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
@@ -51,6 +51,6 @@ class FacturacionAfiliados(BaseModel):
 class FacturacionDetalleAfiliados(BaseModel):
     history = HistoricalRecords()
     facturacion                   = models.ForeignKey(FacturacionAfiliados, on_delete=models.CASCADE, related_name='afiliado_facturacion')
-    concepto_causacion_afiliado   = models.OneToOneField(AfiliadoConceptoCausacion,related_name='afiliado_concepto_causacion',on_delete=models.CASCADE)
+    concepto_causacion_afiliado   = models.ForeignKey(AfiliadoConceptoCausacion,related_name='afiliado_concepto_causacion',on_delete=models.CASCADE)
     valor = models.DecimalField(max_digits=18, decimal_places=2)
 

@@ -15,7 +15,7 @@ DECLARE
     rec             record;
     v_persona_id    integer;
     v_fecha         date;
-    v_cta_cartera   integer;
+    v_cta_clientes  integer;
     v_iva_general   numeric;
     v_preconta      json;
     v_detalle_fac   json;
@@ -27,15 +27,12 @@ DECLARE
 BEGIN
 
     -- ─── Parámetros globales ───
-    -- SELECT valor::integer INTO v_cta_cartera
-    -- FROM conf_parametros WHERE parametro = 'cta_cartera_afiliados_id';
+    SELECT valor::integer INTO v_cta_clientes
+    FROM conf_parametros WHERE parametro = 'cuenta_clientes';
 
-    -- SELECT valor::numeric INTO v_iva_general
-    -- FROM conf_parametros WHERE parametro = 'iva_general';
+    SELECT valor::numeric INTO v_iva_general
+    FROM conf_parametros WHERE parametro = 'iva_general';
 
-    -- IF v_cta_cartera IS NULL THEN
-    --     RAISE EXCEPTION 'Falta parámetro: cta_cartera_afiliados_id';
-    -- END IF;
 
     -- Datos del Afiliado
     SELECT persona_id INTO v_persona_id
@@ -86,7 +83,7 @@ BEGIN
 
             aplica_retencion(
                 v_persona_id,
-                cc.tipo_retencion_id
+                cc.tipo_retencion_id::integer
             )
 
         )
@@ -124,7 +121,7 @@ BEGIN
 
             aplica_retencion(
                 v_persona_id,
-                cc.tipo_retencion_id
+                cc.tipo_retencion_id::integer
             )
         )
 
@@ -140,7 +137,7 @@ BEGIN
                 'concepto', (c->>'concepto_id')::integer,
                 'cantidad', 1,
                 'detalle',  (c->>'nombre') || COALESCE(': ' || (c->>'detalle'), ''),
-                'piva',     CASE WHEN (c->>'iva')::boolean THEN 19 ELSE 0 END,
+                'piva',     CASE WHEN (c->>'iva')::boolean THEN v_iva_general::numeric ELSE 0 END,
                 'valor',    CASE WHEN (c->>'es_retencion')::boolean THEN -(c->>'valor')::numeric
                                  ELSE (c->>'valor')::numeric END,
                 'orden',    ordinality
@@ -150,14 +147,27 @@ BEGIN
                      THEN -(c->>'valor')::numeric
                      ELSE  (c->>'valor')::numeric END
             ), 0),
-            COALESCE(SUM(
+            COALESCE(
+            SUM(
                 CASE
-                    WHEN NOT (c->>'iva')::boolean OR (c->>'es_retencion')::boolean THEN 0
-                    WHEN (c->>'iva_incluido')::boolean
-                    THEN (c->>'valor')::numeric - ((c->>'valor')::numeric / (1 + 19/100))
-                    ELSE (c->>'valor')::numeric * (19/100)
+                    WHEN (c->>'es_retencion')::boolean THEN
+                        0
+
+                    WHEN NOT (c->>'iva')::boolean THEN
+                        0
+
+                    WHEN (c->>'iva_incluido')::boolean THEN
+                        (c->>'valor')::numeric
+                        -
+                        (
+                            (c->>'valor')::numeric /
+                            (1 + (v_iva_general::numeric/100))
+                        )
+
+                    ELSE
+                        (c->>'valor')::numeric * (v_iva_general::numeric/100)
                 END
-            ), 0)
+            ),0)
         INTO v_detalle_fac, v_subtotal, v_iva_total
         FROM json_array_elements(rec.conceptos) WITH ORDINALITY AS t(c, ordinality);
 
@@ -168,6 +178,20 @@ BEGIN
         SELECT json_agg(mov) INTO v_preconta
         FROM (
 
+             -- Débito único a cartera por el total neto
+            SELECT json_build_object(
+                'mov_id',        0,
+                'mayor_id',      v_cta_clientes,
+                'persona_id',    v_persona_id,
+                'concepto_id',   null,
+                'detalle',       'Facturación período ' || in_mes || '/' || in_anio,
+                'valor_db',      v_subtotal + v_iva_total,
+                'valor_cr',      0,
+                'cc_id', null, 'base', 0, 'docref', ''
+            ) as mov
+
+            UNION ALL
+
             -- Crédito/débito por cada concepto según es_retencion
             SELECT json_build_object(
                 'mov_id',        0,
@@ -177,7 +201,7 @@ BEGIN
                 'detalle',       c->>'nombre',
                 'valor_db',      CASE WHEN (c->>'es_retencion')::boolean THEN (c->>'valor')::numeric ELSE 0 END,
                 'valor_cr',      CASE WHEN (c->>'es_retencion')::boolean THEN 0 ELSE (c->>'valor')::numeric END,
-                'cc_id', null, 'base', 0, 'docref', '', 'nittercero_id', null
+                'cc_id', null, 'base', 0, 'docref', ''
             ) AS mov
             FROM json_array_elements(rec.conceptos) AS c
 
@@ -193,28 +217,14 @@ BEGIN
                 'valor_db',      0,
                 'valor_cr',      CASE
                                     WHEN (c->>'iva_incluido')::boolean
-                                    THEN (c->>'valor')::numeric - ((c->>'valor')::numeric / (1 + 19/100))
-                                    ELSE (c->>'valor')::numeric * (19/100)
+                                    THEN (c->>'valor')::numeric - ((c->>'valor')::numeric / (1 + v_iva_general::numeric/100))
+                                    ELSE (c->>'valor')::numeric * (v_iva_general::numeric/100)
                                  END,
                 'cc_id', null, 'base', 0, 'docref', ''
             )
             FROM json_array_elements(rec.conceptos) AS c
             WHERE (c->>'iva')::boolean = true
-            AND   (c->>'es_retencion')::boolean = false
-
-            UNION ALL
-
-            -- Débito único a cartera por el total neto
-            SELECT json_build_object(
-                'mov_id',        0,
-                'mayor_id',      958,
-                'persona_id',    v_persona_id,
-                'concepto_id',   null,
-                'detalle',       'Facturación período ' || in_mes || '/' || in_anio,
-                'valor_db',      v_subtotal + v_iva_total,
-                'valor_cr',      0,
-                'cc_id', null, 'base', 0, 'docref', ''
-            )
+            AND   (c->>'es_retencion')::boolean = false          
 
         ) sub;
 
@@ -255,17 +265,8 @@ BEGIN
             false::boolean
         ) af;
 
-        -- ══════════════════════════════════════════
-        -- Registrar en tabla de seguimiento
-        -- ══════════════════════════════════════════
-        INSERT INTO afiliados_facturacionafiliados (
-            created, modified,
-            afiliado_id, concepto_causacion_afiliado_id,
-            documento_id, periodo_mes, periodo_anio, valor
-        )
-        SELECT NOW(), NOW(), in_afiliado_id, (c->>'acc_id')::integer,
-               v_out_id, in_mes, in_anio, (c->>'valor')::numeric
-        FROM json_array_elements(rec.conceptos) AS c;
+
+        -- Insertar en la tabla de facturados
 
         INSERT INTO afiliados_facturacionafiliados (
             created,
