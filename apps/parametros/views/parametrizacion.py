@@ -52,28 +52,8 @@ class ParametrosViewSet(viewsets.ModelViewSet):
     serializer_class = ParametrosModelSerializer
     pagination_class = None
 
-    @action(methods=['GET'], detail=False, url_path='tarifa_comision_inmobiliaria')
-    def tarifa_comision_inmobiliaria(self, request, *args, **kwargs):
-        tarifa = Parametros.objects.filter(parametro='tarifa_comision_inmo').first().valor
-        return Response(tarifa)
     
 
-    @action(methods=['GET'], detail=False, url_path='listar_portales')
-    def listar_portales(self, request, *args, **kwargs):
-        query = PortalesSincronizacion.objects.all()
-        data = PortalesSerializer(query, many=True).data
-        return Response(data)
-    
-    @action(methods=['GET'], detail=False, url_path='portales_parametro')
-    def portales_parametro(self, request, *args, **kwargs):
-        portales_par = Parametros.objects.filter(parametro='portales_sincronizar').first().valor
-        if portales_par != '[]' :
-            query = PortalesSincronizacion.objects.filter(id__in=json.loads(portales_par))
-        else :
-            query = PortalesSincronizacion.objects.all()
-        data = PortalesSerializer(query, many=True).data
-        # pdb.set_trace()
-        return Response(data)
 
     def update(self, request, *args, **kwargs):
         parametro = Parametros.objects.get(pk=kwargs['pk'])
@@ -104,13 +84,6 @@ class ParametrosViewSet(viewsets.ModelViewSet):
         serializer = ParametrosModelSerializer(parametro)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    @action(methods=['GET'], detail=False, url_path='pago_total')
-    def ParametrizacionPagoTotal(self, request, *args, **kwargs):
-        parametro = Parametros.objects.filter(parametro="pago_total").first()
-        if not parametro:
-            return Response('Parámetro de pago total no encontrado', status=400)
-        serializer = ParametrosModelSerializer(parametro)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=False, url_path='save')
     def GuardarParametrizacion(self, request, *args, **kwargs):

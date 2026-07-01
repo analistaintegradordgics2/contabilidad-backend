@@ -6,6 +6,7 @@ from apps.contabilidad.models.concepto import Concepto
 from apps.contabilidad.models.cuenta import Mayor
 from apps.contabilidad.models.parametros import TipoRetencion
 from apps.afiliados.models.afiliado import Afiliado
+from apps.contabilidad.models.documento import Documentos
 
 class ConceptoCausacion(BaseModel):
     history = HistoricalRecords()
@@ -34,3 +35,22 @@ class AfiliadoConceptoCausacion(BaseModel):
 
     class Meta:
         db_table = 'afiliados_afiliado_concepto_causacion'
+
+class FacturacionAfiliados(BaseModel):
+    history = HistoricalRecords()
+    afiliado = models.ForeignKey(Afiliado, on_delete=models.CASCADE, related_name='afiliado_facturacion')
+    fecha              = models.DateField(blank=True, null=True)
+    anio     = models.IntegerField(blank=True, null=True)
+    mes      = models.IntegerField(blank=True, null=True)
+    documento = models.OneToOneField(
+        Documentos,
+        related_name='afiliado_documento',
+        on_delete=models.CASCADE
+    )
+
+class FacturacionDetalleAfiliados(BaseModel):
+    history = HistoricalRecords()
+    facturacion                   = models.ForeignKey(FacturacionAfiliados, on_delete=models.CASCADE, related_name='afiliado_facturacion')
+    concepto_causacion_afiliado   = models.ForeignKey(AfiliadoConceptoCausacion,related_name='afiliado_concepto_causacion',on_delete=models.CASCADE)
+    valor = models.DecimalField(max_digits=18, decimal_places=2)
+
