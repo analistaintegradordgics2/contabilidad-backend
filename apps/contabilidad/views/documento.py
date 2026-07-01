@@ -172,3 +172,11 @@ class DocumentoViewSet(ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(DocumentoDetailSerializer(doc).data)
+    
+    @action(methods=['POST'], detail=False, url_path='validar_resolucion')
+    def validar_resolucion(self, request):
+        try:
+            validate = DocumentoService.validar_resolucion(request.data.get('afiliados_id', []))
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(validate)
