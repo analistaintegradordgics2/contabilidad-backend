@@ -30,7 +30,8 @@ class AfiliadoService:
                     concepto_id=conc['concepto'],
                     valor=conc['valor'],
                     detalle=conc['detalle'],
-                    uc=self._usuario
+                    uc=self._usuario,
+                    facturar=conc.get('facturar', False)
                 )
 
             return afiliado
@@ -63,7 +64,8 @@ class AfiliadoService:
                         valor=conc['valor'],
                         detalle=conc['detalle'],
                         porcentaje=conc.get('porcentaje', None),
-                        um=self._usuario
+                        um=self._usuario,
+                        facturar=conc.get('facturar', False)
                     )
                     ids_conceptos_enviados.append(id_conc_causacion)
                 
@@ -75,7 +77,8 @@ class AfiliadoService:
                         valor=conc['valor'],
                         detalle=conc['detalle'],
                         porcentaje=conc.get('porcentaje', None),
-                        uc=self._usuario # Guardamos quién creó esta fila
+                        uc=self._usuario, # Guardamos quién creó esta fila
+                        facturar=conc.get('facturar', False)
                     )
                     ids_conceptos_enviados.append(nuevo_concepto.id)
 
