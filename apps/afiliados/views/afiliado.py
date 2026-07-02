@@ -6,12 +6,35 @@ from rest_framework import status
 from apps.afiliados.services.afiliado_service import AfiliadoService
 from apps.afiliados.models.afiliado import Afiliado
 from rest_framework.decorators import action
+from apps.afiliados.serializers.facturacion import FacturacionAfiliadosSerializer
 import pdb
 
 class AfiliadoViewSet(viewsets.ModelViewSet):
     queryset = Afiliado.objects.filter(activo=True)
     serializer_class = AfiliadoModelSerializer
     pagination_class = None
+
+    def get_serializer_class(self):
+        if not self.request.GET.get('sin_facturar'):
+            return AfiliadoModelSerializer
+
+        sin_facturar = (
+            self.request.GET.get('sin_facturar', '').lower() == 'true'
+        )
+
+        if sin_facturar:
+            return AfiliadoModelSerializer
+
+        return FacturacionAfiliadosSerializer
+
+    def list(self, request, *args, **kwargs):
+        sin_facturar = request.GET.get('sin_facturar', '').lower() == 'true'
+        
+        service = AfiliadoService()
+        afiliados = service.afiliados_facturacion(request.GET, sin_facturar)
+        
+        serializer = self.get_serializer(afiliados, many=True)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

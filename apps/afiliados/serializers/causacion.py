@@ -41,4 +41,5 @@ class AfiliadoConceptoCausacionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AfiliadoConceptoCausacion
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ('id','nombreConcepto','valor','detalle','porcentaje','facturar','concepto')

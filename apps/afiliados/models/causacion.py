@@ -32,6 +32,7 @@ class AfiliadoConceptoCausacion(BaseModel):
     valor = models.DecimalField(max_digits=18, decimal_places=2)
     detalle = models.TextField(blank=True, null=True)
     porcentaje = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
+    facturar = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'afiliados_afiliado_concepto_causacion'
