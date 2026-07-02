@@ -5,16 +5,12 @@ from apps.afiliados.serializers.causacion import AfiliadoConceptoCausacionSerial
 
 import pdb
 
-class AfiliadoModelSerializer(serializers.ModelSerializer):
-    conceptos_causacion = serializers.ListField(
-        child=serializers.DictField(),
-        write_only=True,
-        required=False
-    )
+class AfiliadoResumenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Afiliado
-        fields = '__all__'
+        # fields = '__all__'
+        exclude = ('created', 'modified', 'delete', 'uc', 'um')
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -46,6 +42,18 @@ class AfiliadoModelSerializer(serializers.ModelSerializer):
                 'ciudad': ciudad
             }
             
+        return representation
+
+class AfiliadoModelSerializer(AfiliadoResumenSerializer):
+    conceptos_causacion = serializers.ListField(
+        child=serializers.DictField(),
+        write_only=True,
+        required=False
+    )
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        
         conceptos_causacion = instance.afiliado_concepto_causacion
         if conceptos_causacion.exists():
             representation['conceptos_causacion'] = AfiliadoConceptoCausacionSerializer(
