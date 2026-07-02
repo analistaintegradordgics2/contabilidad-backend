@@ -13,9 +13,9 @@ BEGIN
     SELECT
         CASE
 
-            WHEN in_tipo_retencion = 1 THEN COALESCE(p.retefuente,false)
-            WHEN in_tipo_retencion = 2 THEN COALESCE(p.reteica,false)
-            WHEN in_tipo_retencion = 3 THEN COALESCE(p.reteiva,false)
+            WHEN in_tipo_retencion = 1 THEN false
+            WHEN in_tipo_retencion = 2 THEN false
+            WHEN in_tipo_retencion = 3 THEN false
 
             ELSE false
 

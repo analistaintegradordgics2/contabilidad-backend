@@ -95,7 +95,7 @@ class DocumentoViewSet(ModelViewSet):
 
         tipo_busqueda = request.GET.get('tipobusqueda')
 
-        if tipo_busqueda:
+        if tipo_busqueda and tipo_busqueda != "0":
             qs = qs.filter( tipo_documento_id=tipo_busqueda)
             
         documento = request.GET.get('documento')
@@ -180,3 +180,12 @@ class DocumentoViewSet(ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(validate)
+    
+    @action(methods=['POST'], detail=False, url_path='exportar-excel')
+    def exportar_excel(self, request):
+        try:
+            excel_file = DocumentoService.exportar_excel(request.data, request.user)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return excel_file

@@ -9,6 +9,7 @@ from apps.contabilidad.models.tipodocumento import TiposDocumentos
 from apps.utils.querySQL import querySQL
 from apps.afiliados.models.causacion import AfiliadoConceptoCausacion
 import pdb
+from apps.utils.render import Render
 class DocumentoService:
 
     @staticmethod
@@ -333,4 +334,30 @@ class DocumentoService:
             result.append(validate)
 
         return result
+    
+    @staticmethod
+    def exportar_excel(data, user):
+        data["tipoconsulta"] = 1
+        # pdb.set_trace()
+        result = querySQL.consulta_de_documentos(data)
+
+        data = []
+        for item in result :
+            model = {}
+            for key, value in item.items() :
+                if key != "mov" and key != "enca" :
+                    model[key] = value
+
+            data.append(model)
+
+        data.append({
+            'tipo': "Total de registros: {}".format(len(data))
+        })
+        # pdb.set_trace()
+        data.append({
+            'tipo': "Exportado por: {} {}".format(user.first_name, user.last_name)
+        })
+
+        return Render.export_excel(data, 'Documentos contables')
         
+        return excel_file

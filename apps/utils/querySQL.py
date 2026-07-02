@@ -155,9 +155,10 @@ class querySQL:
         doc_id = None
         tipo_consulta = filtros["tipoconsulta"]
         try :
-            fecha_ini = datetime.strptime(filtros["finicio"], "%d/%m/%Y").strftime("%Y-%m-%d")
-            fecha_fin = datetime.strptime(filtros["ffin"], "%d/%m/%Y").strftime("%Y-%m-%d")
-            tipo_fuente = filtros["tipodocumento"]
+            # pdb.set_trace()
+            fecha_inicio = datetime.strptime(filtros["fecha_inicio"], "%Y-%m-%d").strftime("%Y-%m-%d")
+            fecha_fin = datetime.strptime(filtros["fecha_fin"], "%Y-%m-%d").strftime("%Y-%m-%d")
+            tipo_fuente = filtros["tipo_documento"]
             tipo_documento = filtros["tipobusqueda"]
         except :
             pass
@@ -171,7 +172,7 @@ class querySQL:
             # El doc_id debe llegar de la siguiente forma: [1,2,3,4,5]
             ids = ', '.join(map(str, doc_id))
             sql_filtros = f" where cd.id in ({ids})"
-        elif not filtros["documento"] in ["", None] :
+        elif not filtros.get("documento", None) in ["", None] :
             documento = filtros["documento"].split(";")
             if len(documento) > 1 :
                 # Rango de documento
@@ -183,13 +184,13 @@ class querySQL:
                 # Un documento
                 sql_filtros = f" where cd.numero = '{documento[0]}'"
         else :
-            sql_filtros = f" where cd.fecha between '{fecha_ini}' and '{fecha_fin}'"
+            sql_filtros = f" where cd.fecha between '{fecha_inicio}' and '{fecha_fin}'"
 
-            if len(filtros["estado"]) > 0 :
+            if len(filtros.get("estado", [])) > 0 :
                 sql_filtros += " and cd.estado in ("
-                for i, item in enumerate(filtros["estado"]) :
+                for i, item in enumerate(filtros.get("estado", [])) :
                     sql_filtros += str(item)
-                    if (i + 1) < len(filtros["estado"]) :
+                    if (i + 1) < len(filtros.get("estado", [])) :
                         sql_filtros += ", "
                     else :
                         sql_filtros += ")"
@@ -199,7 +200,7 @@ class querySQL:
             if tipo_documento != 0 :
                 sql_filtros += f" and ctd.id = {tipo_documento}"
             
-            if filtros["usuario"] != 0 :
+            if filtros.get("usuario", 0) != 0 :
                 sql_filtros += f' and cd.conf_usuarios_id = {filtros["usuario"]}'
         
         mov = ""
@@ -209,28 +210,37 @@ class querySQL:
             # Listado de documentos
             encabezado = "null as enca"
             mov = "'[]'::json as mov"
+            # fpago = """
+            #     ( case when cf.id = 1 then 
+            #         case when cd.efectivo > 0 
+            #             then 'EFECTIVO' 
+            #         when cd.consignacion > 0 
+            #             then 'CONSIGNACION' 
+            #         when cd.cheques > 0 
+            #             then 'CHEQUE' 
+            #         when cd.tarjeta > 0 
+            #             then 'TARJETA' 
+            #         end 
+            #     when cf.id = 1 then 
+            #         case when cd.fpago = '1' 
+            #             then 'EFECTIVO' 
+            #         when cd.fpago = '2' 
+            #             then 'CHEQUE' 
+            #         when cd.fpago = '3' 
+            #             then 'TRANSFERENCIA' 
+            #         end 
+            #     when cf.id = 4 
+            #         then (select cfp.nombre from cont_fpago cfp where cfp.id = cd.forma_pago_id limit 1) 
+            #     else NULL end ) as fpago
+            #     """
             fpago = """
-                ( case when cf.id = 1 then 
-                    case when cd.efectivo > 0 
-                        then 'EFECTIVO' 
-                    when cd.consignacion > 0 
-                        then 'CONSIGNACION' 
-                    when cd.cheques > 0 
-                        then 'CHEQUE' 
-                    when cd.tarjeta > 0 
-                        then 'TARJETA' 
-                    end 
-                when cf.id = 2 then 
-                    case when cd.fpago = '1' 
+                    (case when cd.fpago = '1' 
                         then 'EFECTIVO' 
                     when cd.fpago = '2' 
                         then 'CHEQUE' 
                     when cd.fpago = '3' 
                         then 'TRANSFERENCIA' 
-                    end 
-                when cf.id = 4 
-                    then (select cfp.nombre from cont_fpago cfp where cfp.id = cd.forma_pago_id limit 1) 
-                else NULL end ) as fpago
+                    end) as fpago
                 """
         else :
             # Documento contable
@@ -358,15 +368,15 @@ class querySQL:
                     cd.id,
                     cd.estado,
                     coalesce(cd.automatico, false) as automatico,
-                    (select concat(au.first_name, ' ', au.last_name) from auth_user au where au.id = cd.conf_usuarios_id) as usuario,
+                    (select concat(au.first_name, ' ', au.last_name) from accounts_usuario au where au.id = cd.uc_id) as usuario,
                     cf.id as fuente,
                     {},
                     {},
                     {}
                 from cont_documentos cd 
-                inner join cont_tipo_documentos ctd on ctd.id = cd.tipo_documentos_id 
-                inner join cont_fuentes cf on cf.id = ctd.fuentes_id
-                inner join tercero_personas tp on tp.id = cd.personas_id
+                inner join contabilidad_tipos_documentos ctd on ctd.id = cd.tipo_documento_id 
+                inner join contabilidad_fuentes cf on cf.id = ctd.fuentes_id
+                inner join personas_persona tp on tp.id = cd.personas_id
                 {}
                 order by cd.id desc
             ) as obj
@@ -374,6 +384,7 @@ class querySQL:
 
         db = connection.cursor()
         db.execute(sql)
+        # pdb.set_trace()
         resultado = db.fetchall()
         db.close()
         gran_total = 0
@@ -424,7 +435,7 @@ class querySQL:
                     nt.nombre as base,
                     to_char(nc.fecha_inicial, 'DD/MM/YYYY HH:MI AM') as fecha_inicio,
                     to_char(nc.fecha_final, 'DD/MM/YYYY HH:MI AM') as fecha_final,
-                    (select concat(au.first_name, ' ', au.last_name) from auth_user au where au.id = nc.uc_id) as registrada_por,
+                    (select concat(au.first_name, ' ', au.last_name) from accounts_usuario au where au.id = nc.uc_id) as registrada_por,
                     nn.automatica
                 from nomina_contratonominanovedades nc 
                 inner join nomina_novedades nn on nn.id = nc.novedad_id
