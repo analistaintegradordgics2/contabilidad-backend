@@ -15,6 +15,9 @@ class AfiliadoViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_serializer_class(self):
+        if not self.request.GET.get('sin_facturar'):
+            return AfiliadoModelSerializer
+
         sin_facturar = (
             self.request.GET.get('sin_facturar', '').lower() == 'true'
         )
