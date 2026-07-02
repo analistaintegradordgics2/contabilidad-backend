@@ -37,6 +37,7 @@ MENUS = [{
     "icono": "gestioncontable.png",
     "permiso": "view_menu_gestion_contable",
     "orden": "4",
+    "ruta": "plandecuentas",
 
     "children": [
 

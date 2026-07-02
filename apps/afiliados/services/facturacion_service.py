@@ -40,5 +40,24 @@ class AfiliadoFacturacionService:
    
         sql    = "SELECT * FROM facturar_afiliados(%s, %s, %s, %s)"
         params = [afiliado_id, mes, anio, usuario_id]
-        return execute_procedure(sql=sql, params=params)
+        resultado = execute_procedure(sql=sql, params=params)
+
+        # Cerrar la factura generada ───
+   
+        errores_cierre = []
+        for fila in resultado:
+            doc_id = fila[0]  # out_documento_id
+            if doc_id:
+                try:
+                    DocumentoService.cerrar(doc_id, usuario_id)
+                except Exception as e:
+                    errores_cierre.append({
+                        'documento_id': doc_id,
+                        'error': str(e)
+                    })
+
+        return {
+            'facturas':        resultado,
+            'errores_cierre':  errores_cierre,
+        }
 

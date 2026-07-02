@@ -45,14 +45,14 @@ BEGIN
             estado, total,
             concepto_id, tipo_documento_id, personas_id,
             uc_id,
-            mandato, nota_parcial, automatico, nota_saldos_iniciales
+            nota_parcial, automatico, nota_saldos_iniciales
         ) VALUES (
             NOW(), NOW(),
             '', in_fecha, in_referencia, in_detalle,
             1, in_total,
             in_concepto, in_tipo_documento, in_persona,
             in_usuario,
-            false, false, false, false
+            false, false, false
         ) RETURNING id INTO out_id;
 
     ELSE

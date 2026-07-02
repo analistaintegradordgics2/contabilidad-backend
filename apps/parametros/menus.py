@@ -14,6 +14,7 @@ MENUS = [
         "icono": "parametrizacion.png",
         "permiso": "view_menu_parametrizacion",
         "orden": "5",
+        "ruta": "parametrizacion",
 
         "children": [
             {
@@ -27,7 +28,6 @@ MENUS = [
                 "codigo": "parametros_administrativos",
                 "titulo": "Administrativos",
                 "permiso": "view_menu_parametrizacion_administrativos",
-                "ruta": "parametrizacion",
                 "orden": "2",
 
                 "children": [

@@ -288,11 +288,8 @@ class DocumentoService:
         for mov in movimientos:
             mayor = mov.mayor
 
-            if mayor.tipo == 'GENERAL':   # ⚠️ ajusta al valor real de tu TextChoices
+            if mayor.tipo == 'GENERAL':   # 
                 raise Exception(f'La cuenta {mayor.codigo} no es auxiliar')
-
-            if mayor.nittercero and not mov.nittercero_id:
-                raise Exception(f'La cuenta {mayor.codigo} exige un NIT de tercero')
 
             if mayor.ccosto and not mov.centro_costos_id:
                 raise Exception(f'La cuenta {mayor.codigo} exige centro de costo')
@@ -307,7 +304,7 @@ class DocumentoService:
         if doc.estado not in (Estado.ABIERTO, Estado.REABIERTO):
             raise Exception('Solo se pueden cerrar documentos abiertos o reabiertos')
 
-        DocumentoService.validar_cierre(doc_id)   # ✅ nuevo
+        DocumentoService.validar_cierre(doc_id)   # nuevo
 
         doc.estado = Estado.CERRADO
         doc.save(update_fields=['estado'])

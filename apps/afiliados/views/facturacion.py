@@ -38,12 +38,6 @@ class AfiliadoCausacionViewSet(viewsets.ModelViewSet):
             .distinct()
         )
 
-        # Validar resolución/numeración disponible para cada tipo 
-        # errores = AfiliadoFacturacionService.validar_resoluciones(afiliado_id)
-        # if errores:
-        #     return Response({'validate': errores, 'status': 400},
-        #                     status=status.HTTP_400_BAD_REQUEST)
-
         # ─── Facturar ───
         try:
             resultado = AfiliadoFacturacionService.facturar_afiliado(
