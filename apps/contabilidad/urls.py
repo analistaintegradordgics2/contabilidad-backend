@@ -20,6 +20,7 @@ router.register(r'cuenta', MayorViewSet, basename='cuenta')
 router.register(r'bancos', PagoViewSet, basename='bancos')
 router.register(r'tipodocumento', TiposDocumentosViewSet, basename='tipodocumento')
 router.register(r'documentos', DocumentoViewSet, basename='documentos')
+router.register(r'consultas', ConsultasViewSet, basename='consultas')
 router.register(r'parametros', ParametrosViewSet, basename='parametros')
 
 urlpatterns = [
