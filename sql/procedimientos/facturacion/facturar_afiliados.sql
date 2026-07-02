@@ -28,10 +28,10 @@ BEGIN
 
     -- ─── Parámetros globales ───
     SELECT valor::integer INTO v_cta_clientes
-    FROM conf_parametros WHERE parametro = 'cuenta_clientes';
+    FROM parametros_parametros WHERE parametro = 'cuenta_clientes';
 
     SELECT valor::numeric INTO v_iva_general
-    FROM conf_parametros WHERE parametro = 'iva_general';
+    FROM parametros_parametros WHERE parametro = 'iva_general';
 
 
     -- Datos del Afiliado
