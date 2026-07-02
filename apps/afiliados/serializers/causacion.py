@@ -21,10 +21,23 @@ class ConceptoCausacionSerializer(serializers.ModelSerializer):
             
         if instance.mayor:
             representation['mayor'] = MayorSerializer(instance.mayor).data
+
+        if instance.tipo_retencion:
+            representation['tipo_retencion'] = {
+                'id': instance.tipo_retencion.id,
+                'nombre': instance.tipo_retencion.nombre
+            }
             
         return representation
 
 class AfiliadoConceptoCausacionSerializer(serializers.ModelSerializer):
+
+    nombreConcepto = serializers.SerializerMethodField('get_n_concepto', read_only=True)
+    def get_n_concepto(self, obj):
+        try:
+            return obj.concepto.nombre
+        except:
+            return {}
 
     class Meta:
         model = AfiliadoConceptoCausacion

@@ -111,6 +111,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+REMOVE_BG_API_KEY = 'A6abQsHVdDdrtSJd7LJT8k3a'
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 

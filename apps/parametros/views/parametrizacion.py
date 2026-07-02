@@ -50,29 +50,10 @@ class ConfAnioViewSet(viewsets.ModelViewSet):
 class ParametrosViewSet(viewsets.ModelViewSet):
     queryset = Parametros.objects.all()
     serializer_class = ParametrosModelSerializer
+    pagination_class = None
 
-    @action(methods=['GET'], detail=False, url_path='tarifa_comision_inmobiliaria')
-    def tarifa_comision_inmobiliaria(self, request, *args, **kwargs):
-        tarifa = Parametros.objects.filter(parametro='tarifa_comision_inmo').first().valor
-        return Response(tarifa)
     
 
-    @action(methods=['GET'], detail=False, url_path='listar_portales')
-    def listar_portales(self, request, *args, **kwargs):
-        query = PortalesSincronizacion.objects.all()
-        data = PortalesSerializer(query, many=True).data
-        return Response(data)
-    
-    @action(methods=['GET'], detail=False, url_path='portales_parametro')
-    def portales_parametro(self, request, *args, **kwargs):
-        portales_par = Parametros.objects.filter(parametro='portales_sincronizar').first().valor
-        if portales_par != '[]' :
-            query = PortalesSincronizacion.objects.filter(id__in=json.loads(portales_par))
-        else :
-            query = PortalesSincronizacion.objects.all()
-        data = PortalesSerializer(query, many=True).data
-        # pdb.set_trace()
-        return Response(data)
 
     def update(self, request, *args, **kwargs):
         parametro = Parametros.objects.get(pk=kwargs['pk'])
@@ -103,13 +84,6 @@ class ParametrosViewSet(viewsets.ModelViewSet):
         serializer = ParametrosModelSerializer(parametro)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    @action(methods=['GET'], detail=False, url_path='pago_total')
-    def ParametrizacionPagoTotal(self, request, *args, **kwargs):
-        parametro = Parametros.objects.filter(parametro="pago_total").first()
-        if not parametro:
-            return Response('Parámetro de pago total no encontrado', status=400)
-        serializer = ParametrosModelSerializer(parametro)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=False, url_path='save')
     def GuardarParametrizacion(self, request, *args, **kwargs):
@@ -120,53 +94,50 @@ class ParametrosViewSet(viewsets.ModelViewSet):
             parametro = Parametros.objects.get(pk=item['id'])
             parametro.uc_id = request.user.id
             parametro.um_id = request.user.id
-            if item['tipo_tab'] == "5" :
-                if item["parametro"] == "smtp_correo_generales" :
-                    parametro.valor = item['valor']
-                elif item["parametro"] == "puerto_smtp_correo_generales" :
-                    parametro.valor = item['valor']
-                elif item["parametro"] == "imap_pop_correo_generales" :
-                    parametro.valor = item['valor']
-                elif item["parametro"] == "puerto_imap_pop_correo_generales" :
-                    parametro.valor = item['valor']
-                else :
-                    # Se encripta las contraseñas para los correos
-                    imap_pop = Parametros.objects.filter(parametro="imap_pop_correo_generales").first().valor
-                    puerto = Parametros.objects.filter(parametro="puerto_imap_pop_correo_generales").first().valor
-                    # pdb.set_trace()
-                    try :
-                        if not item['valor'] in [None, ""] and not item['valor2'] in [None, ""] :
-                            with MailBox(imap_pop if imap_pop != None else "imap.gmail.com", int(puerto) if puerto != None else 587).login(item['valor'], item['valor2']) as mailbox :
-                                key = Fernet.generate_key()
-                                crypt = Fernet(key).encrypt(item['valor2'].encode())
-                                parametro.valor = item['valor']
-                                parametro.valor2 = crypt.decode('utf-8')
-                                parametro.key = key.decode('utf-8')
-                    except:
-                        parametro.valor = item['valor']
-                        correos_invalidos.append(item['valor'])
-            else :
-                if item['parametro'] == 'forma_pagos_mostrar' :
-                    parametro.valor = str(item['valor'])
-                elif item['parametro'] == 'portales_sincronizar' :
-                    parametro.valor = str(item['valor'])
-                elif item['parametro'] == 'base_cree' :
-                    parametro.valor = str(item['valor'])
-                elif item['parametro'] == 'persona_id_empresa' :
-                    parametro.valor = item['valor']
-                    persona = Parametros.objects.filter(parametro="persona_inmobiliaria_id").first()
+            tipo_tab = item.get('tipo_tab', None)
+            if tipo_tab == "5" :
+                pass
+                # if item["parametro"] == "smtp_correo_generales" :
+                #     parametro.valor = item['valor']
+                # elif item["parametro"] == "puerto_smtp_correo_generales" :
+                #     parametro.valor = item['valor']
+                # elif item["parametro"] == "imap_pop_correo_generales" :
+                #     parametro.valor = item['valor']
+                # elif item["parametro"] == "puerto_imap_pop_correo_generales" :
+                #     parametro.valor = item['valor']
+                # else :
+                #     # Se encripta las contraseñas para los correos
+                #     imap_pop = Parametros.objects.filter(parametro="imap_pop_correo_generales").first().valor
+                #     puerto = Parametros.objects.filter(parametro="puerto_imap_pop_correo_generales").first().valor
+                #     # pdb.set_trace()
+                #     try :
+                #         if not item['valor'] in [None, ""] and not item['valor2'] in [None, ""] :
+                #             with MailBox(imap_pop if imap_pop != None else "imap.gmail.com", int(puerto) if puerto != None else 587).login(item['valor'], item['valor2']) as mailbox :
+                #                 key = Fernet.generate_key()
+                #                 crypt = Fernet(key).encrypt(item['valor2'].encode())
+                #                 parametro.valor = item['valor']
+                #                 parametro.valor2 = crypt.decode('utf-8')
+                #                 parametro.key = key.decode('utf-8')
+                #     except:
+                #         parametro.valor = item['valor']
+                #         correos_invalidos.append(item['valor'])
+            elif item['parametro'] == 'persona_id_empresa' :
+                parametro.valor = item['valor']
+                persona = Parametros.objects.filter(parametro="persona_inmobiliaria_id").first()
+                if persona :
                     persona.valor = item['valor']
                     persona.save()
-                else :
-                    parametro.valor = item['valor']
-                parametro.valor2 = item['valor2']
+            else :
+                parametro.valor = item['valor']
+            
+            parametro.valor2 = item['valor2']
             parametro.save()
         
         # pdb.set_trace()
         if correos_invalidos != []:
             return Response("Credenciales invalidas para el correo: {}.".format(correos_invalidos), status=status.HTTP_200_OK)
         else:
-            return Response(ParametrosModelSerializer(parametro).data, status=status.HTTP_200_OK)
+            return Response("OK", status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['POST'], url_path='upload_logo')
     def upload_logo(self, request):

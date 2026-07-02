@@ -1,4 +1,6 @@
 
+import pdb
+
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
@@ -79,7 +81,8 @@ class PersonaService:
         ids_enviados = []
 
         for item in items:
-
+            if item['tipo'] and isinstance(item['tipo'], dict):
+                item['tipo'] = item.get('tipo').get('id') if item.get('tipo') else None
             if not item.get(campo_validacion):
                 continue
 
@@ -91,6 +94,7 @@ class PersonaService:
                 ids_enviados.append(item['id'])
 
             serializer = serializer_class(obj, data=item) if obj else serializer_class(data=item)
+            # pdb.set_trace()
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
 
@@ -125,12 +129,12 @@ class PersonaService:
     
     @staticmethod
     def _guardar_tributario(persona, tributario_data):
-
         if not tributario_data:
             return
 
         tributario_data['persona'] = persona.id
-
+        # tributario_data['tipo_actividad'] = tributario_data['contribuyente']
+        # pdb.set_trace()
         tributario = PersonaTributario.objects.filter(
             persona=persona
         ).first()

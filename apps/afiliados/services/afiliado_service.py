@@ -57,6 +57,7 @@ class AfiliadoService:
                         concepto_id=conc['concepto'],
                         valor=conc['valor'],
                         detalle=conc['detalle'],
+                        porcentaje=conc.get('porcentaje', None),
                         um=self._usuario
                     )
                     ids_conceptos_enviados.append(id_conc_causacion)
@@ -68,6 +69,7 @@ class AfiliadoService:
                         concepto_id=conc['concepto'],
                         valor=conc['valor'],
                         detalle=conc['detalle'],
+                        porcentaje=conc.get('porcentaje', None),
                         uc=self._usuario # Guardamos quién creó esta fila
                     )
                     ids_conceptos_enviados.append(nuevo_concepto.id)

@@ -11,6 +11,7 @@ from apps.contabilidad.views.pago import PagoViewSet
 from apps.contabilidad.views.tipodocumento import TiposDocumentosViewSet
 from apps.contabilidad.views.documento import DocumentoViewSet
 from apps.contabilidad.views.consulta import ConsultasViewSet
+from apps.contabilidad.views.parametros import ParametrosViewSet
 
 
 router = DefaultRouter()
@@ -19,7 +20,7 @@ router.register(r'cuenta', MayorViewSet, basename='cuenta')
 router.register(r'bancos', PagoViewSet, basename='bancos')
 router.register(r'tipodocumento', TiposDocumentosViewSet, basename='tipodocumento')
 router.register(r'documentos', DocumentoViewSet, basename='documentos')
-router.register(r'consultas', ConsultasViewSet, basename='consultas')
+router.register(r'parametros', ParametrosViewSet, basename='parametros')
 
 urlpatterns = [
     path('', include(router.urls))]

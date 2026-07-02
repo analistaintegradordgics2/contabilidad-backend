@@ -1,6 +1,8 @@
 from django.db import connection
 from apps.parametros.models.parametrizacion import Parametros
 from datetime import datetime
+from apps.contabilidad.models.tipodocumento import ResolucionFacturacion, TiposDocumentos
+from django.db.models import F
 import pdb, calendar
 
 class querySQL:
@@ -101,150 +103,53 @@ class querySQL:
             return resultado[0][0]
 
     # Nelson Lugo
-    def validar_rango_resolucion(tipo_documento, contratos = [], tipo_validacion = 1) :
-        try:
-            db = connection.cursor()
-            sql= """
-                select 
-                    (ctd.numeracion_final - ctd.numero) as facturas_disponibles 
-                from cont_tipo_documentos ctd where ctd.id = {} and ctd.es_nota = false and ctd.estado = 'Activo';
-                """.format(tipo_documento)
-            db.execute(sql)
-        except: 
-            return []
-        finally:
-            resultado = db.fetchall()
-            db.close()
+    def validar_rango_resolucion(tipo_documento_id:int, num_facturas:int):
 
-        if len(contratos) > 0 :
-            if len(resultado) > 0:
-                # Validacion para facturacion mensual o individual
-                if resultado[0][0] > 0 :
-                    if tipo_validacion == 1 :
-                        # Validacion facturación de arrendatario
-                        # Se valida nada mas el tipo de documento para saber cuantas facturas hay disponibles por el rango de resulución
-                        
-                        total = resultado[0][0] - len(contratos)
-                        return {
-                            "disponibles": resultado[0][0],
-                            "msg": "Cantidad de facturas disponibles para arrendatarios: {}".format(total if total >= 0 else resultado[0][0]),
-                            "status": True if total >= 0 else False,
-                            "tipo": tipo_validacion
-                        }
+        if num_facturas < 0 :
+            return {
+                "disponibles": 0,
+                "msg": "Número de facturas a facturar no enviadas",
+                "status": False,
+                'tipo_factura_id': tipo_documento_id
+            }
+        
+        tipo_documento = TiposDocumentos.objects.filter(id=tipo_documento_id, estado=True).first()
+        if not tipo_documento:
+            return {
+                "disponibles": 0,
+                "msg": "No se encontro el tipo de documento o se encuentra facturar inactivo",
+                "status": False,
+                'tipo_factura': tipo_documento_id
+            }
 
-                    elif tipo_validacion == 2 :
-                        # Validacion para facturación mensual a propietarios
-                        # Se valida el tipo de documento y la cantidad de propietarios para verificar si alcanza el rango de facturacion disponible por la resulución
-                        in_contratos = ""
-                        for index, item in enumerate(contratos) :
-                            in_contratos = in_contratos + str(item)
-                            if (index + 1) < len(contratos) :
-                                in_contratos = in_contratos + ","
-                        try:
-                            db = connection.cursor()
-                            sql= """
-                                select 
-                                    count(ip.id)
-                                from contrato_contratos cc, solicitud_solicitudes ss, consignacion_consignaciones cc2, inmueble_propietarios ip 
-                                where cc.solicitud_id = ss.id
-                                and ss.consignacion_id = cc2.id
-                                and ip.inmueble_id = cc2.inmueble_id
-                                and cc.id in ({});
-                                """.format(in_contratos)
-                            db.execute(sql)
-                        except: 
-                            return []
-                        finally:
-                            resultado2 = db.fetchall()
-                            db.close()
+        facturas_disponibles = tipo_documento.resoluciones.filter(tipo_documento_id=tipo_documento_id).annotate(facturas_disponibles=F('rango_final') - F('consecutivo_actual')).values_list('facturas_disponibles', flat=True)
+        resultado = facturas_disponibles[0]
+        
+        if resultado <= 0 :
+            return {
+                "disponibles": resultado,
+                "msg": "Numeración agotada, por favor solicite nueva resolución para {}.".format(tipo_documento.nombre.capitalize()),
+                "status": False,
+                'tipo_factura_id': tipo_documento_id
+            }
 
-                        total = resultado[0][0] - resultado2[0][0]
-                        return {
-                            "disponibles": resultado[0][0],
-                            "msg": "Cantidad de facturas disponibles para propietarios: {}".format(total if total >= 0 else resultado[0][0]),
-                            "status": True if total >= 0 else False,
-                            "tipo": tipo_validacion
-                        }
-                else :
-                    return {
-                        "disponibles": resultado[0][0],
-                        "msg": "Numeración agotada, por favor solicite nueva resolución.",
-                        "status": False,
-                        "tipo": 0
-                    }
-            else :
-                # Se valida si el tipo de documento esta activo
-                try:
-                    db = connection.cursor()
-                    sql= """
-                        select 
-                            count(*)
-                        from cont_tipo_documentos ctd where ctd.id = {} and ctd.estado = 'Activo';
-                        """.format(tipo_documento)
-                    db.execute(sql)
-                except: 
-                    return []
-                finally:
-                    resultado = db.fetchall()
-                    db.close()
-                
-                if resultado[0][0] > 0 :
-                    # Se consulto un tipo de documento que no tiene resolucion
-                    return {
-                        "status": True,
-                        "tipo": 0
-                    }
-                else :
-                    return {
-                        "msg": "Tipo de documento para facturar inactivo, por favor revisar.",
-                        "status": False,
-                        "tipo": 0
-                    }
-        else :
-            if len(resultado) > 0 :
-                if resultado[0][0] > 0 :
-                    return {
-                        "disponibles": resultado[0][0],
-                        "msg": "Cantidad de facturas disponibles: {}".format(resultado[0][0]),
-                        "status": True if resultado[0][0] > 0 else False,
-                        "tipo": 0
-                    }
-                else :
-                    return {
-                        "disponibles": resultado[0][0],
-                        "msg": "Numeración agotada, por favor solicite nueva resolución.",
-                        "status": False,
-                        "tipo": 0
-                    }
-            else :
-                # Se valida si el tipo de documento esta activo
-                try:
-                    db = connection.cursor()
-                    sql= """
-                        select 
-                            count(*)
-                        from cont_tipo_documentos ctd where ctd.id = {} and ctd.estado = 'Activo';
-                        """.format(tipo_documento)
-                    db.execute(sql)
-                except: 
-                    return []
-                finally:
-                    resultado = db.fetchall()
-                    db.close()
-                
-                if resultado[0][0] > 0 :
-                    # Se consulto un tipo de documento que no tiene resolucion
-                    return {
-                        "status": True,
-                        "tipo": 0
-                    }
-                else :
-                    return {
-                        "msg": "Tipo de documento para facturar inactivo, por favor revisar.",
-                        "status": False,
-                        "tipo": 0
-                    }
-    
+        total = resultado - num_facturas
+
+        if total < 0 :
+            return {
+                "disponibles": resultado,
+                "msg": "Numeración insuficiente para {}. Cantidad de facturas disponibles: {}".format(tipo_documento.nombre.capitalize(), resultado),
+                "status": False,
+                'tipo_factura_id': tipo_documento_id
+            }
+
+        return {
+            "disponibles": resultado,
+            "msg": "Cantidad de facturas disponibles para {}: {}".format(tipo_documento.nombre.capitalize(), total),
+            "status": True,
+            'tipo_factura_id': tipo_documento_id
+        }
+
     # Nelson Lugo
     def consulta_de_documentos(filtros) :
         doc_id = None

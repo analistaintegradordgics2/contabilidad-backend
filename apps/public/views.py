@@ -87,7 +87,7 @@ class DashboardViewSet(viewsets.ModelViewSet):
 
 
 class MenuDinamicoViewSet(viewsets.ModelViewSet):
-    queryset = Menu.objects.filter(menu_padre_id=None).order_by('id')
+    queryset = Menu.objects.filter(menu_padre_id=None).order_by('orden')
     serializer_class = MenuDinamicoSerializer
 
     def list(self, request, *args, **kwargs):

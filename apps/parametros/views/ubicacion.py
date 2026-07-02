@@ -49,6 +49,20 @@ class CiudadViewSet(viewsets.ModelViewSet):
         data = self.get_serializer(query, many=True).data
         return Response(data)
 
+    @action(methods=['post'], detail=False, url_path='selectnew')
+    def selectnew(self, request):
+        queryset = Ciudad.objects.all()
+        search = request.data.get('search',None)
+        ciudad_id = request.data.get('id', None)
+        if ciudad_id:
+            queryset = queryset.filter(id = ciudad_id)
+        if search:
+            queryset = queryset.filter(
+                nombre__icontains=search
+            )
+        serializer = CiudadModelSerializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class ZonaViewSet(ModelViewSetClass):
     queryset = Zona.objects.all().order_by('nombre')
@@ -192,6 +206,20 @@ class BarrioViewSet(ModelViewSetClass):
             })
         
         return Render.export_excel(model, nombre)
+    
+    @action(methods=['post'], detail=False, url_path='selectnew')
+    def selectnew(self, request):
+        queryset = Barrio.objects.all()
+        search = request.data.get('search',None)
+        barrio_id = request.data.get('id', None)
+        if barrio_id:
+            queryset = queryset.filter(id = barrio_id)
+        if search:
+            queryset = queryset.filter(
+                nombre__icontains=search
+            )
+        serializer = BarrioModelSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 class TipoViaViewSet(viewsets.ModelViewSet):
     queryset = TipoVia.objects.all().order_by('nombre')

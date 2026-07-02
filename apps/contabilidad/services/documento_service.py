@@ -2,10 +2,12 @@ from django.db import transaction
 import json
 from apps.common_db.db import execute_procedure
 from decimal import Decimal
-from django.db.models import Sum
+from django.db.models import Sum, Count
 import datetime
 from apps.contabilidad.models.documento import Documentos, Mov, PagoDocumento, FactElectronicaDocumento, DocumentosBita, Estado
 from apps.contabilidad.models.tipodocumento import TiposDocumentos
+from apps.utils.querySQL import querySQL
+from apps.afiliados.models.causacion import AfiliadoConceptoCausacion
 import pdb
 class DocumentoService:
 
@@ -318,3 +320,20 @@ class DocumentoService:
             estado_id=doc.estado,
         )
         return doc
+
+    @staticmethod
+    def validar_resolucion(afiliados_id:list):
+        # Extraer solo los tipos de factura de los conceptos causacion de los afiliados enviados
+        afiliados_conceptos = AfiliadoConceptoCausacion.objects.filter(afiliado_id__in=set(afiliados_id)).values('concepto__tipo_factura').annotate(count=Count('concepto__tipo_factura')).values('concepto__tipo_factura', 'count')
+
+        result = []
+
+        for conc in afiliados_conceptos:
+            tipo_fact_id = conc['concepto__tipo_factura']
+            count = conc['count']
+            validate = querySQL.validar_rango_resolucion(tipo_fact_id, count)
+
+            result.append(validate)
+
+        return result
+        
