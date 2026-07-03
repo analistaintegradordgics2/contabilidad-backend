@@ -43,6 +43,13 @@ MENUS = [
 
                 ]
             },
+            {
+                "codigo": "parametros_acceso",
+                "titulo": "Acceso",
+                "permiso": "view_menu_parametrizacion_acceso",
+                "ruta": "usuarios",
+                "orden": "3",
+            },
 
         ]
     },

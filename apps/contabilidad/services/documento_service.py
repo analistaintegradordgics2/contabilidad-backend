@@ -10,6 +10,12 @@ from apps.utils.querySQL import querySQL
 from apps.afiliados.models.causacion import AfiliadoConceptoCausacion
 import pdb
 from apps.utils.render import Render
+from apps.parametros.services.empresa_service import EmpresaService
+from apps.contabilidad.models.cuenta import Mayor
+from apps.contabilidad.models.concepto import Concepto
+from apps.contabilidad.models.parametros import CentroCostos
+from apps.personas.models.persona import Persona
+
 class DocumentoService:
 
     @staticmethod
@@ -297,3 +303,61 @@ class DocumentoService:
         return Render.export_excel(data, 'Documentos contables')
         
         return excel_file
+    
+    @staticmethod
+    def imprimir_documento(filtros:dict):
+        result = querySQL.consulta_de_documentos(filtros)
+        empresa = EmpresaService.obtener_datos_empresa()
+
+        nombre = "documento"
+        params = {
+            'data': result,
+            'empresa': empresa,
+        }
+        options = {
+            'page-size': 'A4',
+            'encoding': 'UTF-8',
+            'print-media-type': '',
+            'margin-top': '10mm',  
+            'margin-bottom': '10mm' 
+        }
+        return Render.render_pdfkit('pdf/contabilidad/documento.html', params, nombre, options)
+    
+    @staticmethod
+    def exportar_movimiento(request_data):
+        data = []
+        for item in request_data :
+            codigo = ""
+            nit = ""
+            concepto = ""
+            centro_costo = ""
+
+            if item["mayor_id"] != None :
+                cta = Mayor.objects.get(pk=item["mayor_id"])
+                codigo = "{} - {}".format(cta.codigo, cta.nombre)
+            
+            if item["persona_id"] != None :
+                pers = Persona.objects.get(pk=item["persona_id"])
+                nit = "{} - {}".format(pers.documento, pers.n_completo)
+            
+            if item["concepto_id"] != None :
+                conc = Concepto.objects.get(pk=item["concepto_id"])
+                concepto = "{} - {}".format(conc.codigo, conc.nombre)
+            
+            if item["cc_id"] != None :
+                cc = CentroCostos.objects.get(pk=item["cc_id"])
+                centro_costo = "{} - {}".format(cc.codigo, cc.nombre)
+
+            data.append({
+                "codigo": codigo,
+                "nit": nit,
+                "concepto": concepto,
+                "detalle": item["detalle"] if item["detalle"] != None else "",
+                "debito": item["valordb"],
+                "credito": item["valorcr"],
+                "docref": item["docref"],
+                "base": item["base"],
+                "centro_costo": centro_costo,
+            })
+        
+        return Render.export_excel(data, "exportar_movimiento", False, True)
