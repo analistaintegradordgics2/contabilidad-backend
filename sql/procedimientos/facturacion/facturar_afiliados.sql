@@ -183,7 +183,7 @@ BEGIN
                 'mov_id',        0,
                 'mayor_id',      v_cta_clientes,
                 'persona_id',    v_persona_id,
-                'concepto_id',   null,
+                'concepto_id',   1,
                 'detalle',       'Facturación período ' || in_mes || '/' || in_anio,
                 'valor_db',      v_subtotal + v_iva_total,
                 'valor_cr',      0,

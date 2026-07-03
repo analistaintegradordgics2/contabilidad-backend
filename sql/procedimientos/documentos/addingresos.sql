@@ -225,7 +225,7 @@ BEGIN
                 valor_db, valor_cr,
                 centro_costos_id, persona_id,
                 base, docref,
-                nittercero, concepto_id,
+                concepto_id,
                 detalle, sistema, conciliado
             ) VALUES (
                 out_id,
@@ -236,7 +236,6 @@ BEGIN
                 COALESCE((pre_i->>'persona_id')::integer, in_persona),
                 COALESCE((pre_i->>'base')::decimal, 0),
                 COALESCE(pre_i->>'docref', ''),
-                (pre_i->>'nittercero_id')::integer,
                 (pre_i->>'concepto_id')::integer,
                 COALESCE(pre_i->>'detalle', ''),
                 0, false
@@ -252,7 +251,6 @@ BEGIN
                 persona_id       = COALESCE((pre_i->>'persona_id')::integer, in_persona),
                 base             = COALESCE((pre_i->>'base')::decimal, 0),
                 docref           = COALESCE(pre_i->>'docref', ''),
-                nittercero       = (pre_i->>'nittercero_id')::integer,
                 concepto_id      = (pre_i->>'concepto_id')::integer,
                 detalle          = COALESCE(pre_i->>'detalle', ''),
                 sistema          = 0

@@ -1,7 +1,7 @@
 # apps/afiliados/services/facturacion_service.py
 
 from apps.afiliados.models import AfiliadoConceptoCausacion
-from apps.contabilidad.services.documento_service import DocumentoService
+from apps.contabilidad.services.documento_cierre_service import DocumentoCierreService
 from apps.common_db.db import execute_procedure
 
 
@@ -49,7 +49,7 @@ class AfiliadoFacturacionService:
             doc_id = fila[0]  # out_documento_id
             if doc_id:
                 try:
-                    DocumentoService.cerrar(doc_id, usuario_id)
+                    DocumentoCierreService.cerrar(doc_id, usuario_id)
                 except Exception as e:
                     errores_cierre.append({
                         'documento_id': doc_id,

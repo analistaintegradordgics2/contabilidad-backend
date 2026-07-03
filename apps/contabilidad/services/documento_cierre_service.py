@@ -43,9 +43,6 @@ class DocumentoCierreService:
             if mayor.tipo == 'GENERAL':   # ⚠️ ajusta al valor real de tu TextChoices
                 raise Exception(f'La cuenta {mayor.codigo} no es auxiliar')
 
-            if mayor.nittercero and not mov.nittercero_id:
-                raise Exception(f'La cuenta {mayor.codigo} exige un NIT de tercero')
-
             # if mayor.ccosto and not mov.centro_costos_id:
             #     raise Exception(f'La cuenta {mayor.codigo} exige centro de costo')
 

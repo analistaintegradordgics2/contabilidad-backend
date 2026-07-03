@@ -24,7 +24,6 @@ class MayorSerializer(serializers.ModelSerializer):
             "cuenta_cxp",
             "flujocaja",
             "naturaleza",
-            "nittercero",
             "codigo_nombre"
         )
 

@@ -152,7 +152,6 @@ BEGIN
                 persona_id,
                 base,
                 docref,
-                nittercero,
                 concepto_id,
                 detalle,
                 sistema,
@@ -166,7 +165,6 @@ BEGIN
                 COALESCE((pre_i->>'persona_id')::integer, in_persona_id),
                 COALESCE((pre_i->>'base')::decimal, 0),
                 COALESCE(pre_i->>'docref', ''),
-                (pre_i->>'nittercero_id')::integer,
                 (pre_i->>'concepto_id')::integer,
                 UPPER(COALESCE(pre_i->>'detalle', '')),
                 0,
@@ -183,7 +181,6 @@ BEGIN
                 persona_id       = COALESCE((pre_i->>'persona_id')::integer, in_persona_id),
                 base             = COALESCE((pre_i->>'base')::decimal, 0),
                 docref           = COALESCE(pre_i->>'docref', ''),
-                nittercero       = (pre_i->>'nittercero_id')::integer,
                 concepto_id      = (pre_i->>'concepto_id')::integer,
                 detalle          = UPPER(COALESCE(pre_i->>'detalle', '')),
                 sistema          = 0
