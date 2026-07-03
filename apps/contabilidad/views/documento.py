@@ -70,7 +70,7 @@ class DocumentoViewSet(ModelViewSet):
         )
 
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'])
     def filtro_documentos(self, request):
 
@@ -78,7 +78,7 @@ class DocumentoViewSet(ModelViewSet):
             'personas',
             'tipo_documento'
         )
-        
+
         search = request.GET.get('buscar')
         if search != "" and search != None:
             qs = qs.filter(
@@ -97,7 +97,7 @@ class DocumentoViewSet(ModelViewSet):
 
         if tipo_busqueda and tipo_busqueda != "0":
             qs = qs.filter( tipo_documento_id=tipo_busqueda)
-            
+
         documento = request.GET.get('documento')
 
         if documento:
@@ -147,7 +147,7 @@ class DocumentoViewSet(ModelViewSet):
         }
 
         return Response(results, status=status.HTTP_200_OK)
-    
+
     @action(methods=['patch'], detail=True, url_path='cerrar')
     def cerrar(self, request, pk=None):
         try:
@@ -172,7 +172,7 @@ class DocumentoViewSet(ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(DocumentoDetailSerializer(doc).data)
-    
+
     @action(methods=['POST'], detail=False, url_path='validar_resolucion')
     def validar_resolucion(self, request):
         try:
@@ -180,7 +180,7 @@ class DocumentoViewSet(ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(validate)
-    
+
     @action(methods=['POST'], detail=False, url_path='exportar-excel')
     def exportar_excel(self, request):
         try:
@@ -189,3 +189,22 @@ class DocumentoViewSet(ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return excel_file
+
+    @action(methods=['POST'], detail=False, url_path='imprimir_documento')
+    def imprimir_documento(self, request, *args, **kwargs):
+        try:
+            filtros = {
+                "id": [request.data['id']],
+                "tipoconsulta": 2,
+                # "tipobusqueda":request.data['tipodocumento']
+            }
+            return DocumentoService.imprimir_documento(filtros)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+    @action(methods=['POST'], detail=False, url_path='exportar_movimiento')
+    def ExportarMovimiento(self, request):
+        try:
+            return DocumentoService.exportar_movimiento(request.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
