@@ -45,7 +45,7 @@ MENUS = [{
             "codigo": "gastos_administrativos",
             "titulo": "Gastos Administrativos",
             "permiso": "view_menu_gestion_contable_gastos_administrativos",
-            "orden": "1",
+            "orden": "2",
 
             "children": [
 
@@ -65,7 +65,7 @@ MENUS = [{
             "codigo": "directorio_contable",
             "titulo": "Directorio Contable",
             "permiso": "view_menu_gestion_contable_directorio_contable",
-            "orden": "2",
+            "orden": "1",
 
             "children": [
 
