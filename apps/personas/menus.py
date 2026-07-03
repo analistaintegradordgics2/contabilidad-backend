@@ -19,7 +19,7 @@ MENUS = [
         "children": [
 
             {
-                "codigo": "directorio_personas",
+                "codigo": "directoriopersonas",
                 "titulo": "Directorio de Personas",
                 "permiso": "view_menu_directorio_personas",
                 "ruta": "PersonaListar",
