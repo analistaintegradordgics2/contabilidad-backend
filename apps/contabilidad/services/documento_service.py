@@ -332,20 +332,20 @@ class DocumentoService:
             concepto = ""
             centro_costo = ""
 
-            if item["mayor_id"] != None :
-                cta = Mayor.objects.get(pk=item["mayor_id"])
+            if item["mayor"] != None :
+                cta = Mayor.objects.get(pk=item["mayor"])
                 codigo = "{} - {}".format(cta.codigo, cta.nombre)
             
-            if item["persona_id"] != None :
-                pers = Persona.objects.get(pk=item["persona_id"])
+            if item["persona"] != None :
+                pers = Persona.objects.get(pk=item["persona"])
                 nit = "{} - {}".format(pers.documento, pers.n_completo)
             
-            if item["concepto_id"] != None :
-                conc = Concepto.objects.get(pk=item["concepto_id"])
+            if item["concepto"] != None :
+                conc = Concepto.objects.get(pk=item["concepto"])
                 concepto = "{} - {}".format(conc.codigo, conc.nombre)
             
-            if item["cc_id"] != None :
-                cc = CentroCostos.objects.get(pk=item["cc_id"])
+            if item["centro_costos"] != None :
+                cc = CentroCostos.objects.get(pk=item["centro_costos"])
                 centro_costo = "{} - {}".format(cc.codigo, cc.nombre)
 
             data.append({
@@ -353,8 +353,8 @@ class DocumentoService:
                 "nit": nit,
                 "concepto": concepto,
                 "detalle": item["detalle"] if item["detalle"] != None else "",
-                "debito": item["valordb"],
-                "credito": item["valorcr"],
+                "debito": item["valor_db"],
+                "credito": item["valor_cr"],
                 "docref": item["docref"],
                 "base": item["base"],
                 "centro_costo": centro_costo,
