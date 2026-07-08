@@ -13,6 +13,7 @@ MENUS = [
         "titulo": "Afiliados",
         "icono": "afiliados.png",
         "permiso": "view_menu_afiliados",
+        "ruta": "afiliados",
         "orden": "3",
 
         "children": [
@@ -31,6 +32,13 @@ MENUS = [
                 "permiso": "view_menu_afiliados_facturacion_afiliados",
                 "ruta": "causacion",
                 "orden": "2"
+            },
+            {
+                "codigo": "cupones",
+                "titulo": "Cupones",
+                "permiso": "view_menu_afiliados_cupones",
+                "ruta": "cupones",
+                "orden": "3"
             },
 
         ]
