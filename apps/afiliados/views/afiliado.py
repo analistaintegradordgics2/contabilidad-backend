@@ -33,7 +33,7 @@ class AfiliadoViewSet(viewsets.ModelViewSet):
         service = AfiliadoService()
         afiliados = service.afiliados_facturacion(request.GET, sin_facturar)
         
-        serializer = self.get_serializer(afiliados, many=True)
+        serializer = self.get_serializer(afiliados, many=True, context={'conceptos_facturar': True})
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):

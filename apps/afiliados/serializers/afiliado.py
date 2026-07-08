@@ -54,7 +54,12 @@ class AfiliadoModelSerializer(AfiliadoResumenSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         
-        conceptos_causacion = instance.afiliado_concepto_causacion
+        if self.context.get('conceptos_facturar', False):
+            #Incluir solo los conceptos con marca facturar
+            conceptos_causacion = instance.afiliado_concepto_causacion.filter(facturar=True)
+        else:
+            conceptos_causacion = instance.afiliado_concepto_causacion
+            
         if conceptos_causacion.exists():
             representation['conceptos_causacion'] = AfiliadoConceptoCausacionSerializer(
                 conceptos_causacion, 

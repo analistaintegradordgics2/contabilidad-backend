@@ -2,14 +2,15 @@ from apps.afiliados.services.afiliado_service import AfiliadoService
 from apps.parametros.models.parametrizacion import Parametros
 from apps.contabilidad.services.tipodocumento_service import TipoDocumentoService
 from apps.parametros.services.parametrizacion_service import ParametrizacionService
+from apps.common_db.db import execute_procedure
+from django.db import transaction
+from apps.contabilidad.models.cupon import Cupon
 import pdb
 
 class CuponService:
 
     @staticmethod
     def listar(params:dict, sin_generar=False):
-        mes = params.get('mes')
-        anio = params.get('año')
 
         if sin_generar:
             # Filtrar los cupones que no se han generado en el mes y anio indicados
@@ -17,7 +18,9 @@ class CuponService:
             queryset = aservice.afiliados_facturacion(params, sin_facturar=True)
         else:
             # Filtrar los cupones que se han generado en el mes y anio indicados
-            queryset = []
+            mes = params.get('mes')
+            anio = params.get('año')
+            queryset = Cupon.objects.filter(mes=mes, anio__nombre=anio, estado=True)
             pass
 
         return queryset
@@ -36,5 +39,18 @@ class CuponService:
             TipoDocumentoService.crear_o_actualizar(item, item.get('id'))
 
     @staticmethod
-    def generar_cupon(request_data, user=None):
-        pdb.set_trace()
+    def generar(request_data, user=None):
+        
+        sql = "select * from generar_cupon(array[%s], %s);"
+        params = [request_data['afiliado_id'], user]
+
+        with transaction.atomic():
+            resultado = execute_procedure(sql=sql, params=params)
+        
+        if resultado is not None and len(resultado) > 0:
+            return list(map(lambda x: {
+                'id': x[0],
+                'numero': x[1],
+            }, resultado))
+        return []
+
