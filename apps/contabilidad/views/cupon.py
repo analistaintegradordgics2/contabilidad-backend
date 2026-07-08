@@ -49,3 +49,11 @@ class CuponViewSet(ModelViewSetClass):
         except Exception as e:
             return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
         return Response("ok", status=status.HTTP_200_OK)
+    
+    @action(methods=['POST'], detail=False, url_path='generar')
+    def generar_cupon(self, request, *args, **kwargs):
+        try:
+            CuponService.generar(request.data)
+        except Exception as e:
+            return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response("ok", status=status.HTTP_200_OK)
