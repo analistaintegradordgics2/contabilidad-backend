@@ -135,4 +135,4 @@ class TiposDocumentosViewSet(ModelViewSetClass):
     
     @action(detail=False, methods=['POST'], url_path='filtro')
     def filtro(self, request, *args, **kwargs):
-        return TipoDocumentoService.filtro(request.data)
+        return Response(TipoDocumentoService.filtro(request.data), status=status.HTTP_200_OK)

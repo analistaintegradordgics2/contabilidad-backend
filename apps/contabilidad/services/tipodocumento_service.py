@@ -150,4 +150,4 @@ class TipoDocumentoService:
                 data.append({'id': 0, 'nombre': "Mostrar Todos "})
         except :
             pass
-        return Response(data, status=status.HTTP_200_OK)
+        return data
