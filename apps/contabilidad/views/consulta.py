@@ -101,7 +101,9 @@ class ConsultasViewSet(viewsets.ViewSet):
     
     @action(methods=['POST'], detail=False, url_path='consulta_estado_resultados')
     def consulta_estado_resultados(self, request):
+        import pdb
         try:
+            # pdb.set_trace()
             return Response(InformeService.filtro_estado_resultados(request.data['model']))
         except Exception:
             return Response("Error en el proceso por favor revisar.", status=status.HTTP_404_NOT_FOUND)
