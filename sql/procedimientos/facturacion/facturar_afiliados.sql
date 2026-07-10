@@ -181,7 +181,7 @@ BEGIN
              -- Débito único a cartera por el total neto
             SELECT json_build_object(
                 'mov_id',        0,
-                'mayor_id',      v_cta_clientes,
+                'mayor_id',      (c->>'mayor_id')::integer,
                 'persona_id',    v_persona_id,
                 'concepto_id',   1,
                 'detalle',       'Facturación período ' || in_mes || '/' || in_anio,
@@ -189,13 +189,14 @@ BEGIN
                 'valor_cr',      0,
                 'cc_id', null, 'base', 0, 'docref', ''
             ) as mov
+            FROM json_array_elements(rec.conceptos) AS c
 
             UNION ALL
 
             -- Crédito/débito por cada concepto según es_retencion
             SELECT json_build_object(
                 'mov_id',        0,
-                'mayor_id',      (c->>'mayor_id')::integer,
+                'mayor_id',      v_cta_clientes::integer,
                 'persona_id',    v_persona_id,
                 'concepto_id',   (c->>'concepto_id')::integer,
                 'detalle',       c->>'nombre',
