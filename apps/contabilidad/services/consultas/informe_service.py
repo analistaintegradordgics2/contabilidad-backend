@@ -410,7 +410,7 @@ class InformeService:
     @staticmethod
     def exportar_consulta_comprobrante_diario(request_data):
         model = []
-        pdb.set_trace()
+        # pdb.set_trace()
         if request_data['tab'] == "detalle":
             ccosto = ''
             cod_concepto = ''
@@ -434,8 +434,8 @@ class InformeService:
                     'credito': item['valor_cr'],
                 })
             dataReturn = Render.export_excel(model, (
-                'CONSULTA DE COMPROBANTE DIARIO - DETALLADA - DESDE {} - HASTA {}').format(request_data['model']['finicio'],
-                                                                                           request_data['model']['ffin']))
+                'CONSULTA DE COMPROBANTE DIARIO - DETALLADA - DESDE {} - HASTA {}').format(request_data['finicio'],
+                                                                                           request_data['ffin']))
         else:
             totaldb = 0
             totalcr = 0
