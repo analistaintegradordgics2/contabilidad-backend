@@ -1,0 +1,447 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cupones de Pago</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 12mm;
+        }
+        
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+
+        /* Page break handling */
+        .cupon-page {
+            page-break-after: always;
+            position: relative;
+            height: 100%;
+        }
+
+        .cupon-page:last-child {
+            page-break-after: avoid;
+        }
+
+        /* Header Container */
+        .header-container {
+            display: table;
+            width: 100%;
+            border-bottom: 2px solid #002855;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .header-logo {
+            display: table-cell;
+            vertical-align: middle;
+            width: 25%;
+            text-align: left;
+        }
+
+        .header-logo img {
+            max-height: 200px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .header-logo-info {
+            display: table-cell;
+            vertical-align: middle;
+            width: 50%;
+            text-align: center;
+        }
+
+        .header-logo-info h1 {
+            font-size: 13pt;
+            color: #002855;
+            margin: 0 0 4px 0;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .header-logo-info p {
+            margin: 2px 0;
+            font-size: 8pt;
+            color: #555555;
+        }
+
+        .header-coupon-meta {
+            display: table-cell;
+            vertical-align: middle;
+            width: 40%;
+            text-align: right;
+        }
+
+        .coupon-badge {
+            display: inline-block;
+            border: 1.5px solid #002855;
+            border-radius: 6px;
+            padding: 8px 15px;
+            text-align: center;
+            background-color: #f4f7f9;
+        }
+
+        .coupon-badge .title {
+            font-size: 8pt;
+            color: #555555;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+
+        .coupon-badge .number {
+            font-size: 14pt;
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .coupon-badge .date {
+            margin-top: 5px;
+            font-size: 9pt;
+            font-weight: bold;
+            color: #333333;
+            border-top: 1px solid #dddddd;
+            padding-top: 4px;
+        }
+
+        /* Cliente & Contrato Info block (Optimizada para ahorrar espacio vertical) */
+        .info-block {
+            width: 100%;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-collapse: collapse;
+        }
+
+        .info-block td {
+            padding: 5px 8px;
+            font-size: 8.5pt;
+            vertical-align: middle;
+            border: 1px solid #e0e0e0;
+        }
+
+        .info-block .section-title {
+            background-color: #002855;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 8pt;
+            text-transform: uppercase;
+            padding: 4px 8px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #555555;
+            font-size: 8pt;
+            text-transform: uppercase;
+            display: inline;
+        }
+
+        .value {
+            color: #111111;
+            font-weight: 500;
+            display: inline;
+            margin-left: 4px;
+        }
+        
+        .value {
+            color: #111111;
+            font-weight: 500;
+        }
+
+        /* Detail/Concept Table */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .details-table th {
+            background-color: #f4f7f9;
+            border: 1px solid #cccccc;
+            color: #002855;
+            text-align: left;
+            padding: 8px 10px;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .details-table td {
+            border: 1px solid #cccccc;
+            padding: 8px 10px;
+            font-size: 9.5pt;
+            vertical-align: middle;
+        }
+
+        /* Layout columns for Totals and Dates */
+        .footer-layout {
+            display: table;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .dates-column {
+            display: table-cell;
+            width: 55%;
+            vertical-align: top;
+            padding-right: 20px;
+        }
+
+        .totals-column {
+            display: table-cell;
+            width: 45%;
+            vertical-align: top;
+        }
+
+        /* Dates Tables */
+        .dates-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #cccccc;
+        }
+
+        .dates-table th {
+            background-color: #002855;
+            color: #ffffff;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 6px;
+            text-align: center;
+            border: 1px solid #cccccc;
+        }
+
+        .dates-table td {
+            padding: 8px;
+            text-align: center;
+            font-size: 10pt;
+            border: 1px solid #cccccc;
+        }
+
+        .dates-table .date-highlight {
+            font-weight: bold;
+            color: #002855;
+        }
+
+        /* Totals Tables */
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #cccccc;
+        }
+
+        .totals-table td {
+            padding: 7px 10px;
+            font-size: 9.5pt;
+            border: 1px solid #cccccc;
+        }
+
+        .totals-table .total-label {
+            font-weight: bold;
+            color: #555555;
+            text-align: right;
+            text-transform: uppercase;
+            font-size: 8.5pt;
+            background-color: #f4f7f9;
+            width: 50%;
+        }
+
+        .totals-table .total-value {
+            text-align: right;
+            font-weight: bold;
+            color: #111111;
+        }
+
+        .totals-table .grand-total-label {
+            background-color: #002855;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: right;
+            text-transform: uppercase;
+            font-size: 9pt;
+        }
+
+        .totals-table .grand-total-value {
+            background-color: #002855;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: right;
+            font-size: 12pt;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    {% for cupon in cupones %}
+    <div class="cupon-page">
+        
+        <!-- HEADER -->
+        <div class="header-container">
+            <div class="header-logo">
+                {% if empresa.logo %}
+                    <img src="{{ empresa.logo }}" alt="Logo Empresa">
+                {% endif %}
+            </div>
+            <div class="header-logo-info">
+                <h1>{{ empresa.nombre }}</h1>
+                <p><strong>NIT:</strong> {{ empresa.nit }}</p>
+                <p><strong>Dirección:</strong> {{ empresa.direccion }}</p>
+                <p><strong>Contacto:</strong> {{ empresa.telefono }} / {{ empresa.email }}</p>
+            </div>
+            <div class="header-coupon-meta">
+                <div class="coupon-badge">
+                    <div class="title">Cupón Número</div>
+                    <div class="number">{{ cupon.numero }}</div>
+                    <div class="date">Expedición: {{ cupon.fecha }}</div>
+                </div>
+            </div>
+        </div>
+
+       <!-- INFO CLIENTE Y CONTRATO (Optimizado en una Sola Línea con ':') -->
+        <table class="info-block">
+            <tr>
+                <td colspan="4" class="section-title">Información del Cliente y Contrato</td>
+            </tr>
+            <tr>
+                <td style="width: 50%;" colspan="2">
+                    <span class="label">Cliente:</span>
+                    <span class="value">{{ cupon.nombre }}</span>
+                </td>
+                <td style="width: 50%;" colspan="2">
+                    <span class="label">NIT / Documento:</span>
+                    <span class="value">{{ cupon.afiliado.persona.documento }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%;" colspan="2">
+                    <span class="label">Dirección:</span>
+                    <span class="value">{{ cupon.direccion }}</span>
+                </td>
+                <td style="width: 50%;" colspan="2">
+                    <span class="label">Ciudad:</span>
+                    <span class="value">{{ cupon.ciudad }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%;" colspan="2">
+                    <span class="label">Teléfono:</span>
+                    <span class="value">{{ cupon.telefono }}</span>
+                </td>
+                <td style="width: 50%;" colspan="2">
+                    <span class="label">Email:</span>
+                    <span class="value">{{ cupon.afiliado.persona.email }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%;">
+                    <span class="label">Tipo de Contrato:</span>
+                    <span class="value">{{ cupon.afiliado.tipo_contrato.nombre }}</span>
+                </td>
+                <td style="width: 50%;" colspan="3">
+                    <span class="label">Aplicativo:</span>
+                    <span class="value">{{ cupon.afiliado.aplicativo.nombre }}</span>
+                </td>
+            </tr>
+        </table>
+
+        <!-- DETALLE DEL CUPÓN -->
+        <table class="details-table">
+            <thead>
+                <tr>
+                    <th style="width: 70%;">Concepto / Detalle</th>
+                    <th style="width: 30%; text-align: right;">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in cupon.detalle_cupones %}
+                <tr>
+                    <td>
+                        <strong>{{ detalle.concepto.codigo_nombre }}</strong><br>
+                    </td>
+                    <td class="text-right">
+                        ${{ detalle.valor|intcomma }}
+                    </td>
+                </tr>
+                {% endfor %}
+                <!-- Espacio de relleno visual para asimilarse al PDF -->
+                <tr style="height: 120px;">
+                    <td style="border-bottom: 1px solid #cccccc; border-top: none;"></td>
+                    <td style="border-bottom: 1px solid #cccccc; border-top: none;"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- TOTALES Y FECHAS DE PAGO -->
+        <div class="footer-layout">
+            <!-- Columna de Fechas Límite -->
+            <div class="dates-column">
+                <table class="dates-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Pague antes de las siguientes fechas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="date-highlight">{{ cupon.fecha1 }}</td>
+                            <td class="date-highlight">{{ cupon.fecha2 }}</td>
+                        </tr>
+                        <tr>
+                            <td class="total-value">${{ cupon.valor1|intcomma }}</td>
+                            <td class="total-value">${{ cupon.valor2|intcomma }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Columna de Totales -->
+            <div class="totals-column">
+                <table class="totals-table">
+                    <tr>
+                        <td class="total-label">Subtotal</td>
+                        <td class="total-value">${{ cupon.subtotal|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td class="total-label">Descuento</td>
+                        <td class="total-value">
+                            {% if cupon.descuento %}
+                                -${{ cupon.descuento|intcomma }}
+                            {% else %}
+                                $0
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="total-label">IVA</td>
+                        <td class="total-value">${{ cupon.iva|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td class="grand-total-label">Total a Pagar</td>
+                        <td class="grand-total-value">${{ cupon.gran_total|intcomma }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</body>
+</html>

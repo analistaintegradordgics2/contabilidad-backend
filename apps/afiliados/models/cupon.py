@@ -45,7 +45,7 @@ class Cupon(models.Model):
     url_s3             = models.TextField(blank=True, null=True)
 
     class Meta:
-        db_table = 'contabilidad_cupones' 
+        db_table = 'afiliados_cupones' 
 
 
 class DetalleCupones(models.Model):
@@ -59,4 +59,4 @@ class DetalleCupones(models.Model):
     concepto        = models.ForeignKey(Concepto, on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
-        db_table = 'contabilidad_detalle_cupones'
+        db_table = 'afiliados_detalle_cupones'

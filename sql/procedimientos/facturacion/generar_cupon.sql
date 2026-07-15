@@ -18,7 +18,7 @@ DECLARE
     v_dia_cobro_sinrecargo integer;
     v_dia1_cobro_conrecargo integer;
     v_porc_recargo1 character varying;
-    v_iva_general integer;
+    v_iva_general numeric;
     
     v_persona_id integer;
     v_afiliado_id integer;
@@ -49,7 +49,7 @@ BEGIN
     SELECT valor::integer INTO v_dia_cobro_sinrecargo FROM parametros_parametros WHERE parametro = 'dia_cobro_sinrecargo';
     SELECT valor::integer INTO v_dia1_cobro_conrecargo FROM parametros_parametros WHERE parametro = 'dia1_cobro_conrecargo';
     SELECT valor INTO v_porc_recargo1 FROM parametros_parametros WHERE parametro = 'porc_recargo1';
-    SELECT valor::integer INTO v_iva_general FROM parametros_parametros WHERE parametro = 'iva_general';
+    SELECT valor::numeric INTO v_iva_general FROM parametros_parametros WHERE parametro = 'iva_general';
 
     SELECT
 	    COALESCE(ctd.numero,0),
@@ -175,7 +175,7 @@ BEGIN
         v_anio_id := (select id from parametros_anio where nombre = EXTRACT(YEAR FROM CURRENT_DATE));
 
         -- ═══════════════ Insertar cupon ═══════════════
-        INSERT INTO contabilidad_cupones (
+        INSERT INTO afiliados_cupones (
             fecha,
             numero,
             estado,
@@ -234,7 +234,7 @@ BEGIN
         ) LOOP
 
             -- ═══════════════ Insertar detalle cupon ═══════════════
-            INSERT INTO contabilidad_detalle_cupones (
+            INSERT INTO afiliados_detalle_cupones (
                 cupon_id,
                 cantidad,
                 detalle,

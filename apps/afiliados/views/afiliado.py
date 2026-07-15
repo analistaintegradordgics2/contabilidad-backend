@@ -53,7 +53,9 @@ class AfiliadoViewSet(viewsets.ModelViewSet):
         # request.data['aplicativo'] = request.data['aplicativo']['id']
         # request.data['persona'] = request.data['persona']['id']
         # request.data['tipo_contrato'] = request.data['tipo_contrato']['id']
-        serializer = self.get_serializer(data=request.data)
+        partial = kwargs.pop('partial', False)
+        afiliado = Afiliado.objects.get(pk=kwargs['pk'])
+        serializer = self.get_serializer(afiliado, data=request.data, partial=partial)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         service = AfiliadoService(request.user)

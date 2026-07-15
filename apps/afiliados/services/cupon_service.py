@@ -1,10 +1,13 @@
-from apps.afiliados.services.afiliado_service import AfiliadoService
+from apps.afiliados.models.afiliado import Afiliado
 from apps.parametros.models.parametrizacion import Parametros
 from apps.contabilidad.services.tipodocumento_service import TipoDocumentoService
 from apps.parametros.services.parametrizacion_service import ParametrizacionService
 from apps.common_db.db import execute_procedure
 from django.db import transaction
-from apps.contabilidad.models.cupon import Cupon
+from apps.afiliados.models.cupon import Cupon
+from apps.parametros.services.empresa_service import EmpresaService
+from apps.utils.render import Render
+from apps.afiliados.serializers.cupon import CuponImprimirModelSerializer
 import pdb
 
 class CuponService:
@@ -14,8 +17,7 @@ class CuponService:
 
         if sin_generar:
             # Filtrar los cupones que no se han generado en el mes y anio indicados
-            aservice = AfiliadoService()
-            queryset = aservice.afiliados_facturacion(params, sin_facturar=True)
+            queryset = Afiliado.objects.filter(activo=True).exclude(cupon__mes=params.get('mes'), cupon__anio__nombre=params.get('año'))
         else:
             # Filtrar los cupones que se han generado en el mes y anio indicados
             mes = params.get('mes')
@@ -53,4 +55,20 @@ class CuponService:
                 'numero': x[1],
             }, resultado))
         return []
+    
+    @staticmethod
+    def imprimir(cupones_ids):
+
+        empresa = EmpresaService.obtener_datos_empresa()
+
+        cupones = Cupon.objects.filter(id__in=cupones_ids)
+        serializer = CuponImprimirModelSerializer(cupones, many=True)
+
+        nombre = "cupones"
+        params = {
+            'cupones': serializer.data,
+            'empresa': empresa
+        }
+
+        return Render.render_pdfkit('pdf/afiliados/cupon.html', params, nombre)
 

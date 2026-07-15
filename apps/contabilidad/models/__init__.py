@@ -5,4 +5,3 @@ from .pago import *
 from .parametros import *
 from .tipodocumento import *
 from .saldo import *
-from .cupon import *

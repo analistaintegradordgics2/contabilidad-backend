@@ -1,10 +1,10 @@
 from apps.utils.ModelViewSetClass import ModelViewSetClass
-from apps.contabilidad.serializers.cupon import *
-from apps.contabilidad.services.cupon_service import CuponService
+from apps.afiliados.serializers.cupon import *
+from apps.afiliados.services.cupon_service import CuponService
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import status
-from apps.contabilidad.models.cupon import Cupon
+from apps.afiliados.models.cupon import Cupon
 import pdb
 from apps.parametros.serializers.parametrizacion import ParametrosModelSerializer
 
@@ -57,3 +57,11 @@ class CuponViewSet(ModelViewSetClass):
         except Exception as e:
             return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(result, status=status.HTTP_200_OK)
+    
+    @action(methods=['POST'], detail=False, url_path='imprimir')
+    def imprimir(self, request, *args, **kwargs):
+        try:
+            result = CuponService.imprimir(request.data.get('cupones', []))
+        except Exception as e:
+            return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+        return result
