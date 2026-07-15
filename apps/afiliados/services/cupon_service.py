@@ -64,10 +64,13 @@ class CuponService:
         cupones = Cupon.objects.filter(id__in=cupones_ids)
         serializer = CuponImprimirModelSerializer(cupones, many=True)
 
+        observacion = Parametros.objects.get(parametro="observacion_cupones").valor
+
         nombre = "cupones"
         params = {
             'cupones': serializer.data,
-            'empresa': empresa
+            'empresa': empresa,
+            'observacion': observacion
         }
 
         return Render.render_pdfkit('pdf/afiliados/cupon.html', params, nombre)
