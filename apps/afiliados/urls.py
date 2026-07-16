@@ -10,11 +10,13 @@ from rest_framework.routers import DefaultRouter
 from apps.afiliados.views.afiliado import AfiliadoViewSet
 from apps.afiliados.views.facturacion import AfiliadoCausacionViewSet
 from apps.afiliados.views.cupon import CuponViewSet
+from apps.afiliados.views.recaudo import RecaudoViewSet
 
 router = DefaultRouter()
 router.register(r'afiliado', AfiliadoViewSet, basename='afiliado')
 router.register(r'causacion', AfiliadoCausacionViewSet, basename='causacion')
 router.register(r'cupones', CuponViewSet, basename='cupones')
+router.register(r'recaudos', RecaudoViewSet, basename='recaudos')
 
 urlpatterns = [
     path('', include(router.urls))

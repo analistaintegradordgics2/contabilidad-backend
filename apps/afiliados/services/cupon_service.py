@@ -8,7 +8,7 @@ from apps.afiliados.models.cupon import Cupon
 from apps.parametros.services.empresa_service import EmpresaService
 from apps.utils.render import Render
 from apps.afiliados.serializers.cupon import CuponImprimirModelSerializer
-import pdb
+import pdb, requests
 
 class CuponService:
 
@@ -74,4 +74,42 @@ class CuponService:
         }
 
         return Render.render_pdfkit('pdf/afiliados/cupon.html', params, nombre)
+    
+    @staticmethod
+    def boton_pago(cupones_ids):
 
+        url = "https://pagodgi.webdgi.site/api/restful/add/"
+
+        payload = []
+
+        for cupon_id in cupones_ids:
+            cupon = Cupon.objects.get(id=cupon_id)
+
+            cupon_payload = {
+                "mes" : cupon.mes.numero,
+                "anio" : cupon.anio.nombre,
+                "descripcion": cupon.detalle_cupones.first().detalle if cupon.detalle_cupones.count() > 0 else "",
+                "ref_1": cupon.numero,
+                "ref_2": None,
+                "usuario": 1, # TODO: Pendiente
+                "valor_1": int(cupon.valor1),
+                "fecha_1": cupon.fecha1.strftime("%Y-%m-%d"),
+                "valor_2": int(cupon.valor2) if cupon.valor2 else 0,
+                "fecha_2": cupon.fecha2.strftime("%Y-%m-%d") if cupon.fecha2 else None,
+                "fecha_licencia_alquiler": cupon.afiliado.fecha_inicio.strftime("%Y-%m-%d") if cupon.afiliado.fecha_inicio else None,
+                "fecha_licencia_cmcp": cupon.afiliado.fecha_inicio.strftime("%Y-%m-%d") if cupon.afiliado.fecha_inicio else None, # TODO: Pendiente
+                "eliminar": False,
+                "observacion": None,
+                "detalle": list(map(lambda x: {
+                    "concepto": x.concepto.codigo,
+                    "detalle": x.detalle,
+                    "valor": int(x.valor),
+                    "sancion": False
+                }, cupon.detalle_cupones.all()))
+            }
+
+            payload.append(cupon_payload)
+
+        response = requests.post(url, json=payload)
+
+        return response.json()

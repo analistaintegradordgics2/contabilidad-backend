@@ -65,3 +65,11 @@ class CuponViewSet(ModelViewSetClass):
         except Exception as e:
             return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
         return result
+    
+    @action(methods=['POST'], detail=False, url_path='boton-pago')
+    def boton_pago(self, request, *args, **kwargs):
+        try:
+            result = CuponService.boton_pago(request.data.get('cupones', []))
+        except Exception as e:
+            return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result, status=result["status"])
