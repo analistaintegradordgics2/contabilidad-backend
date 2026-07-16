@@ -40,6 +40,13 @@ MENUS = [
                 "ruta": "cupones",
                 "orden": "3"
             },
+            {
+                "codigo": "recaudos",
+                "titulo": "Recaudos",
+                "permiso": "view_menu_afiliados_recaudos",
+                "ruta": "recaudos",
+                "orden": "4"
+            },
 
         ]
     },
