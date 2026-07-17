@@ -4,6 +4,7 @@ from apps.parametros.models.parametrizacion import Anio, Mes
 from simple_history.models import HistoricalRecords
 from apps.accounts.models import Usuario
 from apps.contabilidad.models.concepto import Concepto
+from apps.afiliados.models.causacion import ConceptoCausacion
 
 class Cupon(models.Model): 
     history            = HistoricalRecords()
@@ -57,6 +58,7 @@ class DetalleCupones(models.Model):
     piva            = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     pdescuento      = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True)
     concepto        = models.ForeignKey(Concepto, on_delete=models.CASCADE, blank=True, null=True)
+    concepto_causacion        = models.ForeignKey(ConceptoCausacion, on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
         db_table = 'afiliados_detalle_cupones'

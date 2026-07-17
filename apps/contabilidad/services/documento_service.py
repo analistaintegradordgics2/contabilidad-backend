@@ -231,7 +231,8 @@ class DocumentoService:
             # pdb.set_trace()
             resultado = execute_procedure(sql, params)
 
-        except Exception:
+        except Exception as e:
+            pdb.set_trace()
             return {"status": 404, "data": None}
 
         # doc = Documentos.objects.get(pk=resultado[0][0])

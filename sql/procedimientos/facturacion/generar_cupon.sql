@@ -226,7 +226,8 @@ BEGIN
                 acc.detalle,
                 acc.valor,
                 cc.iva,
-                cc.concepto_id
+                cc.concepto_id,
+                cc.id as concepto_causacion
             FROM afiliados_afiliado_concepto_causacion acc
             JOIN afiliados_concepto_causacion cc ON cc.id = acc.concepto_id
             WHERE acc.afiliado_id = v_afiliado_id
@@ -240,14 +241,16 @@ BEGIN
                 detalle,
                 valor,
                 piva,
-                concepto_id
+                concepto_id,
+                concepto_causacion_id
             ) VALUES (
                 v_out_id,
                 '1',
                 rec.detalle,
                 rec.valor,
                 case when rec.iva is true then v_iva_general else 0 end,
-                rec.concepto_id
+                rec.concepto_id,
+                rec.concepto_causacion
             );
         END LOOP;
 
