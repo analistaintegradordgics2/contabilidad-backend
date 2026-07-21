@@ -43,8 +43,8 @@ class CuponService:
     @staticmethod
     def generar(request_data, user=None):
         
-        sql = "select * from generar_cupon(array[%s], %s);"
-        params = [request_data['afiliado_id'], user]
+        sql = "select * from generar_cupon(array[%s], %s, %s, %s);"
+        params = [request_data['afiliado_id'], user, request_data['mes'], request_data['año']]
 
         with transaction.atomic():
             resultado = execute_procedure(sql=sql, params=params)
@@ -84,7 +84,6 @@ class CuponService:
 
         for cupon_id in cupones_ids:
             cupon = Cupon.objects.get(id=cupon_id)
-
             cupon_payload = {
                 "mes" : cupon.mes.numero,
                 "anio" : cupon.anio.nombre,
@@ -101,7 +100,7 @@ class CuponService:
                 "eliminar": False,
                 "observacion": None,
                 "detalle": list(map(lambda x: {
-                    "concepto": x.concepto.codigo,
+                    "concepto": x.concepto.id,
                     "detalle": x.detalle,
                     "valor": int(x.valor),
                     "sancion": False
@@ -111,5 +110,6 @@ class CuponService:
             payload.append(cupon_payload)
 
         response = requests.post(url, json=payload)
+        # pdb.set_trace()
 
         return response.json()

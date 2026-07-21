@@ -1,6 +1,8 @@
 CREATE OR REPLACE FUNCTION public.generar_cupon(
     in_afiliado_id integer[],
-    in_usuario_id  integer
+    in_usuario_id  integer,
+    in_mes integer,
+    in_anio integer
 )
 RETURNS TABLE (
     out_cupon_id integer,
@@ -165,14 +167,14 @@ BEGIN
         v_gtotal := v_subtotal + v_iva;
 
         -- ═══════════════ Fechas y valores ═══════════════
-        v_fecha1 := make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, EXTRACT(MONTH FROM CURRENT_DATE)::integer, v_dia_cobro_sinrecargo);
-        v_fecha2 := make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, EXTRACT(MONTH FROM CURRENT_DATE)::integer, v_dia1_cobro_conrecargo);
+        v_fecha1 := make_date(in_anio, in_mes, v_dia_cobro_sinrecargo);
+        v_fecha2 := make_date(in_anio, in_mes, v_dia1_cobro_conrecargo);
 
         v_valor2 := v_gtotal + v_gtotal * (v_porc_recargo1::float / 100);
 
         -- ═══════════════ Mes y año ═══════════════
-        v_mes_id := (select id from parametros_mes where numero = case when EXTRACT(MONTH FROM CURRENT_DATE) < 10 then concat('0',EXTRACT(MONTH FROM CURRENT_DATE)::varchar) else EXTRACT(MONTH FROM CURRENT_DATE)::varchar end);
-        v_anio_id := (select id from parametros_anio where nombre = EXTRACT(YEAR FROM CURRENT_DATE));
+        v_mes_id := (select id from parametros_mes where numero = case when in_mes < 10 then concat('0',in_mes::varchar) else in_mes::varchar end);
+        v_anio_id := (select id from parametros_anio where nombre = in_anio);
 
         -- ═══════════════ Insertar cupon ═══════════════
         INSERT INTO afiliados_cupones (

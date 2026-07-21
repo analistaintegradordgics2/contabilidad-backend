@@ -70,6 +70,8 @@ class RecaudoService:
         # Armamos el payload de cada cupón, sin crear todavía el documento
         payloads = []
         for item in data:
+            item['numero_cupon'] = item['ref_1']
+            item['fecha_pago'] = item['fecha_transaccion']
             payload = RecaudoService.armar_contabilizacion(
                 item,
                 conc_sancion=conc_sancion,
@@ -78,8 +80,8 @@ class RecaudoService:
                 ctabanco=ctabanco,
                 recaudo_concepto=obj_recaudo_concepto
             )
+            # pdb.set_trace()
             payloads.append(payload)
-
         recaudo_forma_documento = int(recaudo_forma_documento)
 
         if recaudo_forma_documento == 1:
@@ -91,7 +93,6 @@ class RecaudoService:
                 ctabanco=ctabanco
             )
             result = DocumentoService.crear(documento_payload, user.id)
-
             # sincronizar pagos en wl webservice
             RecaudoService.sincronizar_pagos(data)
 
@@ -123,7 +124,6 @@ class RecaudoService:
             persona_id=None,
             detalle=recaudo_concepto.detalle
         )
-
         movimientos = [movimiento_debito]
         for p in payloads:
             movimientos.extend(p['movimientos'])
@@ -149,7 +149,7 @@ class RecaudoService:
         numero_cupon = data.get('numero_cupon', None)
         fecha_pago = data.get('fecha_pago', None)
         valor_pagado = data.get('valor_pagado', None)
-
+        # pdb.set_trace()
         cupon = Cupon.objects.filter(numero=numero_cupon).first()
         if not cupon:
             raise Exception("Cupon no encontrado")
@@ -202,7 +202,7 @@ class RecaudoService:
             'movimientos': detalle_cupones_list,
             'pagos': {
                 'consig': {
-                    'medio_pago': None,
+                    'medio_pago': 1,
                     'banco': ctabanco.banco.id,
                     'fecha': fecha_recaudo,
                     'cuenta_bancaria': ctabanco.id,
