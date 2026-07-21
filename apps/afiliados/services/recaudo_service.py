@@ -9,7 +9,7 @@ from apps.contabilidad.services.documento_service import DocumentoService
 from dateutil import parser as dateutil_parser
 from datetime import datetime
 
-import pdb, requests
+import pdb, requests, math
 
 class RecaudoService:
     
@@ -65,6 +65,8 @@ class RecaudoService:
         ctabanco = CuentaBancaria.objects.get(pk=recaudo_ctabanco)
         conc_sancion = Concepto.objects.filter(pk=param_conc_sancion).first()
 
+        obj_recaudo_concepto = Concepto.objects.get(pk=recaudo_concepto)
+
         # Armamos el payload de cada cupón, sin crear todavía el documento
         payloads = []
         for item in data:
@@ -74,6 +76,7 @@ class RecaudoService:
                 recaudo_cta_mora=recaudo_cta_mora,
                 recaudo_tipo_documento=recaudo_tipo_documento,
                 ctabanco=ctabanco,
+                recaudo_concepto=obj_recaudo_concepto
             )
             payloads.append(payload)
 
@@ -83,34 +86,54 @@ class RecaudoService:
             # Un documento para todo: totalizamos y concatenamos movimientos
             documento_payload = RecaudoService._consolidar_payloads(
                 payloads,
-                recaudo_concepto=recaudo_concepto,
+                recaudo_concepto=obj_recaudo_concepto,
                 recaudo_tipo_documento=recaudo_tipo_documento,
+                ctabanco=ctabanco
             )
-            return DocumentoService.crear(documento_payload, user.id)
+            result = DocumentoService.crear(documento_payload, user.id)
+
+            # sincronizar pagos en wl webservice
+            RecaudoService.sincronizar_pagos(data)
+
+            return result
         else:
             # Un documento por cada cupón, sin totalizar nada
-            return [DocumentoService.crear(p, user.id) for p in payloads]
+            result = [DocumentoService.crear(p, user.id) for p in payloads]
+
+            # sincronizar pagos en wl webservice
+            RecaudoService.sincronizar_pagos(data)
+
+            return result
 
     @staticmethod
-    def _consolidar_payloads(payloads, recaudo_concepto, recaudo_tipo_documento):
+    def _consolidar_payloads(payloads, recaudo_concepto, recaudo_tipo_documento, ctabanco):
         if not payloads:
             raise Exception("No hay cupones para contabilizar")
 
         base = payloads[0]
 
-        total = sum(float(p['total']) for p in payloads)
+        total = math.floor(sum(float(p['total']) for p in payloads))
         valor_pagado_total = sum(float(p['pagos']['consig']['valor']) for p in payloads)
 
-        movimientos = []
+        # Movimiento al débito con el total de TODOS los cupones, de primero en la lista
+        movimiento_debito = RecaudoService._movimiento_debito(
+            total=total,
+            mayor=ctabanco.mayor_id,
+            concepto=recaudo_concepto.id if recaudo_concepto else None,
+            persona_id=None,
+            detalle=recaudo_concepto.detalle
+        )
+
+        movimientos = [movimiento_debito]
         for p in payloads:
             movimientos.extend(p['movimientos'])
 
         return {
             'fecha': base['fecha'],
             'tipo_documento': int(recaudo_tipo_documento),
-            'concepto': int(recaudo_concepto),
+            'concepto': int(recaudo_concepto.id),
             'total': total,
-            'detalle': 'SIN DEFINIR',
+            'detalle': recaudo_concepto.detalle,
             'personas': base['personas'],
             'movimientos': movimientos,
             'pagos': {
@@ -122,7 +145,7 @@ class RecaudoService:
         }
 
     @staticmethod
-    def armar_contabilizacion(data, conc_sancion, recaudo_cta_mora, recaudo_tipo_documento, ctabanco):
+    def armar_contabilizacion(data, conc_sancion, recaudo_cta_mora, recaudo_tipo_documento, ctabanco, recaudo_concepto):
         numero_cupon = data.get('numero_cupon', None)
         fecha_pago = data.get('fecha_pago', None)
         valor_pagado = data.get('valor_pagado', None)
@@ -141,7 +164,7 @@ class RecaudoService:
             total = cupon.gran_total
         elif fecha_recaudo > datetime.strftime(cupon.fecha1, "%Y-%m-%d") and fecha_recaudo <= datetime.strftime(cupon.fecha2, "%Y-%m-%d"):
             total = cupon.valor2
-            valor_diferencia = float(cupon.valor2 - cupon.valor1)
+            valor_diferencia = math.floor(float(cupon.valor2 - cupon.valor1))
 
             obj = {
                 'detalle': conc_sancion.detalle if conc_sancion else None,
@@ -169,21 +192,12 @@ class RecaudoService:
         for i in detalles_sancion:
             detalle_cupones_list.append(i)
 
-        detalle_cupones_list.append({
-            'concepto': conc_sancion.id if conc_sancion else None,
-            'mayor': ctabanco.mayor_id,
-            'persona_id': cupon.afiliado.persona.id,
-            'detalle': 'SIN DEFINIR',
-            'valor_db': float(total),
-            'valor_cr': 0,
-        })
-
         payload = {
             'fecha': fecha_recaudo,
             'tipo_documento': int(recaudo_tipo_documento),
-            'concepto': conc_sancion.id if conc_sancion else None,
+            'concepto': recaudo_concepto.id if recaudo_concepto else None,
             'total': float(total),
-            'detalle': 'SIN DEFINIR',
+            'detalle': recaudo_concepto.detalle if recaudo_concepto else None,
             'personas': cupon.afiliado.persona.id,
             'movimientos': detalle_cupones_list,
             'pagos': {
@@ -199,3 +213,25 @@ class RecaudoService:
         }
 
         return payload
+    
+    @staticmethod
+    def _movimiento_debito(total, mayor, concepto, persona_id=None, detalle=None):
+        return {
+            'concepto': concepto,
+            'mayor': mayor,
+            'persona_id': persona_id,
+            'detalle': detalle,
+            'valor_db': float(total),
+            'valor_cr': 0,
+        }
+
+    @staticmethod
+    def sincronizar_pagos(data):
+        data = list(map(lambda x: {
+            'pago_id': x['pago_id'],
+            'sincronizado': True,
+        }, data))
+        url = "https://pagodgi.webdgi.site/api/restful/sincronizacion/"
+        response = requests.post(url, json=data)
+        if response.status_code != 200:
+            raise Exception(response.json())
