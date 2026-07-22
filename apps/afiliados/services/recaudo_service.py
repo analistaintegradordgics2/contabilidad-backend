@@ -1,12 +1,13 @@
 """
-Service for handling recaudo (payment collection) operations.
+Servicio para manejar operaciones de recaudo (cobro de pagos).
 """
 
 from typing import List, Dict, Any, Optional
 from decimal import Decimal
 from datetime import datetime
 
-import requests, pdb, math
+import requests
+import math
 from dateutil import parser as dateutil_parser
 
 from django.db import transaction
@@ -23,19 +24,19 @@ from apps.parametros.models.parametrizacion import Parametros
 
 class RecaudoService:
     """
-    Service class for handling payment collection operations.
+    Clase servicio para manejar operaciones de cobro de pagos.
     
-    This service handles:
-    - Listing payments from external API
-    - Parameter management for recaudo configuration
-    - Payment accounting and document generation
-    - Payment synchronization with external systems
+    Este servicio se encarga de:
+    - Listar pagos desde API externa
+    - Gestión de parámetros de configuración de recaudo
+    - Contabilización de pagos y generación de documentos
+    - Sincronización de pagos con sistemas externos
     """
     
-    # API endpoints
+    # URLs de la API
     API_SINCRONIZACION_URL = "https://pagodgi.webdgi.site/api/restful/sincronizacion/"
     
-    # Parameter names for recaudo configuration
+    # Nombres de parámetros para configuración de recaudo
     PARAMETROS_RECAUDO = {
         'conc_sancion': 'conc_sancion',
         'recaudo_cta_mora': 'recaudo_cta_mora',
@@ -48,34 +49,34 @@ class RecaudoService:
     @staticmethod
     def listar() -> List[Dict[str, Any]]:
         """
-        Fetch and list payments from external API with afiliado information.
+        Obtener y listar pagos desde API externa con información de afiliado.
         
         Returns:
-            List of payment dictionaries with afiliado data included.
+            Lista de diccionarios de pagos con datos de afiliado incluidos.
             
         Raises:
-            Exception: If API request fails.
+            Exception: Si falla la petición a la API.
         """
         response = requests.get(RecaudoService.API_SINCRONIZACION_URL)
         
         if response.status_code != 200:
-            raise Exception(f"Error fetching payments: {response.json()}")
+            raise Exception(f"Error obteniendo pagos: {response.json()}")
         
-        return RecaudoService._enrich_payments_with_afiliado(response.json())
+        return RecaudoService._enriquecer_pagos_con_afiliado(response.json())
     
     @staticmethod
-    def _enrich_payments_with_afiliado(payments: List[Dict]) -> List[Dict[str, Any]]:
+    def _enriquecer_pagos_con_afiliado(pagos: List[Dict]) -> List[Dict[str, Any]]:
         """
-        Enrich payment data with afiliado information.
+        Enriquecer datos de pago con información de afiliado.
         
         Args:
-            payments: List of payment dictionaries from API.
+            pagos: Lista de diccionarios de pagos desde la API.
             
         Returns:
-            List of payments with afiliado data added.
+            Lista de pagos con datos de afiliado agregados.
         """
         result = []
-        for item in payments:
+        for item in pagos:
             afiliado = Afiliado.objects.filter(cupon__numero=item['ref_1']).first()
             serializer = AfiliadoResumenSerializer(afiliado).data
             item['afiliado'] = serializer
@@ -85,32 +86,32 @@ class RecaudoService:
     @staticmethod
     def listar_parametros() -> List[Dict[str, Any]]:
         """
-        List recaudo parameters with parsed values.
+        Listar parámetros de recaudo con valores parseados.
         
         Returns:
-            List of parameter dictionaries with parsed values.
+            Lista de diccionarios de parámetros con valores parseados.
         """
         parametros = Parametros.objects.filter(tipo_tab="3").order_by('orden')
         return [
             {
                 'id': x.id,
                 'parametro': x.parametro,
-                'valor': RecaudoService._parse_valor(x.tipo, x.valor)
+                'valor': RecaudoService._parsear_valor(x.tipo, x.valor)
             }
             for x in parametros
         ]
     
     @staticmethod
-    def _parse_valor(tipo: str, valor: str) -> Any:
+    def _parsear_valor(tipo: str, valor: str) -> Any:
         """
-        Parse parameter value based on its type.
+        Parsear valor de parámetro según su tipo.
         
         Args:
-            tipo: Parameter type (boolean, numeric, or string).
-            valor: Parameter value as string.
+            tipo: Tipo de parámetro (boolean, numeric, o string).
+            valor: Valor del parámetro como string.
             
         Returns:
-            Parsed value in the appropriate type.
+            Valor parseado en el tipo apropiado.
         """
         if not valor:
             return None
@@ -124,96 +125,96 @@ class RecaudoService:
     @staticmethod
     def contabilizar(data: List[Dict[str, Any]], user) -> Any:
         """
-        Process payments and create accounting documents.
+        Procesar pagos y crear documentos contables.
         
         Args:
-            data: List of payment data to process.
-            user: User performing the operation.
+            data: Lista de datos de pagos a procesar.
+            user: Usuario que realiza la operación.
             
         Returns:
-            Created document(s) result.
+            Resultado del(los) documento(s) creado(s).
             
         Raises:
-            Exception: If configuration parameters are missing.
+            Exception: Si faltan parámetros de configuración.
         """
-
+        # Mapear campos del API a los internos
         for item in data:
             item['numero_cupon'] = item['ref_1']
             item['fecha_pago'] = item['fecha_transaccion']
 
-        # Get all required parameters
-        config = RecaudoService._get_recaudo_config()
+        # Obtener todos los parámetros requeridos
+        config = RecaudoService._obtener_configuracion_recaudo()
         
-        # Build payloads for each cupon
-        payloads = RecaudoService._build_all_payloads(
+        # Construir payloads para cada cupón
+        payloads = RecaudoService._construir_todos_los_payloads(
             data,
             config
         )
         
-        # Create documents based on configuration
+        # Crear documentos según configuración
         forma_documento = int(config['recaudo_forma_documento'])
         
         if forma_documento == 1:
-            return RecaudoService._create_consolidated_document(
+            return RecaudoService._crear_documento_consolidado(
                 payloads,
                 config,
                 data,
                 user
             )
         else:
-            return RecaudoService._create_individual_documents(
+            return RecaudoService._crear_documentos_individuales(
                 payloads,
                 data,
                 user
             )
     
     @staticmethod
-    def _get_recaudo_config() -> Dict[str, Any]:
+    def _obtener_configuracion_recaudo() -> Dict[str, Any]:
         """
-        Fetch all required recaudo configuration parameters.
+        Obtener todos los parámetros de configuración de recaudo.
         
         Returns:
-            Dictionary with all configuration values.
+            Diccionario con todos los valores de configuración.
             
         Raises:
-            Exception: If any required parameter is missing.
+            Exception: Si falta algún parámetro requerido.
         """
         config = {}
-        missing_params = []
+        parametros_faltantes = []
         
-        for param_name in RecaudoService.PARAMETROS_RECAUDO.values():
-            param = Parametros.objects.filter(parametro=param_name, valor__isnull=False).exclude(valor='').first()
-            if param:
-                config[param_name] = param.valor
+        for nombre_parametro in RecaudoService.PARAMETROS_RECAUDO.values():
+            parametro = Parametros.objects.filter(parametro=nombre_parametro, valor__isnull=False).exclude(valor='').first()
+            if parametro:
+                config[nombre_parametro] = parametro.valor
             else:
-                missing_params.append(param_name)
+                parametros_faltantes.append(nombre_parametro)
         
-        if missing_params:
-            raise Exception(f"Revisar parametrización de recaudos: faltan {missing_params}")
+        if parametros_faltantes:
+            raise Exception(f"Revisar parametrización de recaudos: faltan {parametros_faltantes}")
         
         return config
     
     @staticmethod
-    def _build_all_payloads(
+    def _construir_todos_los_payloads(
         data: List[Dict[str, Any]],
         config: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """
-        Build accounting payloads for all cupones.
+        Construir payloads contables para todos los cupones.
         
         Args:
-            data: List of payment data.
-            config: Recaudo configuration dictionary.
+            data: Lista de datos de pagos.
+            config: Diccionario de configuración de recaudo.
             
         Returns:
-            List of payload dictionaries.
+            Lista de diccionarios de payloads.
         """
         ctabanco = CuentaBancaria.objects.get(pk=config['recaudo_ctabanco'])
         conc_sancion = Concepto.objects.filter(pk=config['conc_sancion']).first()
         obj_recaudo_concepto = Concepto.objects.get(pk=config['recaudo_concepto'])
         
         return [
-            RecaudoService._build_cupon_payload(
+            RecaudoService._construir_payload_cupon(
                 item,
                 conc_sancion=conc_sancion,
                 recaudo_cta_mora=config['recaudo_cta_mora'],
@@ -225,7 +226,7 @@ class RecaudoService:
         ]
     
     @staticmethod
-    def _build_cupon_payload(
+    def _construir_payload_cupon(
         data: Dict[str, Any],
         conc_sancion: Optional[Concepto],
         recaudo_cta_mora: str,
@@ -234,21 +235,21 @@ class RecaudoService:
         recaudo_concepto: Concepto
     ) -> Dict[str, Any]:
         """
-        Build accounting payload for a single cupon.
+        Construir payload contable para un cupón individual.
         
         Args:
-            data: Payment data for the cupon.
-            conc_sancion: Sancion concept (optional).
-            recaudo_cta_mora: Cuenta mora parameter.
-            recaudo_tipo_documento: Tipo documento parameter.
-            ctabanco: Cuenta bancaria instance.
-            recaudo_concepto: Recaudo concepto instance.
+            data: Datos de pago para el cupón.
+            conc_sancion: Concepto de sanción (opcional).
+            recaudo_cta_mora: Parámetro de cuenta mora.
+            recaudo_tipo_documento: Parámetro de tipo documento.
+            ctabanco: Instancia de cuenta bancaria.
+            recaudo_concepto: Instancia de concepto de recaudo.
             
         Returns:
-            Payload dictionary for document creation.
+            Diccionario de payload para creación de documento.
             
         Raises:
-            Exception: If cupon is not found.
+            Exception: Si el cupón no se encuentra.
         """
         numero_cupon = data.get('numero_cupon')
         fecha_pago = data.get('fecha_pago')
@@ -256,21 +257,21 @@ class RecaudoService:
         
         cupon = Cupon.objects.filter(numero=numero_cupon).first()
         if not cupon:
-            raise Exception(f"Cupon {numero_cupon} no encontrado")
+            raise Exception(f"Cupón {numero_cupon} no encontrado")
         
         fecha_recaudo = dateutil_parser.parse(fecha_pago).date().isoformat()
         detalles = DetalleCupones.objects.filter(cupon_id=cupon.id)
         
-        # Calculate total and sancion details
-        total, detalles_sancion = RecaudoService._calculate_cupon_total(
+        # Calcular total y detalles de sanción
+        total, detalles_sancion = RecaudoService._calcular_total_cupon(
             cupon,
             fecha_recaudo,
             conc_sancion,
             recaudo_cta_mora
         )
         
-        # Build movimientos from detalles
-        movimientos = RecaudoService._build_movimientos(
+        # Construir movimientos desde detalles
+        movimientos = RecaudoService._construir_movimientos(
             detalles,
             cupon,
             detalles_sancion
@@ -297,23 +298,23 @@ class RecaudoService:
         }
     
     @staticmethod
-    def _calculate_cupon_total(
+    def _calcular_total_cupon(
         cupon: Cupon,
         fecha_recaudo: str,
         conc_sancion: Optional[Concepto],
         recaudo_cta_mora: str
     ) -> tuple:
         """
-        Calculate the total amount and sancion details for a cupon.
+        Calcular el monto total y detalles de sanción para un cupón.
         
         Args:
-            cupon: Cupon instance.
-            fecha_recaudo: Payment date in ISO format.
-            conc_sancion: Sancion concept (optional).
-            recaudo_cta_mora: Cuenta mora parameter.
+            cupon: Instancia de Cupón.
+            fecha_recaudo: Fecha de pago en formato ISO.
+            conc_sancion: Concepto de sanción (opcional).
+            recaudo_cta_mora: Parámetro de cuenta mora.
             
         Returns:
-            Tuple of (total, sancion_details_list).
+            Tupla de (total, lista_detalles_sancion).
         """
         total = 0
         detalles_sancion = []
@@ -340,21 +341,21 @@ class RecaudoService:
         return total, detalles_sancion
     
     @staticmethod
-    def _build_movimientos(
+    def _construir_movimientos(
         detalles: QuerySet,
         cupon: Cupon,
         detalles_sancion: List[Dict]
     ) -> List[Dict[str, Any]]:
         """
-        Build movimiento entries from cupon detalles.
+        Construir entradas de movimiento desde detalles de cupón.
         
         Args:
-            detalles: QuerySet of DetalleCupones.
-            cupon: Cupon instance.
-            detalles_sancion: List of sancion detail dictionaries.
+            detalles: QuerySet de DetalleCupones.
+            cupon: Instancia de Cupón.
+            detalles_sancion: Lista de diccionarios de detalle de sanción.
             
         Returns:
-            List of movimiento dictionaries.
+            Lista de diccionarios de movimientos.
         """
         movimientos = []
         
@@ -375,22 +376,23 @@ class RecaudoService:
         return movimientos
     
     @staticmethod
-    def _create_consolidated_document(
+    def _crear_documento_consolidado(
         payloads: List[Dict[str, Any]],
         config: Dict[str, Any],
         data: List[Dict[str, Any]],
         user
     ) -> Any:
         """
-        Create a single consolidated document for all cupones.
+        Crear un documento consolidado para todos los cupones.
         
         Args:
-            payloads: List of cupon payloads.
-            config: Recaudo configuration.
-            user: User performing the operation.
+            payloads: Lista de payloads de cupones.
+            config: Configuración de recaudo.
+            data: Datos de pagos originales.
+            user: Usuario que realiza la operación.
             
         Returns:
-            Created document result.
+            Resultado del documento creado.
         """
         obj_recaudo_concepto = Concepto.objects.get(pk=config['recaudo_concepto'])
         ctabanco = CuentaBancaria.objects.get(pk=config['recaudo_ctabanco'])
@@ -408,21 +410,21 @@ class RecaudoService:
         return result
     
     @staticmethod
-    def _create_individual_documents(
+    def _crear_documentos_individuales(
         payloads: List[Dict[str, Any]],
         data: List[Dict[str, Any]],
         user
     ) -> List[Any]:
         """
-        Create individual documents for each cupon.
+        Crear documentos individuales para cada cupón.
         
         Args:
-            payloads: List of cupon payloads.
-            data: Original payment data.
-            user: User performing the operation.
+            payloads: Lista de payloads de cupones.
+            data: Datos de pagos originales.
+            user: Usuario que realiza la operación.
             
         Returns:
-            List of created document results.
+            Lista de resultados de documentos creados.
         """
         result = [DocumentoService.crear(p, user.id) for p in payloads]
         RecaudoService.sincronizar_pagos(data)
@@ -436,28 +438,28 @@ class RecaudoService:
         ctabanco: CuentaBancaria
     ) -> Dict[str, Any]:
         """
-        Consolidate multiple cupon payloads into a single document payload.
+        Consolidar múltiples payloads de cupones en un solo payload de documento.
         
         Args:
-            payloads: List of cupon payloads.
-            recaudo_concepto: Recaudo concepto instance.
-            recaudo_tipo_documento: Tipo documento parameter.
-            ctabanco: Cuenta bancaria instance.
+            payloads: Lista de payloads de cupones.
+            recaudo_concepto: Instancia de concepto de recaudo.
+            recaudo_tipo_documento: Parámetro de tipo documento.
+            ctabanco: Instancia de cuenta bancaria.
             
         Returns:
-            Consolidated payload dictionary.
+            Diccionario de payload consolidado.
             
         Raises:
-            Exception: If no payloads provided.
+            Exception: Si no hay payloads.
         """
         if not payloads:
             raise Exception("No hay cupones para contabilizar")
         
         base = payloads[0]
-        total =  math.floor(sum(Decimal(str(p['total'])) for p in payloads))
+        total = math.floor(sum(Decimal(str(p['total'])) for p in payloads))
         valor_pagado_total = sum(Decimal(str(p['pagos']['consig']['valor'])) for p in payloads)
         
-        movimiento_debito = RecaudoService._create_movimiento_debito(
+        movimiento_debito = RecaudoService._crear_movimiento_debito(
             total=float(total),
             mayor=ctabanco.mayor_id,
             concepto=recaudo_concepto.id,
@@ -485,7 +487,7 @@ class RecaudoService:
         }
     
     @staticmethod
-    def _create_movimiento_debito(
+    def _crear_movimiento_debito(
         total: float,
         mayor: int,
         concepto: int,
@@ -493,17 +495,17 @@ class RecaudoService:
         detalle: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Create a debit movement entry.
+        Crear entrada de movimiento débito.
         
         Args:
-            total: Total amount.
-            mayor: Mayor account ID.
-            concepto: Concept ID.
-            persona_id: Optional persona ID.
-            detalle: Optional detail text.
+            total: Monto total.
+            mayor: ID de cuenta mayor.
+            concepto: ID de concepto.
+            persona_id: ID de persona (opcional).
+            detalle: Texto de detalle (opcional).
             
         Returns:
-            Movimiento dictionary.
+            Diccionario de movimiento.
         """
         return {
             'concepto': concepto,
@@ -517,13 +519,13 @@ class RecaudoService:
     @staticmethod
     def sincronizar_pagos(data: List[Dict[str, Any]]) -> None:
         """
-        Synchronize payments with external API.
+        Sincronizar pagos con API externa.
         
         Args:
-            data: List of payment data to synchronize.
+            data: Lista de datos de pagos a sincronizar.
             
         Raises:
-            Exception: If synchronization fails.
+            Exception: Si falla la sincronización.
         """
         payload = [
             {
