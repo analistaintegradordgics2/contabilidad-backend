@@ -136,6 +136,11 @@ class RecaudoService:
         Raises:
             Exception: If configuration parameters are missing.
         """
+
+        for item in data:
+            item['numero_cupon'] = item['ref_1']
+            item['fecha_pago'] = item['fecha_transaccion']
+
         # Get all required parameters
         config = RecaudoService._get_recaudo_config()
         
