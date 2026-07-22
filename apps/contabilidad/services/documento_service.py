@@ -15,6 +15,8 @@ from apps.contabilidad.models.cuenta import Mayor
 from apps.contabilidad.models.concepto import Concepto
 from apps.contabilidad.models.parametros import CentroCostos
 from apps.personas.models.persona import Persona
+from apps.contabilidad.services.documento_cierre_service import DocumentoCierreService
+from typing import Dict, Any
 
 class DocumentoService:
 
@@ -362,3 +364,27 @@ class DocumentoService:
             })
         
         return Render.export_excel(data, "exportar_movimiento", False, True)
+
+    @staticmethod
+    def crear_y_cerrar_documento(payload: Dict[str, Any], user_id: int) -> Any:
+        """
+        Crear y cerrar documento contable.
+        
+        Args:
+            payload: Diccionario de payload de documento.
+            user_id: ID de usuario.
+            
+        Returns:
+            Documento creado.
+        """
+        result = DocumentoService.crear(payload, user_id)
+
+        if result['status'] != 200:
+            raise Exception(f"Error creando documento")
+
+        try:
+            DocumentoCierreService.cerrar(result['data'][0][1], user_id)
+        except Exception as e:
+            raise Exception(f"Error cerrando documento: {result['data'][0][2]} - {str(e)}")
+    
+        return result

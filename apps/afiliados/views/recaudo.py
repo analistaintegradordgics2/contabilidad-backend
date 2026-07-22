@@ -22,6 +22,7 @@ class RecaudoViewSet(viewsets.ModelViewSet):
     @action(methods=['POST'], detail=False, url_path='contabilizar')
     def contabilizar(self, request, *args, **kwargs):
         try:
-            return Response(RecaudoService.contabilizar(request.data, request.user), status=status.HTTP_200_OK)
+            service = RecaudoService()
+            return Response(service.contabilizar(request.data, request.user), status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
