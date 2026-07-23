@@ -18,7 +18,14 @@ class CuponService:
 
         if sin_generar:
             # Filtrar los cupones que no se han generado en el mes y anio indicados
-            queryset = Afiliado.objects.filter(activo=True).exclude(cupon__mes=params.get('mes'), cupon__anio__nombre=params.get('año'))
+            queryset = Afiliado.objects.filter(activo=True).exclude(
+                id__in=Cupon.objects.filter(
+                    mes=params.get('mes'),
+                    anio__nombre=params.get('año'),
+                    estado=True
+                ).values('afiliado_id')
+            )
+
         else:
             # Filtrar los cupones que se han generado en el mes y anio indicados
             mes = params.get('mes')
