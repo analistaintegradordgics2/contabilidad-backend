@@ -53,7 +53,7 @@ class CuponViewSet(ModelViewSetClass):
     @action(methods=['POST'], detail=False, url_path='generar')
     def generar_cupon(self, request, *args, **kwargs):
         try:
-            result = CuponService.generar(request.data, request.user.id)
+            result = CuponService.generar(request.data, request.user)
         except Exception as e:
             return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(result, status=status.HTTP_200_OK)
@@ -73,3 +73,11 @@ class CuponViewSet(ModelViewSetClass):
         except Exception as e:
             return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(result, status=result["status"])
+
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            instance = Cupon.objects.get(pk=kwargs['pk'])
+            CuponService.partial_update(instance, request.data, request.user)
+        except Exception as e:
+            return Response({'msg': f"Error inesperado: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"msg": "OK"}, status=status.HTTP_200_OK)

@@ -8,6 +8,7 @@ from apps.afiliados.models.cupon import Cupon
 from apps.parametros.services.empresa_service import EmpresaService
 from apps.utils.render import Render
 from apps.afiliados.serializers.cupon import CuponImprimirModelSerializer
+from django.utils import timezone
 import pdb, requests
 
 class CuponService:
@@ -44,10 +45,12 @@ class CuponService:
     def generar(request_data, user=None):
         
         sql = "select * from generar_cupon(array[%s], %s, %s, %s);"
-        params = [request_data['afiliado_id'], user, request_data['mes'], request_data['año']]
+        params = [request_data['afiliado_id'], user.id, request_data['mes'], request_data['año']]
 
         with transaction.atomic():
             resultado = execute_procedure(sql=sql, params=params)
+
+            CuponService._crear_historico_cupones([item[0] for item in resultado], user)
         
         if resultado is not None and len(resultado) > 0:
             return list(map(lambda x: {
@@ -113,3 +116,42 @@ class CuponService:
         # pdb.set_trace()
 
         return response.json()
+
+    @staticmethod
+    def _crear_historico_cupones(ids_cupones, usuario):
+        cupones = Cupon.objects.filter(id__in=ids_cupones)
+
+        historical_model = Cupon.history.model
+        historicos = []
+
+        for cupon in cupones:
+            history = historical_model(
+                **{
+                    field.attname: getattr(cupon, field.attname)
+                    for field in cupon._meta.fields
+                },
+                history_date=timezone.now(),
+                history_type='+',
+                history_user=usuario,
+                history_change_reason='Cupon Generado'
+            )
+
+            historicos.append(history)
+
+        historical_model.objects.bulk_create(historicos)
+
+    @staticmethod
+    def partial_update(cupon, data, user=None):
+        campos_permitidos = [
+            'estado'
+        ]
+
+        for campo, valor in data.items():
+            if campo in campos_permitidos:
+                setattr(cupon, campo, valor)
+
+        cupon._history_user = user
+
+        cupon.save()
+
+    
