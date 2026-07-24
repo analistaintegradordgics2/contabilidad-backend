@@ -60,7 +60,7 @@ class CiudadViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(
                 nombre__icontains=search
             )
-        serializer = CiudadModelSerializer(queryset, many=True)
+        serializer = CiudadModelSerializer(queryset[:10], many=True)
         return Response(serializer.data)
 
 
@@ -218,7 +218,7 @@ class BarrioViewSet(ModelViewSetClass):
             queryset = queryset.filter(
                 nombre__icontains=search
             )
-        serializer = BarrioModelSerializer(queryset, many=True)
+        serializer = BarrioModelSerializer(queryset[:10], many=True)
         return Response(serializer.data)
 
 class TipoViaViewSet(viewsets.ModelViewSet):
