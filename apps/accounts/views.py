@@ -41,6 +41,12 @@ class CustomTokenSerializer(TokenObtainPairSerializer):
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenSerializer
 
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        return Response({"detail": "Sesión cerrada correctamente."}, status=status.HTTP_200_OK)
+
 class DominioView(APIView):
     permission_classes = ()
 
