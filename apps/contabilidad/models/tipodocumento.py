@@ -51,7 +51,9 @@ class TiposDocumentos(BaseModel):
     dias_vencimiento    = models.IntegerField(blank=True, null=True)
     estado              = models.BooleanField(default=True)
     sucursales_id       = models.IntegerField(blank=True, null=True)
-    tipo_electronica    = models.IntegerField(blank=True, null=True)
+    tipo_electronica = models.PositiveSmallIntegerField(
+        choices=TipoElectronica.choices, blank=True, null=True
+    )
     es_nota             = models.BooleanField(default=False)
     forma_pago          = models.ForeignKey(FormaPagoElectro, blank=True, null=True, on_delete=models.CASCADE)
     medio_pago          = models.ForeignKey(MedioPagoElectro, blank=True, null=True, on_delete=models.CASCADE)

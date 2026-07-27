@@ -105,6 +105,13 @@ class PagoDocumento(BaseModel):
         on_delete=models.PROTECT
     )
 
+    forma_pago_electro = models.ForeignKey(
+        FormaPagoElectro,
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True
+    )
+
 class PagoEfectivo(BaseModel):
     pago  = models.OneToOneField(PagoDocumento, on_delete=models.CASCADE, related_name='detalle_efectivo')
     valor = models.DecimalField(max_digits=18, decimal_places=2)

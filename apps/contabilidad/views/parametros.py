@@ -9,3 +9,15 @@ class ParametrosViewSet(viewsets.ViewSet):
     def tipo_retencion(self, request):
         query = list(TipoRetencion.objects.all().values("id", "nombre"))
         return Response(query)
+
+
+    @action(methods=['get'], detail=False, url_path='tipo_electronica')
+    def tipo_electronica(self, request):
+        query = [
+            {"id": 1, "nombre": "Factura electrónica"},
+            {"id": 2, "nombre": "Nota débito"},
+            {"id": 3, "nombre": "Nota crédito"},
+            {"id": 4, "nombre": "Documento soporte"},
+            {"id": 5, "nombre": "Nota ajuste"},
+        ]
+        return Response(query)

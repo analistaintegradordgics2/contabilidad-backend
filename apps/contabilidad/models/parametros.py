@@ -38,3 +38,10 @@ class TipoRetencion(models.Model):
     class Meta:
         db_table = 'contabilidad_tipos_retenciones'
 
+class TipoElectronica(models.IntegerChoices):
+    FACTURA = 1, 'Factura electrónica'
+    NOTA_DEBITO = 2, 'Nota débito'
+    NOTA_CREDITO = 3, 'Nota crédito'
+    DOCUMENTO_SOPORTE = 4, 'Documento soporte'
+    NOTA_AJUSTE = 5, 'Nota ajuste'
+

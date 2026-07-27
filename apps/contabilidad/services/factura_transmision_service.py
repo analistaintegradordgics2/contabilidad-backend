@@ -1,13 +1,16 @@
 import datetime
-import json
+import json, pdb
 
 from requests import Session
 from zeep import Client
 from zeep.transports import Transport
 from lxml import etree
+from django.utils import timezone
 
-from apps.contabilidad.models.documento import Documentos, FactElectronicaDocumento, DetalleFacturas
+from apps.contabilidad.models.documento import Documentos, FactElectronicaDocumento, DetalleFacturas, TiposDocumentos
+from apps.contabilidad.models.parametros import TipoElectronica
 from apps.parametros.models.parametrizacion import Parametros
+from apps.personas.models.persona import PersonaTributario
 
 from apps.utils.funciones import Funciones
 
@@ -48,6 +51,10 @@ class _FacturaTransmisionContext:
             '<x:Header>{}</x:Header><x:Body>{}</x:Body></x:Envelope>'
         )
         self.url = None
+        try:
+            self.fact_electronica = obj_factura.facturacion_electronica
+        except FactElectronicaDocumento.DoesNotExist:
+            self.fact_electronica = None
 
 
 class FacturacionTransmisionService:
@@ -64,10 +71,7 @@ class FacturacionTransmisionService:
     # ------------------------------------------------------------------ #
 
     def _cargar_parametros(self):
-        self.tipo_fac_arr_id = self._valor_parametro('tipo_fac_arr_id')
-        self.nota_credito_id = self._valor_parametro('nota_credito_id')
-        self.nota_debito_id = self._valor_parametro('nota_debito_id')
-        self.nota_ajuste_id = self._valor_parametro('nota_ajuste_id')
+        self.tipo_fact_afiliado_id = self._valor_parametro('tipo_fact_afiliado_id')
         self.doc_soporte_id = self._valor_parametro('doc_soporte_id')
         self.regimen_simple = self._valor_parametro('regimen_simple')
         self.responsable_iva = self._valor_parametro('responsable_iva')
@@ -133,8 +137,10 @@ class FacturacionTransmisionService:
             if numero_generado is not None:
                 cfe.numero_generado = numero_generado
             cfe.save()
+
+            return cfe
         else:
-            FactElectronicaDocumento.objects.create(
+            return FactElectronicaDocumento.objects.create(
                 documento_id=documento_id,
                 estado_id=estado_id,
                 numero_generado=numero_generado,
@@ -165,7 +171,7 @@ class FacturacionTransmisionService:
 
         ctx = _FacturaTransmisionContext(obj_factura)
 
-        datos_existentes = json.loads(obj_factura.webservice) if obj_factura.webservice else []
+        datos_existentes = json.loads(ctx.fact_electronica.webservice) if ctx.fact_electronica and ctx.fact_electronica.webservice else []
         datos_webservice = []
 
         self._resolver_tipo_documento_y_endpoint(ctx)
@@ -192,14 +198,15 @@ class FacturacionTransmisionService:
     def _resolver_tipo_documento_y_endpoint(self, ctx):
         obj_factura = ctx.obj_factura
         documento = ctx.documento_referenciado
-        tipo_doc_referenciado = (
-            documento.tipo_documentos.tipo_documento_nota_credito_id if documento is not None else None
+        tipo_doc_referenciado_id = (
+            documento.tipo_documento.tipo_documento_nota_credito_id if documento is not None else None
         )
+        tipo_doc_referenciado = TiposDocumentos.objects.filter(id=tipo_doc_referenciado_id).first()
 
         es_documento_soporte_o_ajuste = (
-            obj_factura.tipo_documentos.es_nota is True and tipo_doc_referenciado == int(self.nota_ajuste_id)
+            obj_factura.tipo_documento.es_nota is True and tipo_doc_referenciado and tipo_doc_referenciado.tipo_electronica == TipoElectronica.NOTA_AJUSTE
         ) or (
-            obj_factura.tipo_documentos_id == int(self.doc_soporte_id) and not obj_factura.tipo_documentos.es_nota
+            obj_factura.tipo_documento_id == int(self.doc_soporte_id) and not obj_factura.tipo_documento.es_nota
         )
 
         if es_documento_soporte_o_ajuste:
@@ -226,7 +233,7 @@ class FacturacionTransmisionService:
 
             ctx.codigo_tipo_documento = 31  # NIT
 
-            if not obj_factura.tipo_documentos.es_nota:
+            if not obj_factura.tipo_documento.es_nota:
                 ctx.tipo_documento_trans = 12  # Documento soporte
             else:
                 ctx.tipo_documento_trans = 13  # Nota de ajuste
@@ -234,24 +241,25 @@ class FacturacionTransmisionService:
                     2, obj_factura.referencia
                 )
 
-        elif obj_factura.tipo_documentos.es_nota is True:
+        elif obj_factura.tipo_documento.es_nota is True:
             ctx.funcion = 'enviarNota'
             ctx.url = "https://www.pruebas.v2.ifelix.co/API-FELIX/FacturaElectronicaWS?wsdl"
             if self.fact_elec_produccion.lower() == "true":
                 ctx.url = "https://www.ifelix.co/API-FELIX/FacturaElectronicaWS?wsdl"
 
-            tipo_doc_credito = documento.tipo_documentos.tipo_documento_nota_credito_id if documento is not None else None
-            tipo_doc_debito = documento.tipo_documentos.tipo_documento_nota_debito_id if documento is not None else None
+            tipo_doc_credito = documento.tipo_documento.tipo_documento_nota_credito_id if documento is not None else None
+            tipo_doc_debito = documento.tipo_documento.tipo_documento_nota_debito_id if documento is not None else None
 
-            if tipo_doc_credito == obj_factura.tipo_documentos_id and tipo_doc_credito != int(self.nota_ajuste_id):
+            codigo_concepto = ''
+            if tipo_doc_credito == obj_factura.tipo_documento_id and obj_factura.tipo_documento.tipo_electronica == TipoElectronica.NOTA_CREDITO:
                 ctx.tipo_documento_trans = 3
                 codigo_concepto = 6 if obj_factura.nota_parcial else 2
                 ctx.tipo_operacion = 20  # Nota Crédito que referencia una factura electrónica
-            elif tipo_doc_debito == obj_factura.tipo_documentos_id and tipo_doc_debito != int(self.nota_ajuste_id):
+            elif tipo_doc_debito == obj_factura.tipo_documento_id and obj_factura.tipo_documento.tipo_electronica == TipoElectronica.NOTA_DEBITO:
                 ctx.tipo_documento_trans = 4
                 codigo_concepto = 3  # Cambio de valor
                 ctx.tipo_operacion = 30  # Nota Débito que referencia una factura electrónica
-            else:
+            elif obj_factura.tipo_documento == TipoElectronica.NOTA_AJUSTE:
                 codigo_concepto = ''
 
             ctx.campos_nota = "<codigoConcepto>{}</codigoConcepto><numeroReferenciaFactura>{}</numeroReferenciaFactura>".format(
@@ -263,7 +271,7 @@ class FacturacionTransmisionService:
                 ctx.url = "https://www.ifelix.co/API-FELIX/FacturaElectronicaWS?wsdl"
 
         if ctx.tipo_operacion is None:
-            ctx.tipo_operacion = self._get_tipo_operacion(obj_factura.operacion)
+            ctx.tipo_operacion = self._get_tipo_operacion(ctx.fact_electronica.operacion if ctx.fact_electronica else None)
 
     # ------------------------------------------------------------------ #
     # Construcción del XML de cliente/adquiriente
@@ -271,26 +279,30 @@ class FacturacionTransmisionService:
 
     def _construir_cliente_xml(self, ctx):
         persona = ctx.persona
+        persona_tributario = self._get_persona_tributario(persona)
         obj_factura = ctx.obj_factura
 
-        if persona.contribuyente_id != 1:
+        contribuyente_id = persona_tributario.contribuyente_id if persona_tributario else None
+
+        if contribuyente_id != 1:
             nombres_persona = "{} {}".format(persona.p_nombre or '', persona.s_nombre or '')
         else:
             nombres_persona = persona.n_completo
 
         apellidos_persona = (
             "{} {}".format(persona.p_apellido or '', persona.s_apellido or '')
-            if persona.contribuyente_id != 1 else ""
+            if contribuyente_id != 1 else ""
         )
 
         direccion = persona.direcciones_personas.filter(incluir_a_factura=True).exclude(eliminado=True).first()
-        coddane = direccion.ciudad.coddane
-        coddpto = coddane[0:2]
-        codeciudad = coddane[2:]
+        coddane = direccion.ciudad.coddane if direccion and direccion.ciudad else None
+        coddpto = coddane[0:2] if coddane else ''
+        codeciudad = coddane[2:] if coddane else ''
 
-        tipo_persona = 1 if persona.contribuyente and persona.contribuyente.id == 1 else 2
+        tipo_persona = 1 if contribuyente_id == 1 else 2
+        tipo_regimen_id = persona_tributario.tipo_regimen_id if persona_tributario else None
         tipo_regimen = (
-            48 if obj_factura.personas.tipo_regimen_id in (self.regimen_simple, self.responsable_iva) else 49
+            48 if tipo_regimen_id in (self.regimen_simple, self.responsable_iva) else 49
         )
 
         return (
@@ -309,12 +321,12 @@ class FacturacionTransmisionService:
             apellidos_persona,
             "COP",
             ctx.codigo_tipo_documento,
-            "01" if persona.tipo_regimen is not None and persona.tipo_regimen.id == int(self.responsable_iva) else "",
+            "01" if tipo_regimen_id == int(self.responsable_iva) else "",
             tipo_persona,
             tipo_regimen,
             persona.email,
             coddpto,
-            direccion.descripcion,
+            direccion.descripcion if direccion else "",
             persona.nit_tributario if persona.nit_tributario is not None else persona.documento,
             ctx.codigo_tipo_documento,
             codeciudad,
@@ -322,7 +334,7 @@ class FacturacionTransmisionService:
             tipo_persona,
             nombres_persona,
             "CO",
-            persona.tipo_regimen is not None and persona.tipo_regimen.id == int(self.responsable_iva),
+            tipo_regimen_id == int(self.responsable_iva),
             obj_factura.movil,
         )
 
@@ -337,11 +349,7 @@ class FacturacionTransmisionService:
         obj_det = DetalleFacturas.objects.filter(documentos_id=obj_factura.id)
 
         for det in obj_det:
-            mandantes = []
-            if det.mandantes is not None and self.nota_credito_id != obj_factura.tipo_documentos_id:
-                mandantes = json.loads(det.mandantes)
 
-            lista_tercero = self._construir_lista_tercero_xml(ctx, mandantes)
             lista_tarifa_impuesto = self._construir_lista_tarifa_impuesto_xml(ctx, det)
 
             producto_servicio += (
@@ -349,7 +357,7 @@ class FacturacionTransmisionService:
                 '<fechaInicio></fechaInicio><item></item><marca></marca><modelo></modelo><nombre>{}</nombre>'
                 '<detalle>{}</detalle><precioReferencia></precioReferencia><regalo>{}</regalo><servicio></servicio>'
                 '<servicioTercerizado></servicioTercerizado><tasaCargo></tasaCargo><tasaDescuentos></tasaDescuentos>'
-                '<tasaImpuestos></tasaImpuestos>{}<unidadMedida>{}</unidadMedida><valorBase></valorBase>'
+                '<tasaImpuestos></tasaImpuestos><unidadMedida>{}</unidadMedida><valorBase></valorBase>'
                 '<valorCargo></valorCargo><valorDescuento></valorDescuento><valorImpuestos></valorImpuestos>'
                 '<valorTotal>{}</valorTotal><valorUnitario>{}</valorUnitario>{}</productoServicio>'
             ).format(
@@ -358,7 +366,6 @@ class FacturacionTransmisionService:
                 det.concepto.detalle,
                 det.detalle,
                 False,
-                lista_tercero,
                 "94",
                 round(float(det.valor) + (float(det.valor) * (float(det.piva) / 100))),
                 float(det.valor),
@@ -367,36 +374,6 @@ class FacturacionTransmisionService:
 
         return producto_servicio
 
-    def _construir_lista_tercero_xml(self, ctx, mandantes):
-        obj_factura = ctx.obj_factura
-        observacion_contrato = obj_factura.contrato.observacion_factura if obj_factura.contrato is not None else ''
-        lista_tercero = ""
-
-        for item in mandantes:
-            prop = None
-            if item.get("Identificacion") and obj_factura.inmueble:
-                prop = obj_factura.inmueble.inmueble_propietario.filter(
-                    activo=True, persona__documento=item['Identificacion'].split('-')[0]
-                )
-
-            porcentaje = 100
-            if prop and prop.exists():
-                prop = prop.first()
-                if ctx.nota == "":
-                    ctx.nota += "INGRESOS RECIBIDOS PARA TERCEROS:"
-                ctx.nota += " Propietario {} - Documento: {} % Part {}".format(
-                    item['Nombre'], prop.persona.documento, prop.participacion
-                )
-                porcentaje = prop.participacion
-
-            lista_tercero += (
-                '<listaTercero><codigoTipoDocumento>{}</codigoTipoDocumento><documento>{}</documento>'
-                '<nombres>{}</nombres><valor>{}</valor><porcentaje>{}</porcentaje></listaTercero>'
-            ).format(item['TipoIdentificacion'], item['Identificacion'], item['Nombre'], item['Valor'], porcentaje)
-
-        ctx.nota += (' Observación del contrato: ' + observacion_contrato) if observacion_contrato else ''
-        return lista_tercero
-
     def _construir_lista_tarifa_impuesto_xml(self, ctx, det):
         obj_factura = ctx.obj_factura
         lista = ""
@@ -404,30 +381,24 @@ class FacturacionTransmisionService:
         if float(det.piva) > 0:
             lista += self.build_trasmision_impuesto_xml("01", "Tarifa general", float(det.piva), "")
 
-        if det.concepto.retencion is True:
-            if obj_factura.prteiva > 0:
-                prteiva = (float(det.prteiva) if det.prteiva > 0 else float(obj_factura.prteiva)) \
-                    if det.prteiva is not None else float(obj_factura.prteiva)
-                lista += self.build_trasmision_impuesto_xml("05", "Tarifa general", prteiva, "")
+        if obj_factura.prteiva > 0:
+            prteiva = (float(det.prteiva) if det.prteiva > 0 else float(obj_factura.prteiva)) \
+                if det.prteiva is not None else float(obj_factura.prteiva)
+            lista += self.build_trasmision_impuesto_xml("05", "Tarifa general", prteiva, "")
 
-            if obj_factura.prteica > 0:
-                prteica = (float(det.prteica) if det.prteica > 0 else float(obj_factura.prteica)) \
-                    if det.prteica is not None else float(obj_factura.prteica)
-                prteica *= 10
-                lista += self.build_trasmision_impuesto_xml("07", f"Tarifa {obj_factura.ciudad}", prteica, "")
+        if obj_factura.prteica > 0:
+            prteica = (float(det.prteica) if det.prteica > 0 else float(obj_factura.prteica)) \
+                if det.prteica is not None else float(obj_factura.prteica)
+            prteica *= 10
+            lista += self.build_trasmision_impuesto_xml("07", f"Tarifa {obj_factura.ciudad}", prteica, "")
 
-            if obj_factura.prtefte > 0:
-                persona = obj_factura.personas
-                if obj_factura.operacion == 'PROPIETARIO':
-                    concepto = "Honorarios y comisiones personas naturales que suscriban contrato o cuya sumatoria de los pagos o abonos en cuenta superen las 3.300 UVT ($105.135.000)"
-                elif persona.tipo_actividad_id == 1:
-                    concepto = "Arrendamiento de bienes inmuebles (declarantes)"
-                else:
-                    concepto = "Arrendamiento de bienes inmuebles (no declarantes)"
+        if obj_factura.prtefte > 0:
+            persona = obj_factura.personas
+            concepto = "SIN DEFINIR"
 
-                prtefte = (float(det.prtefuente) if det.prtefuente > 0 else float(obj_factura.prtefte)) \
-                    if det.prtefuente is not None else float(obj_factura.prtefte)
-                lista += self.build_trasmision_impuesto_xml("06", concepto, prtefte, "")
+            prtefte = (float(det.prtefuente) if det.prtefuente > 0 else float(obj_factura.prtefte)) \
+                if det.prtefuente is not None else float(obj_factura.prtefte)
+            lista += self.build_trasmision_impuesto_xml("06", concepto, prtefte, "")
 
         return lista
 
@@ -444,6 +415,10 @@ class FacturacionTransmisionService:
 
     def _construir_payload(self, ctx, cliente_xml, producto_servicio_xml):
         obj_factura = ctx.obj_factura
+
+        pago_documento = obj_factura.pagos.first()
+
+        tipo_documento = obj_factura.tipo_documento
 
         xml_header = (
             '<wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" '
@@ -470,8 +445,8 @@ class FacturacionTransmisionService:
         ).format(
             ctx.funcion,
             cliente_xml,
-            obj_factura.forma_pago.codigo,
-            obj_factura.medio_pago.codigo,
+            pago_documento.forma_pago_electro.codigo if pago_documento and pago_documento.forma_pago_electro is not None else "",
+            pago_documento.medio_pago.codigo if pago_documento and pago_documento.medio_pago is not None else "",
             "COP",
             ctx.tipo_documento_trans,
             ctx.tipo_documento_trans,
@@ -479,11 +454,11 @@ class FacturacionTransmisionService:
             self.username,
             self.username,
             datetime.datetime.combine(obj_factura.fecha, datetime.datetime.min.time()).strftime("%Y-%m-%dT%H:%M:%S"),
-            datetime.datetime.combine(obj_factura.fechaven, datetime.datetime.min.time()).strftime("%Y-%m-%dT%H:%M:%S"),
-            datetime.datetime.combine(obj_factura.fechaven, datetime.datetime.min.time()).strftime("%Y-%m-%dT%H:%M:%S"),
+            datetime.datetime.combine(obj_factura.fecha_vencimiento, datetime.datetime.min.time()).strftime("%Y-%m-%dT%H:%M:%S"),
+            datetime.datetime.combine(obj_factura.fecha_vencimiento, datetime.datetime.min.time()).strftime("%Y-%m-%dT%H:%M:%S"),
             ctx.nota,
             obj_factura.numero,
-            obj_factura.tipo_documentos.prefijo,
+            tipo_documento.prefijo,
             producto_servicio_xml,
             obj_factura.subtotal,
             obj_factura.gtotal,
@@ -531,25 +506,25 @@ class FacturacionTransmisionService:
         }
 
         if jresp["tipo"] != "exito":
-            self._actualizar_estado_fact_electronica(obj_factura.id, estado_id=3)
-            obj_factura.observacion_electronica = " | ".join(jresp["listaMensajes"]) if jresp["listaMensajes"] else ''
-            datos["mensaje_dian"] = obj_factura.observacion_electronica
+            cfe = self._actualizar_estado_fact_electronica(obj_factura.id, estado_id=3)
+            cfe.observacion = " | ".join(jresp["listaMensajes"]) if jresp["listaMensajes"] else ''
+            datos["mensaje_dian"] = cfe.observacion
             datos_webservice.append(datos)
             datos_webservice.extend(datos_existentes)
-            obj_factura.webservice = json.dumps(datos_webservice, indent=4, ensure_ascii=False)
-            obj_factura.save()
+            cfe.webservice = json.dumps(datos_webservice, indent=4, ensure_ascii=False)
+            cfe.fecha_envio = timezone.now()
+            cfe.save()
 
             raise FacturacionElectronicaError("Por favor revisar la factura rechazada.")
 
-        # Nota: en la rama Felix el 'numero_generado' original siempre se guardaba como None
-        # tras un envío exitoso (así estaba en el código fuente). Se mantiene ese comportamiento.
-        self._actualizar_estado_fact_electronica(obj_factura.id, estado_id=4, numero_generado=None)
-        obj_factura.observacion_electronica = "Factura Transmitida Correctamente."
-        datos["mensaje_dian"] = obj_factura.observacion_electronica
+        cfe = self._actualizar_estado_fact_electronica(obj_factura.id, estado_id=4, numero_generado=None)
+        cfe.observacion = "Factura Transmitida Correctamente."
+        datos["mensaje_dian"] = cfe.observacion
         datos_webservice.append(datos)
         datos_webservice.extend(datos_existentes)
-        obj_factura.webservice = json.dumps(datos_webservice, indent=4, ensure_ascii=False)
-        obj_factura.save()
+        cfe.webservice = json.dumps(datos_webservice, indent=4, ensure_ascii=False)
+        cfe.fecha_envio = timezone.now()
+        cfe.save()
 
     def _log_request(self, ctx, payload):
         return {
@@ -631,12 +606,14 @@ class FacturacionTransmisionService:
     # ------------------------------------------------------------------ #
 
     def _get_tipo_operacion(self, operacion):
-        raise NotImplementedError(
-            "Mover aquí la implementación real de ViewSet.getTipoOperacion()"
-        )
-
-    def _get_ciudad_cod_dane(self, personas_id):
-        raise NotImplementedError(
-            "Mover aquí la implementación real de ViewSet.getCiudadCodDane() "
-            "(nota: en la rama Felix no se usaba directamente, revisa si aún es necesaria)"
-        )
+        tipo = ''
+        if operacion == 'ARRENDATARIO':
+            tipo = '11'
+        else:
+            tipo = '10'
+        return tipo
+    def _get_persona_tributario(self, persona):
+        try:
+            return PersonaTributario.objects.get(persona=persona)
+        except:
+            return None
