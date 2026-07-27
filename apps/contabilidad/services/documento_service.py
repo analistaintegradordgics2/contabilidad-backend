@@ -234,7 +234,11 @@ class DocumentoService:
             if resultado and resultado[0][0]:
                 for p in encabezado.get('pagos', []):
                     doc = Documentos.objects.get(pk=resultado[0][0])
-                    pago = PagoDocumento()
+                    pago_existente = PagoDocumento.objects.filter(documento_id = doc.id).first()
+                    if pago_existente:
+                        pago = pago_existente
+                    else:
+                        pago = PagoDocumento()
                     pago.documento_id = doc.id
                     pago.forma_pago_id = encabezado.get('fpago', 3)
                     pago.forma_pago_electro_id = p.get('forma_pago_electro', None)
