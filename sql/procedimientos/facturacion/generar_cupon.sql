@@ -37,16 +37,21 @@ DECLARE
 
     v_subtotal numeric;
     v_iva numeric;
+    v_total_retenciones numeric;
     v_gtotal numeric;
+    v_retefuente numeric;
+    v_reteiva numeric;
+    v_reteica numeric;
 
     v_fecha1 date;
     v_fecha2 date;
     v_valor2 numeric;
     v_mes_id integer;
     v_anio_id integer;
+    v_val_ret numeric;
 BEGIN
 
-    -- ═══════════════ Parámetros ═══════════════
+    -- Parametros
     SELECT valor::integer INTO v_tipo_documento_cupon FROM parametros_parametros WHERE parametro = 'tipo_documento_cupon';
     SELECT valor::integer INTO v_dia_cobro_sinrecargo FROM parametros_parametros WHERE parametro = 'dia_cobro_sinrecargo';
     SELECT valor::integer INTO v_dia1_cobro_conrecargo FROM parametros_parametros WHERE parametro = 'dia1_cobro_conrecargo';
@@ -69,15 +74,18 @@ BEGIN
         
         v_iva := 0;
         v_subtotal := 0;
-        v_gtotal := 0;
+        v_total_retenciones := 0;
+        v_retefuente := 0;
+        v_reteiva := 0;
+        v_reteica := 0;
 
-        -- ═══════════════ Datos del Afiliado ═══════════════
+        -- Datos del Afiliado
         SELECT persona_id INTO v_persona_id
         FROM afiliados_afiliado
         WHERE id = v_afiliado_id AND activo = true;
 
         IF v_persona_id IS NULL THEN
-            RAISE EXCEPTION 'Afiliado % no existe o no está activo', v_afiliado_id;
+            RAISE EXCEPTION 'Afiliado % no existe o no esta activo', v_afiliado_id;
         END IF;
 
         select 
@@ -141,7 +149,7 @@ BEGIN
         left join personas_contribuyente pc on pc.id = ppt.contribuyente_id
         where pp.id = v_persona_id;
 
-        -- ═══════════════ Calcular el nuevo nro de cupon ═══════════════
+        -- Calcular el nuevo nro de cupon
         v_numero_tipodoc := v_numero_tipodoc + 1;
 
         UPDATE contabilidad_tipos_documentos
@@ -153,10 +161,11 @@ BEGIN
             lpad(v_numero_tipodoc::text, v_ndigitos_tipodoc, '0')
         );
 
+        -- Subtotal y IVA de conceptos NO retencion
         select 
-            coalesce(sum(acc.valor), 0), 
+            coalesce(sum(case when not cc.es_retencion then acc.valor else 0 end), 0), 
             coalesce(sum(
-                case when cc.iva then acc.valor * (v_iva_general / 100) else 0 end
+                case when not cc.es_retencion and cc.iva then acc.valor * (v_iva_general / 100) else 0 end
             ), 0)
         into v_subtotal, v_iva
         FROM afiliados_afiliado_concepto_causacion acc
@@ -164,19 +173,120 @@ BEGIN
         WHERE acc.afiliado_id = v_afiliado_id
         AND cc.activo  = true;
 
-        v_gtotal := v_subtotal + v_iva;
+        -- Calcular retenciones especificas (ReteFuente, ReteIVA, ReteICA) si la persona aplica
+        SELECT COALESCE(SUM(
+            ROUND(
+                ((acc.porcentaje / 100.0) * (
+                    SELECT COALESCE(SUM(
+                        CASE WHEN tr.base_sobre = 'IVA' THEN
+                            CASE WHEN cc_b.iva_incluido THEN
+                                acc_b.valor - (acc_b.valor / (1 + (v_iva_general / 100)))
+                            WHEN cc_b.iva THEN
+                                acc_b.valor * (v_iva_general / 100)
+                            ELSE 0 END
+                        ELSE
+                            acc_b.valor
+                        END
+                    ), 0)
+                    FROM afiliados_afiliado_concepto_causacion acc_b
+                    JOIN afiliados_concepto_causacion cc_b ON cc_b.id = acc_b.concepto_id
+                    JOIN afiliados_concepto_causacion_retenciones m2m ON m2m.conceptocausacion_id = cc_b.id
+                    WHERE acc_b.afiliado_id = v_afiliado_id
+                    AND cc_b.activo = true
+                    AND NOT cc_b.es_retencion
+                    AND m2m.tiporetencion_id = cc.tipo_retencion_id
+                )), 2
+            )
+        ), 0) INTO v_retefuente
+        FROM afiliados_afiliado_concepto_causacion acc
+        JOIN afiliados_concepto_causacion cc ON cc.id = acc.concepto_id
+        JOIN contabilidad_tipos_retenciones tr ON tr.id = cc.tipo_retencion_id
+        WHERE acc.afiliado_id = v_afiliado_id
+        AND cc.activo = true
+        AND cc.es_retencion = true
+        AND tr.id = 1
+        AND aplica_retencion(v_persona_id, tr.id::integer);
 
-        -- ═══════════════ Fechas y valores ═══════════════
+        SELECT COALESCE(SUM(
+            ROUND(
+                ((acc.porcentaje / 100.0) * (
+                    SELECT COALESCE(SUM(
+                        CASE WHEN tr.base_sobre = 'IVA' THEN
+                            CASE WHEN cc_b.iva_incluido THEN
+                                acc_b.valor - (acc_b.valor / (1 + (v_iva_general / 100)))
+                            WHEN cc_b.iva THEN
+                                acc_b.valor * (v_iva_general / 100)
+                            ELSE 0 END
+                        ELSE
+                            acc_b.valor
+                        END
+                    ), 0)
+                    FROM afiliados_afiliado_concepto_causacion acc_b
+                    JOIN afiliados_concepto_causacion cc_b ON cc_b.id = acc_b.concepto_id
+                    JOIN afiliados_concepto_causacion_retenciones m2m ON m2m.conceptocausacion_id = cc_b.id
+                    WHERE acc_b.afiliado_id = v_afiliado_id
+                    AND cc_b.activo = true
+                    AND NOT cc_b.es_retencion
+                    AND m2m.tiporetencion_id = cc.tipo_retencion_id
+                )), 2
+            )
+        ), 0) INTO v_reteiva
+        FROM afiliados_afiliado_concepto_causacion acc
+        JOIN afiliados_concepto_causacion cc ON cc.id = acc.concepto_id
+        JOIN contabilidad_tipos_retenciones tr ON tr.id = cc.tipo_retencion_id
+        WHERE acc.afiliado_id = v_afiliado_id
+        AND cc.activo = true
+        AND cc.es_retencion = true
+        AND tr.id = 2
+        AND aplica_retencion(v_persona_id, tr.id::integer);
+
+        SELECT COALESCE(SUM(
+            ROUND(
+                ((acc.porcentaje / 100.0) * (
+                    SELECT COALESCE(SUM(
+                        CASE WHEN tr.base_sobre = 'IVA' THEN
+                            CASE WHEN cc_b.iva_incluido THEN
+                                acc_b.valor - (acc_b.valor / (1 + (v_iva_general / 100)))
+                            WHEN cc_b.iva THEN
+                                acc_b.valor * (v_iva_general / 100)
+                            ELSE 0 END
+                        ELSE
+                            acc_b.valor
+                        END
+                    ), 0)
+                    FROM afiliados_afiliado_concepto_causacion acc_b
+                    JOIN afiliados_concepto_causacion cc_b ON cc_b.id = acc_b.concepto_id
+                    JOIN afiliados_concepto_causacion_retenciones m2m ON m2m.conceptocausacion_id = cc_b.id
+                    WHERE acc_b.afiliado_id = v_afiliado_id
+                    AND cc_b.activo = true
+                    AND NOT cc_b.es_retencion
+                    AND m2m.tiporetencion_id = cc.tipo_retencion_id
+                )), 2
+            )
+        ), 0) INTO v_reteica
+        FROM afiliados_afiliado_concepto_causacion acc
+        JOIN afiliados_concepto_causacion cc ON cc.id = acc.concepto_id
+        JOIN contabilidad_tipos_retenciones tr ON tr.id = cc.tipo_retencion_id
+        WHERE acc.afiliado_id = v_afiliado_id
+        AND cc.activo = true
+        AND cc.es_retencion = true
+        AND tr.id = 3
+        AND aplica_retencion(v_persona_id, tr.id::integer);
+
+        v_total_retenciones := v_retefuente + v_reteiva + v_reteica;
+        v_gtotal := v_subtotal + v_iva - v_total_retenciones;
+
+        -- Fechas y valores
         v_fecha1 := make_date(in_anio, in_mes, v_dia_cobro_sinrecargo);
         v_fecha2 := make_date(in_anio, in_mes, v_dia1_cobro_conrecargo);
 
         v_valor2 := v_gtotal + v_gtotal * (v_porc_recargo1::float / 100);
 
-        -- ═══════════════ Mes y año ═══════════════
+        -- Mes y ano
         v_mes_id := (select id from parametros_mes where numero = case when in_mes < 10 then concat('0',in_mes::varchar) else in_mes::varchar end);
         v_anio_id := (select id from parametros_anio where nombre = in_anio);
 
-        -- ═══════════════ Insertar cupon ═══════════════
+        -- Insertar cupon
         INSERT INTO afiliados_cupones (
             fecha,
             numero,
@@ -198,7 +308,10 @@ BEGIN
             mes_id,
             usuario_id,
             eliminado,
-            unica_fecha          
+            unica_fecha,
+            retefuente,
+            reteiva,
+            reteica
         ) VALUES (
             CURRENT_DATE,
             v_numero_cupon,
@@ -220,40 +333,95 @@ BEGIN
             v_mes_id,
             in_usuario_id,
             false,
-            false
+            false,
+            v_retefuente,
+            v_reteiva,
+            v_reteica
         ) RETURNING id, numero INTO v_out_id, v_out_numero;
 
+        -- Insertar detalle cupon
         FOR rec IN (
             SELECT
                 acc.detalle,
                 acc.valor,
+                acc.porcentaje,
                 cc.iva,
                 cc.concepto_id,
-                cc.id as concepto_causacion
+                cc.id as concepto_causacion,
+                cc.es_retencion,
+                cc.tipo_retencion_id,
+                tr.base_sobre
             FROM afiliados_afiliado_concepto_causacion acc
             JOIN afiliados_concepto_causacion cc ON cc.id = acc.concepto_id
+            LEFT JOIN contabilidad_tipos_retenciones tr ON tr.id = cc.tipo_retencion_id
             WHERE acc.afiliado_id = v_afiliado_id
             AND cc.activo  = true
         ) LOOP
 
-            -- ═══════════════ Insertar detalle cupon ═══════════════
-            INSERT INTO afiliados_detalle_cupones (
-                cupon_id,
-                cantidad,
-                detalle,
-                valor,
-                piva,
-                concepto_id,
-                concepto_causacion_id
-            ) VALUES (
-                v_out_id,
-                '1',
-                rec.detalle,
-                rec.valor,
-                case when rec.iva is true then v_iva_general else 0 end,
-                rec.concepto_id,
-                rec.concepto_causacion
-            );
+            IF rec.es_retencion THEN
+                -- Solo insertar si la persona aplica retencion
+                IF aplica_retencion(v_persona_id, rec.tipo_retencion_id::integer) THEN
+                    SELECT COALESCE(SUM(
+                        CASE WHEN rec.base_sobre = 'IVA' THEN
+                            CASE WHEN cc_b.iva_incluido THEN
+                                acc_b.valor - (acc_b.valor / (1 + (v_iva_general / 100)))
+                            WHEN cc_b.iva THEN
+                                acc_b.valor * (v_iva_general / 100)
+                            ELSE 0 END
+                        ELSE
+                            acc_b.valor
+                        END
+                    ), 0) INTO v_val_ret
+                    FROM afiliados_afiliado_concepto_causacion acc_b
+                    JOIN afiliados_concepto_causacion cc_b ON cc_b.id = acc_b.concepto_id
+                    JOIN afiliados_concepto_causacion_retenciones m2m ON m2m.conceptocausacion_id = cc_b.id
+                    WHERE acc_b.afiliado_id = v_afiliado_id
+                    AND cc_b.activo = true
+                    AND NOT cc_b.es_retencion
+                    AND m2m.tiporetencion_id = rec.tipo_retencion_id;
+
+                    v_val_ret := ROUND((v_val_ret * (rec.porcentaje / 100.0)), 2);
+
+                    -- Insertar con valor NEGATIVO en el detalle del cupon
+                    INSERT INTO afiliados_detalle_cupones (
+                        cupon_id,
+                        cantidad,
+                        detalle,
+                        valor,
+                        piva,
+                        concepto_id,
+                        concepto_causacion_id
+                    ) VALUES (
+                        v_out_id,
+                        '1',
+                        rec.detalle,
+                        -1 * v_val_ret,
+                        0,
+                        rec.concepto_id,
+                        rec.concepto_causacion
+                    );
+                END IF;
+            ELSE
+                -- Concepto normal (positivo)
+                INSERT INTO afiliados_detalle_cupones (
+                    cupon_id,
+                    cantidad,
+                    detalle,
+                    valor,
+                    piva,
+                    concepto_id,
+                    concepto_causacion_id
+                ) VALUES (
+                    v_out_id,
+                    '1',
+                    rec.detalle,
+                    rec.valor,
+                    case when rec.iva is true then v_iva_general else 0 end,
+                    rec.concepto_id,
+                    rec.concepto_causacion
+                );
+            END IF;
+
         END LOOP;
 
         out_cupon_id := v_out_id;

@@ -21,6 +21,11 @@ class ConceptoCausacion(BaseModel):
     activo = models.BooleanField(default=True)
     es_retencion = models.BooleanField(default=False)
     tipo_retencion = models.ForeignKey(TipoRetencion, on_delete=models.SET_NULL, null=True, blank=True)
+    retenciones = models.ManyToManyField(
+        TipoRetencion, blank=True,
+        related_name='conceptos_gravables',
+        help_text="Retenciones que aplican sobre este concepto (solo para conceptos NO retención)"
+    )
 
     class Meta:
         db_table = 'afiliados_concepto_causacion'

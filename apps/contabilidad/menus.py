@@ -167,6 +167,14 @@ MENUS = [{
                 },
 
             ]
+        },
+        {
+            "codigo": "transmision_facturas",
+            "titulo": "Transmisión de Facturas",
+            "permiso": "view_menu_transmision_facturas",
+            "orden": "5",
+            "ruta": "transmision_facturas",
+            "acciones": CRUD
         }
 
     ]

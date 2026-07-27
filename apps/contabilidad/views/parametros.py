@@ -7,7 +7,9 @@ class ParametrosViewSet(viewsets.ViewSet):
 
     @action(methods=['get'], detail=False, url_path='tipo_retencion')
     def tipo_retencion(self, request):
-        query = list(TipoRetencion.objects.all().values("id", "nombre"))
+        query = list(TipoRetencion.objects.filter(activo=True).values(
+            "id", "nombre", "porcentaje_defecto", "base_sobre", "cuenta_contable_id"
+        ))
         return Response(query)
 
 

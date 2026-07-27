@@ -26,7 +26,7 @@ DECLARE
     v_facturacion_id integer;
 BEGIN
 
-    -- ─── Parámetros globales ───
+    -- Parametros globales
     SELECT valor::integer INTO v_cta_clientes
     FROM parametros_parametros WHERE parametro = 'cuenta_clientes';
 
@@ -40,85 +40,87 @@ BEGIN
     WHERE id = in_afiliado_id AND activo = true;
 
     IF v_persona_id IS NULL THEN
-        RAISE EXCEPTION 'Afiliado % no existe o no está activo', in_afiliado_id;
+        RAISE EXCEPTION 'Afiliado % no existe o no esta activo', in_afiliado_id;
     END IF;
 
     v_fecha := MAKE_DATE(in_anio, in_mes, 1);
 
-    -- ══════════════════════════════════════════
-    -- For principal — una fila por cada grupo a facturar
+    -- For principal - una fila por cada grupo a facturar
     -- Agrupados:    GROUP BY tipo_factura_id (agrupar=true)
     -- Individuales: GROUP BY acc.id          (agrupar=false)
-    -- ══════════════════════════════════════════
     FOR rec IN (
 
-        -- ─── Agrupados: una fila por tipo_factura ───
+        -- Agrupados: una fila por tipo_factura
         SELECT
             'agrupado'              AS modo,
             cc.tipo_factura_id,
             NULL::integer           AS acc_id_individual,
             json_agg(json_build_object(
-                'acc_id',       acc.id,
-                'valor',        acc.valor,
-                'detalle',      acc.detalle,
-                'concepto_id',  cc.concepto_id,
-                'nombre',       cc.nombre,
-                'mayor_id',     cc.mayor_id,
-                'iva',          cc.iva,
-                'cta_iva_id',   cc.cta_iva_id,
-                'iva_incluido', cc.iva_incluido,
-                'es_retencion', cc.es_retencion
+                'acc_id',               acc.id,
+                'cc_id',                cc.id,
+                'valor',                acc.valor,
+                'detalle',              acc.detalle,
+                'concepto_id',          cc.concepto_id,
+                'nombre',               cc.nombre,
+                'mayor_id',             COALESCE(tr.cuenta_contable_id, cc.mayor_id),
+                'iva',                  cc.iva,
+                'cta_iva_id',           cc.cta_iva_id,
+                'iva_incluido',         cc.iva_incluido,
+                'es_retencion',         cc.es_retencion,
+                'tipo_retencion_id',    cc.tipo_retencion_id,
+                'porcentaje',           COALESCE(acc.porcentaje, tr.porcentaje_defecto, 0),
+                'base_sobre',           COALESCE(tr.base_sobre, 'SUBTOTAL')
             )) AS conceptos
         FROM afiliados_afiliado_concepto_causacion acc
         JOIN afiliados_concepto_causacion cc ON cc.id = acc.concepto_id
         JOIN afiliados_afiliado a            ON a.id  = acc.afiliado_id
+        LEFT JOIN contabilidad_tipos_retenciones tr ON tr.id = cc.tipo_retencion_id
         WHERE acc.afiliado_id = in_afiliado_id
         AND cc.activo  = true
         AND cc.agrupar = true
         AND (
-
             cc.es_retencion = false
-
             OR
-
             aplica_retencion(
                 v_persona_id,
                 cc.tipo_retencion_id::integer
             )
-
         )
         GROUP BY cc.tipo_factura_id
 
         UNION ALL
 
-        -- ─── Individuales: una fila por concepto ───
+        -- Individuales: una fila por concepto
         SELECT
             'individual'            AS modo,
             cc.tipo_factura_id,
             acc.id                  AS acc_id_individual,
             json_build_array(json_build_object(
-                'acc_id',       acc.id,
-                'valor',        acc.valor,
-                'detalle',      acc.detalle,
-                'concepto_id',  cc.concepto_id,
-                'nombre',       cc.nombre,
-                'mayor_id',     cc.mayor_id,
-                'iva',          cc.iva,
-                'cta_iva_id',   cc.cta_iva_id,
-                'iva_incluido', cc.iva_incluido,
-                'es_retencion', cc.es_retencion
+                'acc_id',               acc.id,
+                'cc_id',                cc.id,
+                'valor',                acc.valor,
+                'detalle',              acc.detalle,
+                'concepto_id',          cc.concepto_id,
+                'nombre',               cc.nombre,
+                'mayor_id',             COALESCE(tr.cuenta_contable_id, cc.mayor_id),
+                'iva',                  cc.iva,
+                'cta_iva_id',           cc.cta_iva_id,
+                'iva_incluido',         cc.iva_incluido,
+                'es_retencion',         cc.es_retencion,
+                'tipo_retencion_id',    cc.tipo_retencion_id,
+                'porcentaje',           COALESCE(acc.porcentaje, tr.porcentaje_defecto, 0),
+                'base_sobre',           COALESCE(tr.base_sobre, 'SUBTOTAL')
             )) AS conceptos
         FROM afiliados_afiliado_concepto_causacion acc
         JOIN afiliados_concepto_causacion cc ON cc.id = acc.concepto_id
         JOIN afiliados_afiliado a            ON a.id  = acc.afiliado_id
+        LEFT JOIN contabilidad_tipos_retenciones tr ON tr.id = cc.tipo_retencion_id
         WHERE acc.afiliado_id = in_afiliado_id
         AND cc.activo  = true
         AND cc.agrupar = false
         AND (
             cc.es_retencion = false
-
             OR
-
             aplica_retencion(
                 v_persona_id,
                 cc.tipo_retencion_id::integer
@@ -127,25 +129,68 @@ BEGIN
 
     ) LOOP
 
-        -- ══════════════════════════════════════════
         -- Construir detalle_fac y calcular totales
-        -- (igual para agrupados e individuales)
-        -- ══════════════════════════════════════════
-
         SELECT
             json_agg(json_build_object(
                 'concepto', (c->>'concepto_id')::integer,
                 'cantidad', 1,
                 'detalle',  (c->>'nombre') || COALESCE(': ' || (c->>'detalle'), ''),
                 'piva',     CASE WHEN (c->>'iva')::boolean THEN v_iva_general::numeric ELSE 0 END,
-                'valor',    CASE WHEN (c->>'es_retencion')::boolean THEN -(c->>'valor')::numeric
-                                 ELSE (c->>'valor')::numeric END,
+                'valor',    CASE WHEN (c->>'es_retencion')::boolean THEN
+                                -1 * ROUND(
+                                    ((c->>'porcentaje')::numeric / 100.0) * (
+                                        SELECT COALESCE(SUM(
+                                            CASE WHEN (cb->>'base_sobre') = 'IVA' THEN
+                                                CASE
+                                                    WHEN (cb->>'iva_incluido')::boolean THEN
+                                                        (cb->>'valor')::numeric - ((cb->>'valor')::numeric / (1 + (v_iva_general::numeric/100)))
+                                                    WHEN (cb->>'iva')::boolean THEN
+                                                        (cb->>'valor')::numeric * (v_iva_general::numeric/100)
+                                                    ELSE 0
+                                                END
+                                            ELSE
+                                                (cb->>'valor')::numeric
+                                            END
+                                        ), 0)
+                                        FROM json_array_elements(rec.conceptos) AS cb
+                                        WHERE NOT (cb->>'es_retencion')::boolean
+                                        AND EXISTS (
+                                            SELECT 1 FROM afiliados_concepto_causacion_retenciones m2m
+                                            WHERE m2m.conceptocausacion_id = (cb->>'cc_id')::integer
+                                            AND m2m.tiporetencion_id = (c->>'tipo_retencion_id')::integer
+                                        )
+                                    ), 2
+                                )
+                            ELSE (c->>'valor')::numeric END,
                 'orden',    ordinality
             ) ORDER BY ordinality),
             COALESCE(SUM(
-                CASE WHEN (c->>'es_retencion')::boolean
-                     THEN -(c->>'valor')::numeric
-                     ELSE  (c->>'valor')::numeric END
+                CASE WHEN (c->>'es_retencion')::boolean THEN
+                    -1 * ROUND(
+                        ((c->>'porcentaje')::numeric / 100.0) * (
+                            SELECT COALESCE(SUM(
+                                CASE WHEN (cb->>'base_sobre') = 'IVA' THEN
+                                    CASE
+                                        WHEN (cb->>'iva_incluido')::boolean THEN
+                                            (cb->>'valor')::numeric - ((cb->>'valor')::numeric / (1 + (v_iva_general::numeric/100)))
+                                        WHEN (cb->>'iva')::boolean THEN
+                                            (cb->>'valor')::numeric * (v_iva_general::numeric/100)
+                                        ELSE 0
+                                    END
+                                ELSE
+                                    (cb->>'valor')::numeric
+                                END
+                            ), 0)
+                            FROM json_array_elements(rec.conceptos) AS cb
+                            WHERE NOT (cb->>'es_retencion')::boolean
+                            AND EXISTS (
+                                SELECT 1 FROM afiliados_concepto_causacion_retenciones m2m
+                                WHERE m2m.conceptocausacion_id = (cb->>'cc_id')::integer
+                                AND m2m.tiporetencion_id = (c->>'tipo_retencion_id')::integer
+                            )
+                        ), 2
+                    )
+                ELSE (c->>'valor')::numeric END
             ), 0),
             COALESCE(
             SUM(
@@ -171,36 +216,57 @@ BEGIN
         INTO v_detalle_fac, v_subtotal, v_iva_total
         FROM json_array_elements(rec.conceptos) WITH ORDINALITY AS t(c, ordinality);
 
-        -- ══════════════════════════════════════════
         -- Construir preconta (movimientos contables)
-        -- ══════════════════════════════════════════
-
         SELECT json_agg(mov) INTO v_preconta
         FROM (
 
-             -- Débito único a cartera por el total neto
-            SELECT json_build_object(
-                'mov_id',        0,
-                'mayor_id',      (c->>'mayor_id')::integer,
-                'persona_id',    v_persona_id,
-                'concepto_id',   1,
-                'detalle',       'Facturación período ' || in_mes || '/' || in_anio,
-                'valor_db',      v_subtotal + v_iva_total,
-                'valor_cr',      0,
-                'cc_id', null, 'base', 0, 'docref', ''
-            ) as mov
-            FROM json_array_elements(rec.conceptos) AS c
-
-            UNION ALL
-
-            -- Crédito/débito por cada concepto según es_retencion
+             -- Debito unico a cartera por el total neto
             SELECT json_build_object(
                 'mov_id',        0,
                 'mayor_id',      v_cta_clientes::integer,
                 'persona_id',    v_persona_id,
+                'concepto_id',   1,
+                'detalle',       'Facturacion periodo ' || in_mes || '/' || in_anio,
+                'valor_db',      v_subtotal + v_iva_total,
+                'valor_cr',      0,
+                'cc_id', null, 'base', 0, 'docref', ''
+            ) AS mov
+
+            UNION ALL
+
+            -- Credito/debito por cada concepto segun es_retencion
+            SELECT json_build_object(
+                'mov_id',        0,
+                'mayor_id',      (c->>'mayor_id')::integer,
+                'persona_id',    v_persona_id,
                 'concepto_id',   (c->>'concepto_id')::integer,
                 'detalle',       c->>'nombre',
-                'valor_db',      CASE WHEN (c->>'es_retencion')::boolean THEN (c->>'valor')::numeric ELSE 0 END,
+                'valor_db',      CASE WHEN (c->>'es_retencion')::boolean THEN
+                                    ROUND(
+                                        ((c->>'porcentaje')::numeric / 100.0) * (
+                                            SELECT COALESCE(SUM(
+                                                CASE WHEN (cb->>'base_sobre') = 'IVA' THEN
+                                                    CASE
+                                                        WHEN (cb->>'iva_incluido')::boolean THEN
+                                                            (cb->>'valor')::numeric - ((cb->>'valor')::numeric / (1 + (v_iva_general::numeric/100)))
+                                                        WHEN (cb->>'iva')::boolean THEN
+                                                            (cb->>'valor')::numeric * (v_iva_general::numeric/100)
+                                                        ELSE 0
+                                                    END
+                                                ELSE
+                                                    (cb->>'valor')::numeric
+                                                END
+                                            ), 0)
+                                            FROM json_array_elements(rec.conceptos) AS cb
+                                            WHERE NOT (cb->>'es_retencion')::boolean
+                                            AND EXISTS (
+                                                SELECT 1 FROM afiliados_concepto_causacion_retenciones m2m
+                                                WHERE m2m.conceptocausacion_id = (cb->>'cc_id')::integer
+                                                AND m2m.tiporetencion_id = (c->>'tipo_retencion_id')::integer
+                                            )
+                                        ), 2
+                                    )
+                                 ELSE 0 END,
                 'valor_cr',      CASE WHEN (c->>'es_retencion')::boolean THEN 0 ELSE (c->>'valor')::numeric END,
                 'cc_id', null, 'base', 0, 'docref', ''
             ) AS mov
@@ -208,7 +274,7 @@ BEGIN
 
             UNION ALL
 
-            -- Crédito IVA por concepto que lo tenga
+            -- Credito IVA por concepto que lo tenga
             SELECT json_build_object(
                 'mov_id',        0,
                 'mayor_id',      (c->>'cta_iva_id')::integer,
@@ -222,16 +288,14 @@ BEGIN
                                     ELSE (c->>'valor')::numeric * (v_iva_general::numeric/100)
                                  END,
                 'cc_id', null, 'base', 0, 'docref', ''
-            )
+            ) AS mov
             FROM json_array_elements(rec.conceptos) AS c
             WHERE (c->>'iva')::boolean = true
             AND   (c->>'es_retencion')::boolean = false          
 
         ) sub;
 
-        -- ══════════════════════════════════════════
         -- Llamar add_factura
-        -- ══════════════════════════════════════════
         SELECT af.out_id, af.out_documento
         INTO v_out_id, v_out_doc
         FROM addfacturas(
@@ -255,8 +319,8 @@ BEGIN
             0::numeric,
             0::numeric,
             CASE rec.modo
-                WHEN 'agrupado'   THEN 'Facturación agrupada período ' || in_mes || '/' || in_anio
-                WHEN 'individual' THEN (rec.conceptos->0->>'nombre') || ' - período ' || in_mes || '/' || in_anio
+                WHEN 'agrupado'   THEN 'Facturacion agrupada periodo ' || in_mes || '/' || in_anio
+                WHEN 'individual' THEN (rec.conceptos->0->>'nombre') || ' - periodo ' || in_mes || '/' || in_anio
             END::varchar,
             in_usuario_id::integer,
             NULL::integer,
@@ -302,7 +366,32 @@ BEGIN
             NOW(),
             v_facturacion_id,
             (c->>'acc_id')::integer,
-            (c->>'valor')::numeric
+            CASE WHEN (c->>'es_retencion')::boolean THEN
+                ROUND(
+                    ((c->>'porcentaje')::numeric / 100.0) * (
+                        SELECT COALESCE(SUM(
+                            CASE WHEN (cb->>'base_sobre') = 'IVA' THEN
+                                CASE
+                                    WHEN (cb->>'iva_incluido')::boolean THEN
+                                        (cb->>'valor')::numeric - ((cb->>'valor')::numeric / (1 + (v_iva_general::numeric/100)))
+                                    WHEN (cb->>'iva')::boolean THEN
+                                        (cb->>'valor')::numeric * (v_iva_general::numeric/100)
+                                    ELSE 0
+                                END
+                            ELSE
+                                (cb->>'valor')::numeric
+                            END
+                        ), 0)
+                        FROM json_array_elements(rec.conceptos) AS cb
+                        WHERE NOT (cb->>'es_retencion')::boolean
+                        AND EXISTS (
+                            SELECT 1 FROM afiliados_concepto_causacion_retenciones m2m
+                            WHERE m2m.conceptocausacion_id = (cb->>'cc_id')::integer
+                            AND m2m.tiporetencion_id = (c->>'tipo_retencion_id')::integer
+                        )
+                    ), 2
+                )
+            ELSE (c->>'valor')::numeric END
         FROM json_array_elements(rec.conceptos) c;
 
 
