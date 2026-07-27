@@ -124,6 +124,20 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
         if obj.tipo_documento_id:
             return TiposDocumentosListSerializer(obj.tipo_documento).data
         return None 
+    
+    medio_pago = serializers.SerializerMethodField()
+    def get_medio_pago(self, obj):
+        medio_pago = PagoDocumento.objects.filter(documento_id = obj.id).first()
+        if medio_pago:
+            return medio_pago.medio_pago_id
+        return None
+    forma_pago_electro = serializers.SerializerMethodField()
+    def get_forma_pago_electro(self, obj):
+        forma_pago_electro = PagoDocumento.objects.filter(documento_id = obj.id).first()
+        if forma_pago_electro:
+            return forma_pago_electro.forma_pago_electro_id
+        return None
+
     class Meta:
         model = Documentos
 
@@ -151,7 +165,9 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
             'movimientos',
             'pagos',
             'items',
-            'obj_tipodocumento'
+            'obj_tipodocumento',
+            'medio_pago',
+            'forma_pago_electro'
         )
 
     def get_pagos(self, documento):
@@ -235,7 +251,7 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
                     'banco_destino': d.banco_destino_id,
                     'cuenta_destino': d.cuenta_destino,
                     'cuenta_origen': d.cuenta_origen_id,
-                    'numero_cheque': d.numero_chque,
+                    'numero_cheque': d.numero_cheque,
                     'valor': float(d.valor)
                 }
             except:

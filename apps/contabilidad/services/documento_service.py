@@ -230,8 +230,17 @@ class DocumentoService:
                     factura_grid,
                     bool(encabezado.get('nota_parcial', False)),
                 )
-            # pdb.set_trace()
             resultado = execute_procedure(sql, params)
+            if resultado and resultado[0][0]:
+                for p in encabezado.get('pagos', []):
+                    doc = Documentos.objects.get(pk=resultado[0][0])
+                    pago = PagoDocumento()
+                    pago.documento_id = doc.id
+                    pago.forma_pago_id = encabezado.get('fpago', 3)
+                    pago.forma_pago_electro_id = p.get('forma_pago_electro', None)
+                    pago.medio_pago_id = p.get('medio_pago', None)
+                    pago.save()
+                
 
         except Exception as e:
             # pdb.set_trace()
