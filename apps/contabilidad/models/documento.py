@@ -100,7 +100,9 @@ class PagoDocumento(BaseModel):
 
     forma_pago = models.ForeignKey(
         FormaPago,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
     )
 
     medio_pago = models.ForeignKey(
