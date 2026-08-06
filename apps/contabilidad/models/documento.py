@@ -61,6 +61,10 @@ class Documentos(BaseModel):
 
     class Meta:
         db_table = 'cont_documentos' 
+        indexes = [
+            models.Index(fields=['tipo_documento', 'fecha', 'estado']),
+            models.Index(fields=['personas', 'fecha']),
+        ]
 
 
 class FactElectronicaDocumento(BaseModel):
@@ -116,6 +120,11 @@ class PagoDocumento(BaseModel):
         blank=True,
         null=True
     )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['documento', 'forma_pago']),
+        ]
 
 class PagoEfectivo(BaseModel):
     pago  = models.OneToOneField(PagoDocumento, on_delete=models.CASCADE, related_name='detalle_efectivo')
@@ -178,6 +187,11 @@ class Mov(models.Model):
     user_conciliacion   = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True, related_name="mov_conciliacion_user")
     dcierre             = models.IntegerField(blank=True, null=True)
     
+    class Meta:
+        db_table = 'contabilidad_mov'
+        indexes = [
+            models.Index(fields=['documento', 'mayor', 'persona']),
+        ]
 
 class DocumentosBita(models.Model):
     documentos = models.ForeignKey(Documentos, on_delete=models.CASCADE)

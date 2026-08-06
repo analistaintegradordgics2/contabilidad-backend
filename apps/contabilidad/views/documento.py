@@ -42,6 +42,15 @@ class DocumentoViewSet(ModelViewSet):
 
         documento = Documentos.objects.filter(
             id=iddocumento
+        ).select_related(
+            'personas',
+            'tipo_documento'
+        ).prefetch_related(
+            'pagos__detalle_efectivo',
+            'pagos__detalle_cheque',
+            'pagos__detalle_consignacion',
+            'pagos__detalle_tarjeta',
+            'pagos__detalle_transferencia'
         ).first()
 
         if not documento:
@@ -77,6 +86,12 @@ class DocumentoViewSet(ModelViewSet):
         qs = Documentos.objects.select_related(
             'personas',
             'tipo_documento'
+        ).prefetch_related(
+            'pagos__detalle_efectivo',
+            'pagos__detalle_cheque',
+            'pagos__detalle_consignacion',
+            'pagos__detalle_tarjeta',
+            'pagos__detalle_transferencia'
         )
 
         search = request.GET.get('buscar')
