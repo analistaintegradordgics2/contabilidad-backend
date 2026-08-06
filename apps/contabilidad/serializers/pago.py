@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.contabilidad.models.pago import Banco
+from apps.contabilidad.models.pago import Banco, CuentaBancaria
 from apps.utils.history import getHistorymodel
 
 class BancosSerializer(serializers.ModelSerializer):
@@ -14,4 +14,23 @@ class BancosSerializer(serializers.ModelSerializer):
         )
 
 
-        
+class CuentaBancariaSerializer(serializers.ModelSerializer):
+    banco_nombre = serializers.CharField(source='banco.nombre', read_only=True)
+    label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CuentaBancaria
+        fields = (
+            "id",
+            "numero_cuenta",
+            "nombre",
+            "banco",
+            "banco_nombre",
+            "label",
+            "activo"
+        )
+
+    def get_label(self, obj):
+        if obj.nombre and obj.numero_cuenta:
+            return f"{obj.numero_cuenta} - {obj.nombre}"
+        return obj.numero_cuenta or obj.nombre or f"Cuenta #{obj.id}"

@@ -45,6 +45,20 @@ class FormaPago(models.Model):
         max_length=255,
         blank=True, null=True
     )
+    codigo = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Slug semántico: EFECTIVO, CONSIGNACION, TARJETA, CHEQUE, TRANSFERENCIA"
+    )
+    forma_pago_electro = models.ForeignKey(
+        'FormaPagoElectro',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text="Mapeo al código DIAN de facturación electrónica"
+    )
   
 
 class TipoCuenta(models.Model):
