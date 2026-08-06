@@ -1,10 +1,14 @@
 from django.db import transaction
 import json
+import logging
 from apps.common_db.db import execute_procedure
+
+logger = logging.getLogger(__name__)
 from decimal import Decimal
 from django.db.models import Sum, Count
 import datetime
 from apps.contabilidad.models.documento import Documentos, Mov, PagoDocumento, FactElectronicaDocumento, DocumentosBita, Estado
+from apps.contabilidad.models.pago import FormaPago
 from apps.contabilidad.models.tipodocumento import TiposDocumentos
 from apps.utils.querySQL import querySQL
 from apps.afiliados.models.causacion import AfiliadoConceptoCausacion
@@ -75,43 +79,66 @@ class DocumentoService:
 
             if fuente != 4:
                 
+                # ─── Lookup ids de formas de pago por código semántico ───
+                fp_ids = {fp.codigo: fp.id for fp in FormaPago.objects.all()}
+
                 # ─── Serializar pagos ───
                 pagos_list = []
 
-                # EFECTIVO
-                if len(pagos) > 0:
+                if isinstance(pagos, dict) and len(pagos) > 0:
+                    tipo_pago = pagos.get('tipo_pago')
                     efectivo = pagos.get('efectivo', {})
+                    val_efectivo = float((efectivo or {}).get('valor', 0)) if isinstance(efectivo, dict) else 0
 
-                    if efectivo and efectivo.get('valor', 0):
+                    # 1. TRANSFERENCIA
+                    transferencia = pagos.get('transferencia', {})
+                    if isinstance(transferencia, dict):
+                        val_transf = float(transferencia.get('valor', 0)) or (val_efectivo if tipo_pago == 3 else 0)
+                        if val_transf > 0:
+                            pagos_list.append({
+                                'tipo': 'transferencia',
+                                'forma_pago_id': fp_ids.get('TRANSFERENCIA'),
+                                'cuenta_origen_id': transferencia.get('cuenta_origen'),
+                                'banco_destino_id': transferencia.get('banco') or transferencia.get('banco_destino'),
+                                'cuenta_destino': transferencia.get('cuenta_destino', ''),
+                                'referencia': transferencia.get('referencia') or transferencia.get('numero_cheque') or '',
+                                'valor': val_transf,
+                            })
 
-                        pagos_list.append({
-                            'tipo': 'efectivo',
-                            'forma_pago_id': 1,
-                            'medio_pago_id': efectivo.get('medio_pago'),
-                            'valor': float(efectivo.get('valor', 0)),
-                        })
-                    # pdb.set_trace()
-                    # CHEQUES
-                    for cheque in pagos.get('cheques', []):
+                    # 2. CHEQUES
+                    cheques_list = pagos.get('cheques', [])
+                    if isinstance(cheques_list, list) and len(cheques_list) > 0:
+                        for cheque in cheques_list:
+                            if isinstance(cheque, dict) and float(cheque.get('valor', 0)) > 0:
+                                pagos_list.append({
+                                    'tipo': 'cheque',
+                                    'forma_pago_id': fp_ids.get('CHEQUE'),
+                                    'medio_pago_id': cheque.get('medio_pago'),
+                                    'banco_id': cheque.get('banco'),
+                                    'numero': cheque.get('numero', ''),
+                                    'fecha': cheque.get('fecha'),
+                                    'valor': float(cheque.get('valor', 0)),
+                                })
+                    elif tipo_pago == 2:
+                        cheque_obj = pagos.get('cheque', {})
+                        val_cheque = float((cheque_obj or {}).get('valor', 0)) or val_efectivo
+                        if val_cheque > 0:
+                            pagos_list.append({
+                                'tipo': 'cheque',
+                                'forma_pago_id': fp_ids.get('CHEQUE'),
+                                'medio_pago_id': cheque_obj.get('medio_pago') if isinstance(cheque_obj, dict) else None,
+                                'banco_id': cheque_obj.get('banco') if isinstance(cheque_obj, dict) else None,
+                                'numero': cheque_obj.get('numero', '') if isinstance(cheque_obj, dict) else '',
+                                'fecha': cheque_obj.get('fecha') if isinstance(cheque_obj, dict) else None,
+                                'valor': val_cheque,
+                            })
 
-                        pagos_list.append({
-                            'tipo': 'cheque',
-                            'forma_pago_id': 4,
-                            'medio_pago_id': cheque.get('medio_pago'),
-                            'banco_id': cheque.get('banco'),
-                            'numero': cheque.get('numero', ''),
-                            'fecha': cheque.get('fecha'),
-                            'valor': float(cheque.get('valor', 0)),
-                        })
-
-                    # CONSIGNACION
+                    # 3. CONSIGNACION
                     consig = pagos.get('consig', {})
-
-                    if consig and consig.get('valor', 0):
-
+                    if isinstance(consig, dict) and float(consig.get('valor', 0)) > 0:
                         pagos_list.append({
                             'tipo': 'consignacion',
-                            'forma_pago_id': 2,
+                            'forma_pago_id': fp_ids.get('CONSIGNACION'),
                             'medio_pago_id': consig.get('medio_pago'),
                             'banco_id': consig.get('banco'),
                             'cuenta_bancaria_id': consig.get('cuenta_bancaria'),
@@ -119,37 +146,32 @@ class DocumentoService:
                             'fecha': consig.get('fecha'),
                             'valor': float(consig.get('valor', 0)),
                         })
-                    
-                    # TRANSFERENCIA
-                    transferencia = pagos.get('transferencia', {})
 
-                    if transferencia and transferencia.get('valor', 0):
-
-                        pagos_list.append({
-                            'tipo': 'transferencia',
-                            'forma_pago_id': 5,
-                            'cuenta_origen_id': transferencia.get('cuenta_origen'),
-                            'banco_destino_id': transferencia.get('banco'),
-                            'cuenta_destino': transferencia.get('cuenta_destino'),
-                            'numero_cheque': transferencia.get('numero_cheque', ''),
-                            'valor': float(transferencia.get('valor', 0)),
-                        })
-
-                    # TARJETA
+                    # 4. TARJETA
                     tarjeta = pagos.get('tarjeta', {})
-
-                    if tarjeta and tarjeta.get('valor', 0):
-
+                    if isinstance(tarjeta, dict) and float(tarjeta.get('valor', 0)) > 0:
                         pagos_list.append({
                             'tipo': 'tarjeta',
-                            'forma_pago_id': 3,
+                            'forma_pago_id': fp_ids.get('TARJETA'),
                             'medio_pago_id': tarjeta.get('medio_pago'),
                             'banco_id': tarjeta.get('banco'),
                             'cuenta_bancaria_id': tarjeta.get('cuenta_bancaria'),
                             'numero_tarjeta': tarjeta.get('numero_tarjeta', ''),
                             'valor': float(tarjeta.get('valor', 0)),
                         })
-                    # pdb.set_trace()
+
+                    # 5. EFECTIVO (asume total del documento si no se han agregado otros pagos)
+                    total_doc = float(encabezado.get('total', 0) or encabezado.get('gtotal', 0))
+                    if val_efectivo <= 0 and len(pagos_list) == 0 and total_doc > 0 and tipo_pago not in [4, 5]:
+                        val_efectivo = total_doc
+
+                    if val_efectivo > 0 and tipo_pago not in [4, 5] and len(pagos_list) == 0:
+                        pagos_list.append({
+                            'tipo': 'efectivo',
+                            'forma_pago_id': fp_ids.get('EFECTIVO'),
+                            'medio_pago_id': efectivo.get('medio_pago') if isinstance(efectivo, dict) else None,
+                            'valor': val_efectivo,
+                        })
 
                 pagos_json = json.dumps(pagos_list)
 
@@ -231,24 +253,22 @@ class DocumentoService:
                     bool(encabezado.get('nota_parcial', False)),
                 )
             resultado = execute_procedure(sql, params)
-            if resultado and resultado[0][0]:
-                for p in encabezado.get('pagos', []):
-                    doc = Documentos.objects.get(pk=resultado[0][0])
-                    pago_existente = PagoDocumento.objects.filter(documento_id = doc.id).first()
-                    if pago_existente:
-                        pago = pago_existente
-                    else:
-                        pago = PagoDocumento()
-                    pago.documento_id = doc.id
-                    pago.forma_pago_id = encabezado.get('fpago', 3)
-                    pago.forma_pago_electro_id = p.get('forma_pago_electro', None)
-                    pago.medio_pago_id = p.get('medio_pago', None)
-                    pago.save()
-                
+            if fuente == 4 and resultado and resultado[0][0]:
+                doc_id = resultado[0][0]
+                pagos_data = encabezado.get('pagos', [])
+                if isinstance(pagos_data, list):
+                    for p in pagos_data:
+                        if isinstance(p, dict):
+                            pago_existente = PagoDocumento.objects.filter(documento_id=doc_id).first()
+                            pago = pago_existente or PagoDocumento(documento_id=doc_id)
+                            pago.forma_pago_id = encabezado.get('fpago', 3)
+                            pago.forma_pago_electro_id = p.get('forma_pago_electro', None)
+                            pago.medio_pago_id = p.get('medio_pago', None)
+                            pago.save()
 
         except Exception as e:
-            # pdb.set_trace()
-            return {"status": 404, "data": None}
+            logger.error(f"Error en crear_documento: {str(e)}", exc_info=True)
+            return {"status": 404, "data": None, "error": str(e)}
 
         # doc = Documentos.objects.get(pk=resultado[0][0])
         # DocumentoService._post_procesar_documento(doc, resultado[0][0], enca, data)

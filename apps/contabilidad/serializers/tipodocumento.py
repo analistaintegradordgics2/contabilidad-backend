@@ -17,7 +17,7 @@ from apps.contabilidad.models.tipodocumento import (
 class FacturacionElectronicaSelectSerializer(serializers.ModelSerializer):
     class Meta:
         model  = FacturacionElectronica
-        fields = ('id', 'nombre', 'tipo_electronica', 'ambiente', 'estado')
+        fields = ('id', 'nombre', 'proveedor', 'ambiente', 'url', 'usuario', 'estado')
 
 
 class FuentesSerializer(serializers.ModelSerializer):
@@ -102,8 +102,12 @@ class TiposDocumentosSerializer(serializers.ModelSerializer):
 
     tipo_display      = serializers.CharField(source='get_tipo_display', read_only=True)
     configuracion_fe  = FacturacionElectronicaSerializer(read_only=True)
-    configuracion_fe_id = serializers.IntegerField(
-        write_only=True, allow_null=True, required=False
+    configuracion_fe_id = serializers.PrimaryKeyRelatedField(
+        queryset=FacturacionElectronica.objects.all(),
+        source='configuracion_fe',
+        write_only=True,
+        allow_null=True,
+        required=False
     )
     resoluciones      = ResolucionFacturacionSerializer(many=True, read_only=True)
 
@@ -125,6 +129,7 @@ class TiposDocumentosSerializer(serializers.ModelSerializer):
             'id', 'nombre', 'tipo', 'tipo_display',
             'fuentes', 'numero', 'ndigitos', 'prefijo',
             'numeracionxmes', 'dias_vencimiento', 'estado',
+            'tipo_electronica',
             'es_nota', 'es_nota_credito', 'mandato', 'proveedor',
             'forma_pago', 'medio_pago',
             'configuracion_fe', 'configuracion_fe_id',

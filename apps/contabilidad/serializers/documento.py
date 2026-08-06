@@ -203,6 +203,11 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
                 }
                 continue
             except:
+                if pago.forma_pago_id == 1:
+                    pagos['efectivo'] = {
+                        **base,
+                        'valor': float(documento.total or documento.gtotal or 0)
+                    }
                 pass
 
             try:
@@ -251,7 +256,7 @@ class DocumentoDetailSerializer(serializers.ModelSerializer):
                     'banco_destino': d.banco_destino_id,
                     'cuenta_destino': d.cuenta_destino,
                     'cuenta_origen': d.cuenta_origen_id,
-                    'numero_cheque': d.numero_cheque,
+                    'referencia': d.referencia,
                     'valor': float(d.valor)
                 }
             except:

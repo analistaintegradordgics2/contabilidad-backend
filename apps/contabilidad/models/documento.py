@@ -44,7 +44,10 @@ class Documentos(BaseModel):
     telefono           = models.CharField(max_length=70, blank=True, null=True)
     movil              = models.CharField(max_length=70, blank=True, null=True)
     ciudad             = models.CharField(max_length=80, blank=True, null=True)    
-    fpago              = models.IntegerField(blank=True, null=True)
+    fpago              = models.IntegerField(
+        blank=True, null=True, editable=False,
+        help_text="[DEPRECATED] Usar PagoDocumento.forma_pago. Campo conservado por compatibilidad histórica."
+    )
     # conf_usuarios      = models.ForeignKey(User, on_delete=models.CASCADE)
     conf_sucursales_id = models.CharField(max_length=4, blank=True, null=True)    
     origen             = models.CharField(max_length=50, blank=True, null=True)
@@ -102,7 +105,9 @@ class PagoDocumento(BaseModel):
 
     medio_pago = models.ForeignKey(
         MedioPagoElectro,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
     )
 
     forma_pago_electro = models.ForeignKey(
@@ -119,35 +124,40 @@ class PagoEfectivo(BaseModel):
 
 class PagoCheque(BaseModel):
     pago         = models.OneToOneField(PagoDocumento, on_delete=models.CASCADE, related_name='detalle_cheque')
-    banco        = models.ForeignKey(Banco, on_delete=models.PROTECT)
-    numero       = models.CharField(max_length=50)
-    fecha        = models.DateField()
+    banco        = models.ForeignKey(Banco, on_delete=models.PROTECT, null=True, blank=True)
+    numero       = models.CharField(max_length=50, null=True, blank=True)
+    fecha        = models.DateField(null=True, blank=True)
     valor        = models.DecimalField(max_digits=18, decimal_places=2)
 
 
 class PagoConsignacion(BaseModel):
     pago            = models.OneToOneField(PagoDocumento, on_delete=models.CASCADE, related_name='detalle_consignacion')
-    banco           = models.ForeignKey(Banco, on_delete=models.PROTECT)
-    cuenta_bancaria = models.ForeignKey(CuentaBancaria, on_delete=models.PROTECT)
-    numero          = models.CharField(max_length=100)
-    fecha           = models.DateField()
-    valor           = models.DecimalField(max_digits=18, decimal_places=2)
+    banco           = models.ForeignKey(Banco, on_delete=models.PROTECT, null=True, blank=True)
+    cuenta_bancaria = models.ForeignKey(CuentaBancaria, on_delete=models.PROTECT, null=True, blank=True)
+    numero          = models.CharField(max_length=100, null=True, blank=True)
+    fecha           = models.DateField(null=True, blank=True)
+    valor           = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
 
 
 class PagoTarjeta(BaseModel):
     pago            = models.OneToOneField(PagoDocumento, on_delete=models.CASCADE, related_name='detalle_tarjeta')
-    banco           = models.ForeignKey(Banco, on_delete=models.PROTECT)
+    banco           = models.ForeignKey(Banco, on_delete=models.PROTECT, null=True, blank=True)
     cuenta_bancaria = models.ForeignKey(CuentaBancaria, on_delete=models.PROTECT, null=True, blank=True)
-    numero_tarjeta  = models.CharField(max_length=45)
-    valor           = models.DecimalField(max_digits=18, decimal_places=2)   
+    numero_tarjeta  = models.CharField(max_length=45, null=True, blank=True)
+    valor           = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)   
 
 class PagoTransferencia(BaseModel):
     pago            = models.OneToOneField(PagoDocumento, on_delete=models.CASCADE, related_name='detalle_transferencia')
-    valor           = models.DecimalField(max_digits=18, decimal_places=2)   
+    valor           = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)   
     cuenta_origen   = models.ForeignKey(CuentaBancaria, on_delete=models.PROTECT, null=True, blank=True)
-    banco_destino   = models.ForeignKey(Banco, on_delete=models.PROTECT)
-    cuenta_destino  = models.CharField(max_length=100)
-    numero_cheque   = models.CharField(max_length=45)
+    banco_destino   = models.ForeignKey(Banco, on_delete=models.PROTECT, null=True, blank=True)
+    cuenta_destino  = models.CharField(max_length=100, null=True, blank=True)
+    referencia      = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Número de transacción o referencia de la transferencia"
+    )
 class Mov(models.Model):
     documento           = models.ForeignKey(Documentos,on_delete=models.CASCADE, related_name="mov_documentos")
     mayor               = models.ForeignKey(Mayor, on_delete=models.CASCADE, related_name="mov_mayor")

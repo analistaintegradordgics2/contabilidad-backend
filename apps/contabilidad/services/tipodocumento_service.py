@@ -18,6 +18,13 @@ class TipoDocumentoService:
             'url':      data.pop('fact_elec_url',  None),
         }
 
+        # Mapeo flexible de configuracion_fe (ID o dict) a configuracion_fe_id
+        if 'configuracion_fe' in data and data['configuracion_fe'] is not None and 'configuracion_fe_id' not in data:
+            if isinstance(data['configuracion_fe'], int):
+                data['configuracion_fe_id'] = data['configuracion_fe']
+            elif isinstance(data['configuracion_fe'], dict) and data['configuracion_fe'].get('id'):
+                data['configuracion_fe_id'] = data['configuracion_fe']['id']
+
         datos_resolucion = {
             'numero_resolucion': data.pop('numero_resolucion',      None),
             'rango_inicial':     data.pop('numeracion_inicial',     None),

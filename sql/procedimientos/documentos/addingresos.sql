@@ -86,7 +86,7 @@ BEGIN
 		    UPDATE contabilidad_pagodocumento
 		    SET
 		        forma_pago_id = (pago_i->>'forma_pago_id')::integer,
-		        medio_pago_id = (pago_i->>'medio_pago_id')::integer,
+		        medio_pago_id = NULLIF((pago_i->>'medio_pago_id'), '')::integer,
 		        modified = NOW()
 		    WHERE id = out_pago_id;
 		
@@ -102,7 +102,7 @@ BEGIN
 	            NOW(), NOW(),
 	            out_id,
 	            (pago_i->>'forma_pago_id')::integer,
-	            (pago_i->>'medio_pago_id')::integer
+	            NULLIF((pago_i->>'medio_pago_id'), '')::integer
 	        ) RETURNING id INTO out_pago_id;
 		
 		END IF;
@@ -142,9 +142,9 @@ BEGIN
                 ) VALUES (
                     NOW(), NOW(),
                     out_pago_id,
-                    (pago_i->>'banco_id')::integer,
+                    NULLIF((pago_i->>'banco_id'), '')::integer,
                     pago_i->>'numero',
-                    (pago_i->>'fecha')::date,
+                    NULLIF((pago_i->>'fecha'), '')::date,
                     (pago_i->>'valor')::decimal
                 );
 
@@ -157,10 +157,10 @@ BEGIN
                 ) VALUES (
                     NOW(), NOW(),
                     out_pago_id,
-                    (pago_i->>'banco_id')::integer,
-                    (pago_i->>'cuenta_bancaria_id')::integer,
+                    NULLIF((pago_i->>'banco_id'), '')::integer,
+                    NULLIF((pago_i->>'cuenta_bancaria_id'), '')::integer,
                     pago_i->>'numero',
-                    (pago_i->>'fecha')::date,
+                    NULLIF((pago_i->>'fecha'), '')::date,
                     (pago_i->>'valor')::decimal
                 );
 
@@ -173,8 +173,8 @@ BEGIN
                 ) VALUES (
                     NOW(), NOW(),
                     out_pago_id,
-                    (pago_i->>'banco_id')::integer,
-                    (pago_i->>'cuenta_bancaria_id')::integer,
+                    NULLIF((pago_i->>'banco_id'), '')::integer,
+                    NULLIF((pago_i->>'cuenta_bancaria_id'), '')::integer,
                     pago_i->>'numero_tarjeta',
                     (pago_i->>'valor')::decimal
                 );
@@ -184,14 +184,14 @@ BEGIN
                     created, modified,
                     pago_id, banco_destino_id, cuenta_destino,
                     cuenta_origen_id,
-                    numero_cheque, valor
+                    referencia, valor
                 ) VALUES (
                     NOW(), NOW(),
                     out_pago_id,
-                    (pago_i->>'banco_destino_id')::integer,
+                    NULLIF((pago_i->>'banco_destino_id'), '')::integer,
 					pago_i->>'cuenta_destino',
-					(pago_i->>'cuenta_origen_id')::integer,
-                    pago_i->>'numero_cheque',
+					NULLIF((pago_i->>'cuenta_origen_id'), '')::integer,
+                    pago_i->>'referencia',
                     (pago_i->>'valor')::decimal
                 );
 
