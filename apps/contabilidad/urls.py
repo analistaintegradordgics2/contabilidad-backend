@@ -13,6 +13,8 @@ from apps.contabilidad.views.documento import DocumentoViewSet
 from apps.contabilidad.views.consulta import ConsultasViewSet
 from apps.contabilidad.views.parametros import ParametrosViewSet
 from apps.contabilidad.views.factura import EstadosFactViewSet, TransmisionFacturaViewSet
+from apps.contabilidad.views.plantilla import PlantillaDocumentoViewSet
+from apps.contabilidad.views.tributario import ReglaTributariaViewSet, VariableContableViewSet, ConceptoReglaTributariaViewSet
 
 
 router = DefaultRouter()
@@ -25,6 +27,10 @@ router.register(r'consultas', ConsultasViewSet, basename='consultas')
 router.register(r'parametros', ParametrosViewSet, basename='parametros')
 router.register(r'estadosfact', EstadosFactViewSet, basename='estadosfact')
 router.register(r'transmisionfact', TransmisionFacturaViewSet, basename='transmisionfact')
+router.register(r'plantilla', PlantillaDocumentoViewSet, basename='plantilla')
+router.register(r'reglas-tributarias', ReglaTributariaViewSet, basename='reglastributarias')
+router.register(r'variables-contables', VariableContableViewSet, basename='variablescontables')
+router.register(r'concepto-reglas', ConceptoReglaTributariaViewSet, basename='conceptoreglas')
 
 urlpatterns = [
-    path('', include(router.urls))]
+    path('', include(router.urls))]

@@ -1,8 +1,7 @@
-import pdb
-
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
+from rest_framework.permissions import AllowAny
 from django.db.models import Q
 
 from apps.utils.ModelViewSetClass import ModelViewSetClass
@@ -10,8 +9,6 @@ from apps.contabilidad.models.cuenta import Mayor
 from apps.contabilidad.serializers.cuenta import MayorSerializer, MayorHistorySerializer
 from apps.contabilidad.services.cuenta_service import *
 from apps.utils.views import Views
-
-import pdb
 
 class MayorViewSet(ModelViewSetClass):
     queryset = Mayor.objects.all().order_by('codigo')
@@ -82,10 +79,13 @@ class MayorViewSet(ModelViewSetClass):
         return Response([MayorService.format_mayor_select(i) for i in queryset])
 
     @action(methods=['POST'], detail=False, url_path='selectnew')
+    @permission_classes([AllowAny])
     def selectnew(self, request, search=None):
         mayor_id = request.data.get('id')
         search   = request.data.get('search', '')
         todas    = request.data.get('todas', False)
+        if isinstance(mayor_id, dict):
+            mayor_id = mayor_id.get('id') or mayor_id.get('value')
         if mayor_id:
             item = Mayor.objects.filter(pk=mayor_id).first()
             return Response([MayorService.format_mayor_select(item, include_model=True)])

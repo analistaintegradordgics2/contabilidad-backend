@@ -56,7 +56,24 @@ MENUS = [{
                     "ruta": "documentos",
                     "orden": "1",
                     "acciones": FACTURA
+                },
+                {
+                    "codigo": "plantillas_contables",
+                    "titulo": "Contabilizacion Automatica",
+                    "permiso": "view_menu_gestion_contable_gastos_administrativos_plantillas",
+                    "ruta": "ejecutar_plantilla",
+                    "orden": "2",
+                    "acciones": CRUD
+                },
+                {
+                    "codigo": "configuracion_plantillas",
+                    "titulo": "Configuración de Plantillas",
+                    "permiso": "view_menu_gestion_contable_gastos_administrativos_configuracion_plantillas",
+                    "ruta": "configuracion_plantillas",
+                    "orden": "3",
+                    "acciones": CRUD
                 }
+
 
             ]
         },
