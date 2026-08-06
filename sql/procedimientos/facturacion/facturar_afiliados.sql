@@ -330,6 +330,24 @@ BEGIN
             false::boolean
         ) af;
 
+        RAISE NOTICE 'REC TIPOFACTURA: %', rec.tipo_factura_id;
+
+        -- Insertar en pagodocumentos
+        INSERT INTO contabilidad_pagodocumento (
+            created,
+            modified,
+            documento_id,
+            forma_pago_id,
+            medio_pago_id,
+            forma_pago_electro_id
+        ) VALUES (
+            now(),
+            now(),
+            v_out_id,
+            1,            
+            (select me.id from contabilidad_mediopagoelectro me where me.id = (select td.medio_pago_id from contabilidad_tipos_documentos td where td.id = rec.tipo_factura_id) ),
+            (select cf.id from contabilidad_formapagoelectro cf where cf.id = (select td.forma_pago_id from contabilidad_tipos_documentos td where td.id = rec.tipo_factura_id) )            
+        );
 
         -- Insertar en la tabla de facturados
 
