@@ -36,9 +36,7 @@ prompt_toolkit==3.0.52
 psycopg2-binary==2.9.11
 #pycairo==1.28.0
 pycparser==2.23
-PyJWT==2.12.1
 pypdf==6.10.2
-PyPDF2==3.0.1
 python-bidi==0.6.7
 python-dateutil==2.9.0.post0
 PyYAML==6.0.3
