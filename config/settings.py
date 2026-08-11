@@ -61,7 +61,8 @@ INSTALLED_APPS = [
     'apps.contabilidad',
     'apps.parametros',
     'apps.public',
-    'apps.afiliados'
+    'apps.afiliados',
+    'apps.nomina'
 ] + DJANGO_APPS
 
 MIDDLEWARE = [
@@ -152,6 +153,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
 
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
