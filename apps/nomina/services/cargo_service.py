@@ -1,31 +1,41 @@
 from django.db import transaction
 from apps.nomina.models.contratos import Cargo
 
-from apps.utils.funciones import Funciones
+from apps.parametros.services.empresa_service import EmpresaService
+from apps.utils.render import Render
 
 class CargoService:
 
     @staticmethod
     @transaction.atomic
-    def crear_o_actualizar(data):
+    def crear_o_actualizar(validated_data, instancia=None, user=None):
         """
-        Crea o actualiza un Cargo directamente con el modelo.
-        Maneja correctamente las relaciones ForeignKey convirtiendo IDs a instancias.
+        Crea o actualiza un Cargo.
+        Recibe validated_data de un serializer — las FKs ya vienen como instancias.
         """
-        cargo_id = data.get('id')
-
-        if cargo_id:
-            # Actualizar existente
-            cargo = Cargo.objects.filter(pk=cargo_id).first()
-            if not cargo:
-                return None
-            for attr, value in data.items():
-                # Resolver FKs antes de setattr
-                value = Funciones.resolver_fk(value, attr, cargo)
-                setattr(cargo, attr, value)
-            cargo.save()
-            return cargo
+        if instancia:
+            validated_data['um'] = user
+            for attr, value in validated_data.items():
+                setattr(instancia, attr, value)
+            instancia.save()
+            return instancia
         else:
-            # Crear nuevo
-            cargo = Cargo.objects.create(**data)
-            return cargo
+            validated_data['uc'] = user
+            return Cargo.objects.create(**validated_data)
+
+    @staticmethod
+    def imprimir(request_data):
+        nombre = "cargos"
+
+        empresa = EmpresaService.obtener_datos_empresa()
+
+        data = request_data
+
+        params = {
+            'empresa': empresa,
+            'data': data
+        }
+
+        pdf = Render.render_pdfkit('pdf/nomina/cargos.html', params, nombre)
+
+        return pdf

@@ -1,7 +1,10 @@
 import pdb
+
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import action
+
 from django.db import transaction
 
 from apps.nomina.services.cargo_service import CargoService
@@ -16,18 +19,33 @@ class CargoViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         estado = request.GET.get("estado", "").lower() == "true"
 
-        if estado == None :
+        if estado is None:
             query = self.get_queryset()
-        else :
+        else:
             query = self.get_queryset().filter(estado=estado).order_by('nombre')
-        
-        data = self.serializer_class(query, many=True).data
 
+        data = self.serializer_class(query, many=True).data
         return Response(data, status=status.HTTP_200_OK)
-    
+
     @transaction.atomic
     def create(self, request, *args, **kwargs):
-        data = request.data
-        CargoService.crear_o_actualizar(data)
-
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        CargoService.crear_o_actualizar(serializer.validated_data, user=request.user)
         return Response("OK", status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        instancia = self.get_object()
+        serializer = self.serializer_class(instancia, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        CargoService.crear_o_actualizar(
+            serializer.validated_data, user=request.user, instancia=serializer.instance
+        )
+        return Response("OK", status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=False, url_path='imprimir')
+    def imprimir(self, request, *args, **kwargs):
+
+        data = self.serializer_class(self.get_queryset(), many=True).data
+        return CargoService.imprimir(data)

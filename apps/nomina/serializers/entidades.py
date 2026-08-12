@@ -6,7 +6,20 @@ from apps.utils.history import getHistorymodel
 
 from apps.nomina.models.entidades import Entidad, EntidadCentroCosto, TipoEntidad
 
+class EntidadCentroCostoSerializer(serializers.ModelSerializer):
+
+    id = serializers.IntegerField(required=False, allow_null=True)
+    
+    class Meta:
+        """Meta class."""
+        model = EntidadCentroCosto
+        fields = ("id", "centro_costos", "entidad", "mayor_cta_credito", "mayor_cta_debito", "eliminado", "uc", "um")
+        read_only_fields = ("entidad",)
+
 class EntidadSerializer(serializers.ModelSerializer):
+
+    data_persona = serializers.DictField(write_only=True)
+    centro_costos = EntidadCentroCostoSerializer(write_only=True, many=True)
     
     history = serializers.SerializerMethodField('get_history', read_only=True)
     def get_history(self, obj):
@@ -114,7 +127,7 @@ class EntidadSerializer(serializers.ModelSerializer):
     class Meta:
         """Meta class."""
         model = Entidad
-        fields = ("id", "personas", "tipo_entidad", "estado", "uc", "um", "history", "estado", "tipo_entidad_nombre", "centro_costo", "mayor_cta_debito", "mayor_cta_credito", "entidad_centro_costos", "persona", "persona_nombre")
+        fields = ("id", "personas", "tipo_entidad", "estado", "uc", "um", "history", "estado", "tipo_entidad_nombre", "centro_costo", "mayor_cta_debito", "mayor_cta_credito", "entidad_centro_costos", "persona", "persona_nombre", "data_persona", "centro_costos")
 
 class TipoEntidadSerializer(serializers.ModelSerializer):
     
@@ -122,10 +135,3 @@ class TipoEntidadSerializer(serializers.ModelSerializer):
         """Meta class."""
         model = TipoEntidad
         fields = ("id", "nombre", "estado")
-
-class EntidadCentroCostoSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        """Meta class."""
-        model = EntidadCentroCosto
-        fields = ("id", "centro_costos", "entidad", "mayor_cta_credito", "mayor_cta_debito", "eliminado", "uc", "um")

@@ -5,6 +5,9 @@ from rest_framework.decorators import action
 from apps.contabilidad.models.parametros import TipoRetencion, CentroCostos
 from apps.contabilidad.serializers.centrocostos import CentroCostosSerializer
 
+from apps.parametros.services.empresa_service import EmpresaService
+from apps.utils.render import Render
+
 class ParametrosViewSet(viewsets.ViewSet):
 
     @action(methods=['get'], detail=False, url_path='tipo_retencion')
@@ -55,3 +58,24 @@ class CentroCostosViewSet(viewsets.ModelViewSet):
         centroscostos.save()
 
         return Response("OK", status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=False, url_path='imprimir')
+    def imprimir(self, request, *args, **kwargs):
+        tipo = request.GET.get("tipo", None)
+
+        if tipo == None:
+            query = CentroCostos.objects.all().order_by('codigo')
+        else:
+            query = CentroCostos.objects.filter(tipo=tipo).order_by('codigo')
+        
+        data = CentroCostosSerializer(query, many=True).data
+
+        nombre = "centro_costo"
+        empresa = EmpresaService.obtener_datos_empresa()
+        params = {
+            'empresa': empresa,
+            'data': data,
+            'tipo': tipo
+        }
+
+        return Render.render_pdfkit('pdf/contabilidad/centrocosto.html', params, nombre)
