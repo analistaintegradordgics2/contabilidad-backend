@@ -42,14 +42,14 @@ MENUS = [
             },
             {
                 "codigo": "nomina_transmision",
-                "titulo": "Transmisiones",
+                "titulo": "Transmisión",
                 "permiso": "view_menu_nomina_transmision",
                 "ruta": "nomina_transmision",
                 "orden": "4"
             },
             {
                 "codigo": "nomina_pago_empleados",
-                "titulo": "Pago Empleados",
+                "titulo": "Pago A Empleados",
                 "permiso": "view_menu_nomina_pago_empleados",
                 "ruta": "nomina_pago_empleados",
                 "orden": "5"
