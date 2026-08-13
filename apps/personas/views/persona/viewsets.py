@@ -6,7 +6,8 @@ from django.db.models import Q
 
 from apps.utils.ModelViewSetClass import ModelViewSetClass
 from apps.personas.models.persona import Persona
-from apps.personas.serializers.persona import PersonaModelSerializer
+from apps.personas.serializers.persona import PersonaModelSerializer, ArchivoPersonaSerializer
+from apps.public.models import Archivo
 
 from .selectors import (
     select_all_personas,
@@ -172,3 +173,12 @@ class PersonaViewSet(ModelViewSetClass):
 
         serializer = PersonaModelSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['POST'], url_path='upload_perfil')
+    def upload_perfil(self, request, *args, **kwargs):
+        if request.data['id_img_actual'] != 'null':
+            obj_archivo = Archivo.objects.filter(id=int(request.data['id_img_actual'])).delete()
+        serializer = ArchivoPersonaSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(persona_id=kwargs['pk'], uc=request.user, tipo=request.data['tipo'] )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

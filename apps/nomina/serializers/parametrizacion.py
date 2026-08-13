@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.nomina.models.parametrizacion import BaseLiquidacionEmpleado, Periodo, NominaParametros, BaseLiquidacionNovedad
+from apps.nomina.models.parametrizacion import BaseLiquidacionEmpleado, Periodo, NominaParametros, BaseLiquidacionNovedad, TipoContrato, TipoTrabajador, NivelRiesgo
 
 class BaseLiquidacionEmpleadoSerializer(serializers.ModelSerializer):
 
@@ -48,3 +48,25 @@ class BaseLiquidacionNovedadSerializer(serializers.ModelSerializer):
         """Meta class."""
         model = BaseLiquidacionNovedad
         fields = ("id", "base_liquidacion", "novedades", "eliminado")
+
+class TipoContratoSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        """Meta class."""
+        model = TipoContrato
+        fields = ("id", "nombre", "estado")
+
+class TipoTrabajadorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        """Meta class."""
+        model = TipoTrabajador
+        fields = ("id", "nombre", "estado")
+
+class NivelRiesgoSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        """Meta class."""
+        model = NivelRiesgo
+        fields = ("id", "nombre", "valor", "estado")
+

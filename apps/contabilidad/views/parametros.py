@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 from apps.contabilidad.models.parametros import TipoRetencion, CentroCostos
+from apps.contabilidad.models.pago import TipoCuenta
 from apps.contabilidad.serializers.centrocostos import CentroCostosSerializer
 
 from apps.parametros.services.empresa_service import EmpresaService
@@ -27,6 +28,13 @@ class ParametrosViewSet(viewsets.ViewSet):
             {"id": 4, "nombre": "Documento soporte"},
             {"id": 5, "nombre": "Nota ajuste"},
         ]
+        return Response(query)
+
+    @action(methods=['get'], detail=False, url_path='tipo_cuenta')
+    def tipo_cuenta(self, request):
+        query = list(TipoCuenta.objects.all().values(
+            "id", "nombre"
+        ))
         return Response(query)
 
 class CentroCostosViewSet(viewsets.ModelViewSet):
