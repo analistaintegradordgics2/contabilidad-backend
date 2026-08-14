@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.contabilidad.models.cuenta import *
-from apps.utils.history import getHistorymodel
+from apps.utils.history import getCombinedHistory
 
 # Si prefieres nombres más claros en el modelo nuevo
 class MayorSerializer(serializers.ModelSerializer):
@@ -32,24 +32,23 @@ class MayorHistorySerializer(serializers.ModelSerializer):
     history = serializers.SerializerMethodField('get_history', read_only=True)
     def get_history(self, obj):
         campos = [
-            {'db': 'codigol', 'label': 'Código'},
-            {'db': 'nombrel', 'label': 'Nombre'},
+            {'db': 'codigo', 'label': 'Código'},
+            {'db': 'nombre', 'label': 'Nombre'},
             {'db': 'tipo', 'label': 'Tipo'},
             {'db': 'estado', 'label': 'Estado'},
-            {'db': 'nits', 'label': 'Nits'},
-            {'db': 'base', 'label': 'Base'},
-            {'db': 'porcentajeret', 'label': '% Retención'},
-            {'db': 'ccosto', 'label': 'Centro de costo'},
-            {'db': 'cxc', 'label': 'Cuenta por cobrar'},
-            {'db': 'cxp', 'label': 'Cuenta por pagar'},
+            {'db': 'naturaleza', 'label': 'Naturaleza'},
+            {'db': 'maneja_nits', 'label': 'Maneja Nits'},
+            {'db': 'maneja_base', 'label': 'Maneja Base'},
+            {'db': 'maneja_ccosto', 'label': 'Centro de costo'},
+            {'db': 'cuenta_cxc', 'label': 'Cuenta por cobrar'},
+            {'db': 'cuenta_cxp', 'label': 'Cuenta por pagar'},
             {'db': 'flujocaja', 'label': 'Flujo de caja'},
-            {'db': 'naturaleza', 'label': 'Naturaleza'},
-            {'db': 'naturaleza', 'label': 'Naturaleza'},
-            {'db': 'history_date', 'label': 'fecha_bitacora'}, {'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion':'username'} # ESTOS DOS CAMPOS SON OBLIGATORIOS
+            {'db': 'history_date', 'label': 'fecha_bitacora'},
+            {'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion': 'username'}
         ]
 
-        list_principal = getHistorymodel(obj, campos,'')
-        
+        list_principal = getCombinedHistory(obj=obj, campos_principal=campos, tipo='Cuenta Contable')
+
         return list_principal
 
     class Meta:

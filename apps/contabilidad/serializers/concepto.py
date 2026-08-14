@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.contabilidad.models.concepto import Concepto
-from apps.utils.history import getHistorymodel
+from apps.utils.history import getHistorymodel, getCombinedHistory
+
 
 class ConceptosSerializer(serializers.ModelSerializer):
     
@@ -27,16 +28,19 @@ class ConceptoHistorySerializer(serializers.ModelSerializer):
             {'db': 'codigo', 'label': 'Código'},
             {'db': 'nombre', 'label': 'Nombre'},
             {'db': 'detalle', 'label': 'Detalle'},
-            {'db': 'history_date', 'label': 'fecha_bitacora'}, {'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion':'username'} # ESTOS DOS CAMPOS SON OBLIGATORIOS
+            {'db': 'history_date', 'label': 'fecha_bitacora'},
+            {'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion': 'username'}
         ]
 
-        list_principal = getHistorymodel(obj, campos,'')
-        
+        list_principal = getCombinedHistory(obj=obj, campos_principal=campos, tipo='Concepto')
+
         return list_principal
 
     class Meta:
         model = Concepto
         fields = (
             'id',
-            'history')
+            'history'
+        )
+
         

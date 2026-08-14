@@ -100,7 +100,9 @@ class PersonaService:
 
             ids_enviados.append(instance.id)
 
-        model.objects.filter(persona=persona).exclude(id__in=ids_enviados).delete()
+        for item_del in model.objects.filter(persona=persona).exclude(id__in=ids_enviados):
+            item_del.delete()
+
 
 
     # ==============================
@@ -110,21 +112,18 @@ class PersonaService:
     @staticmethod
     def _guardar_tipos(persona, tipos):
 
-        PersonaTipoPersona.objects.filter(persona=persona).exclude(
-            tipo_persona__in=tipos
-        ).delete()
+        for ptp in PersonaTipoPersona.objects.filter(persona=persona).exclude(tipo_persona__in=tipos):
+            ptp.delete()
 
         existentes = set(
             PersonaTipoPersona.objects.filter(persona=persona)
             .values_list('tipo_persona_id', flat=True)
         )
 
-        nuevos = [
-            PersonaTipoPersona(persona=persona, tipo_persona_id=tipo)
-            for tipo in tipos if tipo not in existentes
-        ]
+        for tipo in tipos:
+            if tipo not in existentes:
+                PersonaTipoPersona.objects.create(persona=persona, tipo_persona_id=tipo)
 
-        PersonaTipoPersona.objects.bulk_create(nuevos)
 
     
     @staticmethod

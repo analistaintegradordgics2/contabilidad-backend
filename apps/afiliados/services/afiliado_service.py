@@ -55,19 +55,20 @@ class AfiliadoService:
                 id_conc_causacion = conc.get('id') 
                 
                 if id_conc_causacion:
-                    # Viene con ID -> Se actualiza el registro existente
-                    AfiliadoConceptoCausacion.objects.filter(
+                    # Viene con ID -> Se actualiza el registro existente llamando .save() para disparar señales de historial
+                    obj = AfiliadoConceptoCausacion.objects.filter(
                         pk=id_conc_causacion, 
                         afiliado=afiliado
-                    ).update(
-                        concepto_id=conc['concepto'],
-                        valor=conc['valor'],
-                        detalle=conc['detalle'],
-                        porcentaje=conc.get('porcentaje', None),
-                        um=self._usuario,
-                        facturar=conc.get('facturar', False)
-                    )
-                    ids_conceptos_enviados.append(id_conc_causacion)
+                    ).first()
+                    if obj:
+                        obj.concepto_id = conc['concepto']
+                        obj.valor = conc['valor']
+                        obj.detalle = conc['detalle']
+                        obj.porcentaje = conc.get('porcentaje', None)
+                        obj.um = self._usuario
+                        obj.facturar = conc.get('facturar', False)
+                        obj.save()
+                        ids_conceptos_enviados.append(id_conc_causacion)
                 
                 else:
                     # No viene ID -> Es uno nuevo, se crea
@@ -82,8 +83,10 @@ class AfiliadoService:
                     )
                     ids_conceptos_enviados.append(nuevo_concepto.id)
 
-            # Borramos cualquier concepto en la BD que NO haya sido enviado en este JSON
-            AfiliadoConceptoCausacion.objects.filter(afiliado=afiliado).exclude(id__in=ids_conceptos_enviados).delete()
+            # Borramos cualquier concepto en la BD que NO haya sido enviado en este JSON usando .delete() individual para señales
+            for conc_del in AfiliadoConceptoCausacion.objects.filter(afiliado=afiliado).exclude(id__in=ids_conceptos_enviados):
+                conc_del.delete()
+
         return afiliado
     
     def afiliados_facturacion(self, params:dict, sin_facturar=False):

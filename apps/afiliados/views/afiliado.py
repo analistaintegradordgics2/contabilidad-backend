@@ -7,7 +7,8 @@ from apps.afiliados.services.afiliado_service import AfiliadoService
 from apps.afiliados.models.afiliado import Afiliado
 from rest_framework.decorators import action
 from apps.afiliados.serializers.facturacion import FacturacionAfiliadosSerializer
-import pdb
+from apps.utils.history import getCombinedHistory
+from apps.afiliados.models.causacion import AfiliadoConceptoCausacion
 
 class AfiliadoViewSet(viewsets.ModelViewSet):
     queryset = Afiliado.objects.filter(activo=True)
@@ -70,3 +71,48 @@ class AfiliadoViewSet(viewsets.ModelViewSet):
         queryset = Persona.objects.filter(personas_tipos_personas_persona__tipo_persona__nombre__iexact='Afiliado')
         serializer = AfiliadoListSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='history/(?P<id>[^/.]+)')
+    def history(self, request, id=None):
+       
+        afiliado = Afiliado.objects.filter(pk=id).first()
+        if not afiliado:
+            return Response({'history': []}, status=status.HTTP_200_OK)
+
+        campos_afiliado = [
+            {'db': 'nombre',           'label': 'Nombre'},
+            {'db': 'tipo_contrato_id', 'label': 'Tipo Contrato', 'nombre_relacion': 'nombre'},
+            {'db': 'aplicativo_id',    'label': 'Aplicativo', 'nombre_relacion': 'nombre'},
+            {'db': 'fecha_inicio',     'label': 'Fecha Inicio'},
+            {'db': 'fecha_fin',        'label': 'Fecha Fin'},
+            {'db': 'porc_reajuste',    'label': '% Reajuste'},
+            {'db': 'fecha_reajuste',   'label': 'Fecha Reajuste'},
+            {'db': 'activo',           'label': 'Estado'},
+            {'db': 'history_date',     'label': 'fecha_bitacora'},
+            {'db': 'history_user_id',  'label': 'usuario_bitacora', 'nombre_relacion': 'username'},
+        ]
+
+        related_models = [
+            {
+                'history_manager': AfiliadoConceptoCausacion.history,
+                'fk_field': 'afiliado_id',
+                'tipo': 'Concepto de Causación',
+                'campos': [
+                    {'db': 'concepto_id', 'label': 'Concepto', 'nombre_relacion': 'nombre'},
+                    {'db': 'valor',       'label': 'Valor'},
+                    {'db': 'detalle',     'label': 'Detalle'},
+                    {'db': 'porcentaje',  'label': 'Porcentaje'},
+                    {'db': 'facturar',    'label': 'Facturar'},
+                ]
+            }
+        ]
+
+        history_data = getCombinedHistory(
+            obj=afiliado,
+            campos_principal=campos_afiliado,
+            tipo='Afiliación',
+            related_models=related_models
+        )
+
+        return Response({'history': history_data}, status=status.HTTP_200_OK)
+

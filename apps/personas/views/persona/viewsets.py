@@ -5,7 +5,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Q
 
 from apps.utils.ModelViewSetClass import ModelViewSetClass
-from apps.personas.models.persona import Persona
+from apps.personas.models.persona import Persona, PersonaTipoPersona
+from apps.personas.models.contacto import Telefono, Direccion
 from apps.personas.serializers.persona import PersonaModelSerializer
 
 from .selectors import (
@@ -19,6 +20,8 @@ from .selectors import (
 )
 
 from apps.personas.services.persona_service import PersonaService
+from apps.utils.history import getHistorymodel, getCombinedHistory
+
 
 
 class PersonaViewSet(ModelViewSetClass):
@@ -172,3 +175,67 @@ class PersonaViewSet(ModelViewSetClass):
 
         serializer = PersonaModelSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(methods=['get'], detail=False, url_path='history/(?P<id>[^/.]+)')
+    def history(self, request, id=None):
+        persona = Persona.objects.filter(pk=id).first()
+        if not persona:
+            return Response({'history': []}, status=status.HTTP_404_NOT_FOUND)
+
+        campos_persona = [
+            {'db': 'documento', 'label': 'Documento'},
+            {'db': 'p_nombre', 'label': 'Primer Nombre'},
+            {'db': 's_nombre', 'label': 'Segundo Nombre'},
+            {'db': 'p_apellido', 'label': 'Primer Apellido'},
+            {'db': 's_apellido', 'label': 'Segundo Apellido'},
+            {'db': 'n_completo', 'label': 'Nombre Completo'},
+            {'db': 'email', 'label': 'Correo Electrónico'},
+            {'db': 'estado_id', 'label': 'Estado', 'nombre_relacion': 'nombre'},
+            {'db': 'history_date', 'label': 'fecha_bitacora'},
+            {'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion': 'username'},
+        ]
+
+        m2m_relations = [
+            {
+                'history_manager': PersonaTipoPersona.history,
+                'fk_field': 'persona_id',
+                'rel_field': 'tipo_persona',
+                'label_relacion': 'Tipo de Persona',
+                'nombre_campo': 'nombre'
+            }
+        ]
+
+        related_models = [
+            {
+                'history_manager': Telefono.history,
+                'fk_field': 'persona_id',
+                'tipo': 'Teléfono',
+                'campos': [
+                    {'db': 'valor', 'label': 'Teléfono'},
+                    {'db': 'tipo_id', 'label': 'Tipo Teléfono', 'nombre_relacion': 'nombre'},
+                ]
+            },
+            {
+                'history_manager': Direccion.history,
+                'fk_field': 'persona_id',
+                'tipo': 'Dirección',
+                'campos': [
+                    {'db': 'descripcion', 'label': 'Dirección'},
+                    {'db': 'ciudad_id', 'label': 'Ciudad', 'nombre_relacion': 'nombre'},
+                    {'db': 'barrio_id', 'label': 'Barrio', 'nombre_relacion': 'nombre'},
+                ]
+            }
+        ]
+
+
+        history_data = getCombinedHistory(
+            obj=persona,
+            campos_principal=campos_persona,
+            tipo='Persona',
+            m2m_relations=m2m_relations,
+            related_models=related_models
+        )
+
+        return Response({'history': history_data}, status=status.HTTP_200_OK)
+
+

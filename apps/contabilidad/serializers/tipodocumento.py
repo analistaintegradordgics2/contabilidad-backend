@@ -11,6 +11,8 @@ from apps.contabilidad.models.tipodocumento import (
     MedioPagoElectro
 )
 
+from apps.utils.history import getCombinedHistory
+
 
 # apps/contabilidad/serializers/tipodocumento.py — agregar
 
@@ -148,7 +150,6 @@ class TiposDocumentosHistorySerializer(serializers.ModelSerializer):
     history = serializers.SerializerMethodField()
 
     def get_history(self, obj):
-        from apps.utils.history import getHistorymodel
         campos = [
             {'db': 'nombre',           'label': 'Nombre'},
             {'db': 'tipo',             'label': 'Tipo'},
@@ -165,11 +166,12 @@ class TiposDocumentosHistorySerializer(serializers.ModelSerializer):
             {'db': 'history_date',     'label': 'fecha_bitacora'},
             {'db': 'history_user_id',  'label': 'usuario_bitacora', 'nombre_relacion': 'username'},
         ]
-        return getHistorymodel(obj, campos, 'Tipo de Documento')
+        return getCombinedHistory(obj=obj, campos_principal=campos, tipo='Tipo de Documento')
 
     class Meta:
         model  = TiposDocumentos
         fields = ('id', 'history')
+
 
 
 # ─────────────────────────────────────
