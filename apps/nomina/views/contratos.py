@@ -119,21 +119,30 @@ class ContratoNominaViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         serializer = ContratoNominaCreateSerializer(data=request.data)
+        # pdb.set_trace()
         serializer.is_valid(raise_exception=True)
-        ContratoNominaService.crear_o_actualizar(
+        resp = ContratoNominaService.crear_o_actualizar(
             serializer.validated_data, request.user
         )
-        return Response("OK", status=status.HTTP_200_OK)
+        data = {
+            "id": resp.id,
+            "text": "OK"
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
     @transaction.atomic
     def update(self, request, *args, **kwargs):
         instancia = self.get_object()
         serializer = ContratoNominaCreateSerializer(instancia, data=request.data)
         serializer.is_valid(raise_exception=True)
-        ContratoNominaService.crear_o_actualizar(
+        resp = ContratoNominaService.crear_o_actualizar(
             serializer.validated_data, request.user, instancia=serializer.instance
         )
-        return Response("OK", status=status.HTTP_200_OK)
+        data = {
+            "id": resp.id,
+            "text": "OK"
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['POST'], url_path='upload/(?P<contrato_id>[^/.]+)')
     def uploadContratoNomina(self, request, contrato_id=None, *args, **kwargs):

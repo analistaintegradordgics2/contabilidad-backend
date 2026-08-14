@@ -378,12 +378,12 @@ class ContratoNominaSerializer(serializers.ModelSerializer):
     def get_datos_pago(self, obj):
         return DatosPagoSerializer(obj.datos_pago_contrato_nomina.first()).data
 
-    datos_aporte = serializers.SerializerMethodField('get_datos_aporte', read_only=True)
-    def get_datos_aporte(self, obj):
+    datos_aportes = serializers.SerializerMethodField('get_datos_aportes', read_only=True)
+    def get_datos_aportes(self, obj):
         return DatosAporteSerializer(obj.datos_aportes_contrato_nomina.first()).data
 
-    persona = serializers.SerializerMethodField('get_persona', read_only=True)
-    def get_persona(self, obj):
+    data_persona = serializers.SerializerMethodField('get_data_persona', read_only=True)
+    def get_data_persona(self, obj):
         from apps.personas.serializers.persona import PersonaModelSerializer
         return PersonaModelSerializer(obj.persona).data
     
@@ -462,14 +462,14 @@ class ContratoNominaSerializer(serializers.ModelSerializer):
             "foraneas",
             "datos_emergencia",
             "composicion_familiar",
-            "persona",
+            "data_persona",
             "archivos",
             "novedades",
             "valor_dia",
             "medio_auxilio_transporte",
             "contrato_medio_tiempo",
             "datos_pago",
-            "datos_aporte",
+            "datos_aportes",
         )
 
 class ContratoNominaNovedadesListCreateSerializer(serializers.Serializer):

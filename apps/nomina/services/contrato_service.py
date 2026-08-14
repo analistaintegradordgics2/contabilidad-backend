@@ -23,11 +23,14 @@ class ContratoNominaService:
         datos_emergencia = validated_data.pop('datos_emergencia', [])
         composicion_familiar = validated_data.pop('composicion_familiar', [])
 
-        tipopersonas = [11]
+        tipopersonas = [1]
         if data_persona["id"] != None :
             tipopersonas += list(TipoPersona.objects.filter(personas_tipos_personas_tipo__persona_id=data_persona["id"]).values_list('id', flat=True))
 
         data_persona['tipos_persona'] = tipopersonas
+
+        if data_persona.get('n_completo', None) is None or data_persona.get('n_completo', '') == '':
+            data_persona['n_completo'] = f"{data_persona.get('p_nombre', '')} {data_persona.get('s_nombre', '')} {data_persona.get('p_apellido', '')} {data_persona.get('s_apellido', '')}".replace('  ', ' ')
 
         persona = PersonaService.crear_o_actualizar({'persona': data_persona}, user.id)
         validated_data['persona'] = persona
