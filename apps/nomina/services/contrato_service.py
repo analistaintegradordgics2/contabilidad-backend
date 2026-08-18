@@ -187,3 +187,8 @@ class ContratoNominaService:
             ContratoNovedadesPeriodos.objects.create(**item)
 
         return
+    
+    @staticmethod
+    def listar_novedades(contrato_id):
+        data = ContratoNominaNovedades.objects.filter(contrato_id=contrato_id)
+        return data

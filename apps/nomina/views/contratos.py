@@ -182,3 +182,9 @@ class ContratoNominaViewSet(viewsets.ModelViewSet):
         ContratoNominaService.crear_o_actualizar_novedades_periodos(serializer.validated_data, user=request.user)
 
         return Response("OK", status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['GET'], url_path='listar_novedades')
+    def listar_novedades(self, request, *args, **kwargs):
+        data = ContratoNominaService.listar_novedades(kwargs['pk'])
+        serialized_data = ContratoNominaNovedadesSerializer(data, many=True)
+        return Response(serialized_data.data, status=status.HTTP_200_OK)
