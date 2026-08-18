@@ -11,7 +11,7 @@ from apps.contabilidad.views.pago import PagoViewSet
 from apps.contabilidad.views.tipodocumento import TiposDocumentosViewSet
 from apps.contabilidad.views.documento import DocumentoViewSet
 from apps.contabilidad.views.consulta import ConsultasViewSet
-from apps.contabilidad.views.parametros import ParametrosViewSet
+from apps.contabilidad.views.parametros import ParametrosViewSet, CentroCostosViewSet
 from apps.contabilidad.views.factura import EstadosFactViewSet, TransmisionFacturaViewSet
 from apps.contabilidad.views.plantilla import PlantillaDocumentoViewSet
 from apps.contabilidad.views.tributario import ReglaTributariaViewSet, VariableContableViewSet, ConceptoReglaTributariaViewSet
@@ -31,6 +31,7 @@ router.register(r'plantilla', PlantillaDocumentoViewSet, basename='plantilla')
 router.register(r'reglas-tributarias', ReglaTributariaViewSet, basename='reglastributarias')
 router.register(r'variables-contables', VariableContableViewSet, basename='variablescontables')
 router.register(r'concepto-reglas', ConceptoReglaTributariaViewSet, basename='conceptoreglas')
+router.register(r'centrocostos', CentroCostosViewSet, basename='centrocostos')
 
 urlpatterns = [
-    path('', include(router.urls))]
+    path('', include(router.urls))]

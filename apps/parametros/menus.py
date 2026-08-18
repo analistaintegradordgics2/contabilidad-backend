@@ -50,6 +50,49 @@ MENUS = [
                 "ruta": "usuarios",
                 "orden": "3",
             },
+            {
+                "codigo": "parametros_nomina",
+                "titulo": "Nómina",
+                "permiso": "view_menu_parametrizacion_nomina",
+                "orden": "4",
+
+                "children": [
+
+                    {
+                        "codigo": "parametros_nomina_centro_costos",
+                        "titulo": "Centros de Costos",
+                        "permiso": "view_menu_parametrizacion_nomina_centro_costos",
+                        "ruta": "centros_costos",
+                        "orden": "1",
+                        "acciones": CRUD
+                    },
+                    {
+                        "codigo": "parametros_nomina_entidades",
+                        "titulo": "Entidades",
+                        "permiso": "view_menu_parametrizacion_nomina_entidades",
+                        "ruta": "entidades",
+                        "orden": "2",
+                        "acciones": CRUD
+                    },
+                    {
+                        "codigo": "parametros_nomina_cargos",
+                        "titulo": "Cargos",
+                        "permiso": "view_menu_parametrizacion_nomina_cargos",
+                        "ruta": "cargos",
+                        "orden": "3",
+                        "acciones": CRUD
+                    },
+                    {
+                        "codigo": "parametros_nomina_parametrizacion",
+                        "titulo": "Parametrización",
+                        "permiso": "view_menu_parametrizacion_nomina_parametrizacion",
+                        "ruta": "parametrizacion",
+                        "orden": "4",
+                        "acciones": CRUD
+                    },
+
+                ]
+            },
 
         ]
     },

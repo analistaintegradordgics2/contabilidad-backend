@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entidades</title>
+</head>
+
+<body>
+    <img src="{{ empresa.logo }}" width="180px" height="82px">
+    <table class="encabezado">
+        <thead>
+            <tr>
+                <th colspan="2" style="width: 80%;">
+                    <label>{{empresa.nombre}}</label><br>
+                    <label>NIT: {{empresa.nit}}</label><br>
+                    <label>ENTIDADES
+                        {%if filtros.tipo_entidades_id != None%}
+                        <br>TIPO ENTIDAD: {{data.0.tipo_entidad_nombre|upper}}
+                        {%endif%}
+                        {%if filtros.entidad_centro_costos_entidad__centro_costos_id != None%}
+                        <br>CENTRO DE COSTO: {{data.0.centro_costo|upper}}
+                        {%endif%}
+                    </label><br>
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div style="margin-top: 15px;">
+        <table class="tdata" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <th>IDENTIFICACIÓN</th>
+                    <th>NOMBRE</th>
+                    <th>TIPO ENTIDAD</th>
+                    {%if filtros.entidad_centro_costos_entidad__centro_costos_id != None%}
+                    <th>CENTRO DE COSTO</th>
+                    <th>CTA DÉBITO</th>
+                    <th>CTA CRÉDITO</th>
+                    {%endif%}
+                    <th width="8%">ESTADO</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                <tr>
+                    <td>{{item.persona.documento}}</td>
+                    <td>{{item.persona.n_completo|upper}}</td>
+                    <td>{{item.tipo_entidad_nombre|upper}}</td>
+                    {%if filtros.entidad_centro_costos_entidad__centro_costos_id != None%}
+                    <td>{{item.centro_costo|upper}}</td>
+                    <td>{{item.mayor_cta_debito|upper}}</td>
+                    <td>{{item.mayor_cta_credito|upper}}</td>
+                    {%endif%}
+                    <td>{{item.estado}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+
+<style>
+    .titulo {
+        text-align: center;
+        font-size: 16px;
+    }
+
+    table.tdata {
+        border: 1px solid lightgray;
+    }
+
+    table.tdata tr>th {
+        background-color: #e9ecef;
+    }
+
+    tr>th {
+        padding-top: 5px;
+        vertical-align: center;
+    }
+
+    tr>td {
+        padding-top: 4px;
+        padding-left: 3px;
+    }
+
+    .encabezado label {
+        font-size: 12px;
+    }
+</style>

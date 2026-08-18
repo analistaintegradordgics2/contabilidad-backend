@@ -1,7 +1,13 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from apps.contabilidad.models.parametros import TipoRetencion
+
+from apps.contabilidad.models.parametros import TipoRetencion, CentroCostos
+from apps.contabilidad.models.pago import TipoCuenta
+from apps.contabilidad.serializers.centrocostos import CentroCostosSerializer
+
+from apps.parametros.services.empresa_service import EmpresaService
+from apps.utils.render import Render
 
 class ParametrosViewSet(viewsets.ViewSet):
 
@@ -23,3 +29,61 @@ class ParametrosViewSet(viewsets.ViewSet):
             {"id": 5, "nombre": "Nota ajuste"},
         ]
         return Response(query)
+
+    @action(methods=['get'], detail=False, url_path='tipo_cuenta')
+    def tipo_cuenta(self, request):
+        query = list(TipoCuenta.objects.all().values(
+            "id", "nombre"
+        ))
+        return Response(query)
+
+class CentroCostosViewSet(viewsets.ModelViewSet):
+    queryset = CentroCostos.objects.all().order_by('codigo')
+    serializer_class = CentroCostosSerializer
+    def list(self, request, *args, **kwargs):
+        tipo = request.GET.get("tipo", None)
+        if tipo == None :
+            query = CentroCostos.objects.filter(estado=True).order_by('codigo')
+        else :
+            query = CentroCostos.objects.filter(estado=True, tipo=tipo).order_by('codigo')
+
+        data = CentroCostosSerializer(query, many=True).data
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+
+        request.data['uc'] = request.user.id
+        request.data['um'] = request.user.id
+
+        centroscostos = CentroCostosSerializer(data=request.data)
+
+        if request.data['id'] != None:
+            query_centroscostos = CentroCostos.objects.get(pk=request.data['id'])
+            centroscostos = CentroCostosSerializer(query_centroscostos, data=request.data)
+
+        centroscostos.is_valid(raise_exception=True)
+        centroscostos.save()
+
+        return Response("OK", status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False, url_path='imprimir')
+    def imprimir(self, request, *args, **kwargs):
+        tipo = request.GET.get("tipo", None)
+
+        if tipo == None:
+            query = CentroCostos.objects.all().order_by('codigo')
+        else:
+            query = CentroCostos.objects.filter(tipo=tipo).order_by('codigo')
+        
+        data = CentroCostosSerializer(query, many=True).data
+
+        nombre = "centro_costo"
+        empresa = EmpresaService.obtener_datos_empresa()
+        params = {
+            'empresa': empresa,
+            'data': data,
+            'tipo': tipo
+        }
+
+        return Render.render_pdfkit('pdf/contabilidad/centrocosto.html', params, nombre)

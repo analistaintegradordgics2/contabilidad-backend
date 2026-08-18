@@ -11,6 +11,7 @@ urlpatterns = [
         path('personas/', include(('apps.personas.urls', 'personas'), namespace='personas')),
         path('parametros/', include(('apps.parametros.urls', 'parametros'), namespace='parametros')),
         path('contabilidad/', include(('apps.contabilidad.urls', 'contabilidad'), namespace='contabilidad')),
-        path('afiliados/', include(('apps.afiliados.urls', 'afiliados'), namespace='afiliados'))
+        path('afiliados/', include(('apps.afiliados.urls', 'afiliados'), namespace='afiliados')),
+        path('nomina/', include(('apps.nomina.urls', 'nomina'), namespace='nomina'))
     ])),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

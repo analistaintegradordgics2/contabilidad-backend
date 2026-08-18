@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from apps.accounts.serializers import UserFindSerializer
 
 
@@ -40,6 +40,7 @@ class CustomTokenSerializer(TokenObtainPairSerializer):
 
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenSerializer
+    permission_classes = [AllowAny]
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -48,7 +49,7 @@ class LogoutView(APIView):
         return Response({"detail": "Sesión cerrada correctamente."}, status=status.HTTP_200_OK)
 
 class DominioView(APIView):
-    permission_classes = ()
+    permission_classes = [AllowAny]
 
     def get(self, request):
         try :
