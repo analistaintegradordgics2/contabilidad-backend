@@ -79,16 +79,16 @@ class RecaudoService:
 
         Returns:
             Lista de diccionarios de pagos con datos de afiliado incluidos.
-
-        Raises:
-            Exception: Si falla la petición a la API.
         """
-        response = requests.get(RecaudoService.API_SINCRONIZACION_URL)
+        try:
+            response = requests.get(RecaudoService.API_SINCRONIZACION_URL, timeout=5)
 
-        if response.status_code != 200:
-            raise Exception(f"Error obteniendo pagos: {response.json()}")
+            if response.status_code != 200:
+                return []
 
-        return RecaudoService._enriquecer_pagos_con_afiliado(response.json())
+            return RecaudoService._enriquecer_pagos_con_afiliado(response.json())
+        except Exception:
+            return []
 
     @staticmethod
     def _enriquecer_pagos_con_afiliado(pagos: List[Dict]) -> List[Dict[str, Any]]:

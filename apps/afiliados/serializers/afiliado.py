@@ -13,21 +13,23 @@ class AfiliadoResumenSerializer(serializers.ModelSerializer):
         exclude = ('created', 'modified', 'delete', 'uc', 'um')
 
     def to_representation(self, instance):
+        if not instance:
+            return {}
         representation = super().to_representation(instance)
         
-        if instance.tipo_contrato:
+        if getattr(instance, 'tipo_contrato', None):
             representation['tipo_contrato'] = {
                 'id': instance.tipo_contrato.id,
                 'nombre': instance.tipo_contrato.nombre
             }
             
-        if instance.aplicativo:
+        if getattr(instance, 'aplicativo', None):
             representation['aplicativo'] = {
                 'id': instance.aplicativo.id,
                 'nombre': instance.aplicativo.nombre
             }
         
-        if instance.persona:
+        if getattr(instance, 'persona', None):
             telefonos = list(instance.persona.telefonos_personas.exclude(eliminado=True).values('id', 'valor'))
             direccion = instance.persona.direcciones_personas.exclude(eliminado=True).first()
             ciudad = None
@@ -52,6 +54,8 @@ class AfiliadoModelSerializer(AfiliadoResumenSerializer):
     )
 
     def to_representation(self, instance):
+        if not instance:
+            return {}
         representation = super().to_representation(instance)
         
         if self.context.get('conceptos_facturar', False):
@@ -75,15 +79,18 @@ class AfiliadoListSerializer(serializers.ModelSerializer):
     afiliado = serializers.SerializerMethodField('get_afiliado', read_only=True)
     def get_afiliado(self, obj):
         try:
-            return AfiliadoModelSerializer(obj.afiliado_persona.first()).data
-        except:
+            afiliado_obj = obj.afiliado_persona.first()
+            if not afiliado_obj:
+                return {}
+            return AfiliadoModelSerializer(afiliado_obj).data
+        except Exception:
             return {}
     
     tipospersonas = serializers.SerializerMethodField('get_tipos_personas', read_only=True)
     def get_tipos_personas(self, obj):
         try:
             return PersonaTipoPersona.objects.filter(persona_id=obj.id).values('tipo_persona__nombre')
-        except:
+        except Exception:
             return {}
 
     class Meta:
