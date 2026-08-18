@@ -10,7 +10,7 @@ from django.db import transaction
 from apps.nomina.services.cargo_service import CargoService
 from apps.nomina.services.contrato_service import ContratoNominaService
 from apps.nomina.models.contratos import Cargo, ContratoNomina, ContratoNominaNovedades
-from apps.nomina.serializers.contratos import CargoModelSerializer, ContratoNominaCreateSerializer, ContratoNominaArchivoSerializer, ContratoNominaListSerializer, ContratoNominaSerializer, ContratoNominaNovedadesSerializer, ContratoNominaNovedadesListCreateSerializer, ContratoNovedadesPeriodosCreateSerializer
+from apps.nomina.serializers.contratos import CargoModelSerializer, ContratoNominaCreateSerializer, ContratoNominaArchivoSerializer, ContratoNominaListSerializer, ContratoNominaSerializer, ContratoNominaNovedadesSerializer, ContratoNominaNovedadesListCreateSerializer, ContratoNovedadesPeriodosCreateSerializer, ContratoNominaHistorySerializer, ContratoNominaNovedadesHistorySerializer
 from apps.nomina.models.parametrizacion import TipoContrato, TipoTrabajador, NivelRiesgo
 from apps.nomina.serializers.parametrizacion import TipoContratoSerializer, TipoTrabajadorSerializer, NivelRiesgoSerializer
 
@@ -188,3 +188,14 @@ class ContratoNominaViewSet(viewsets.ModelViewSet):
         data = ContratoNominaService.listar_novedades(kwargs['pk'])
         serialized_data = ContratoNominaNovedadesSerializer(data, many=True)
         return Response(serialized_data.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['GET'], url_path='history')
+    def HistoryContratoNomina(self, request, *args, **kwargs):
+        instancia = self.get_object()
+        return Response(ContratoNominaHistorySerializer(instancia).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['GET'], url_path='history_novedad_contrato')
+    def history_novedad_contrato(self, request, *args, **kwargs):
+        from django.shortcuts import get_object_or_404
+        instancia = get_object_or_404(ContratoNominaNovedades, pk=kwargs['pk'])
+        return Response(ContratoNominaNovedadesHistorySerializer(instancia).data, status=status.HTTP_200_OK)

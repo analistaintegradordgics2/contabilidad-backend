@@ -503,3 +503,123 @@ class ContratoNovedadesPeriodosCreateSerializer(serializers.ModelSerializer):
             "contrato",
             "vacaciones",
         )
+
+class ContratoNominaHistorySerializer(serializers.ModelSerializer):
+    history = serializers.SerializerMethodField('get_history', read_only=True)
+    def get_history(self, obj):
+        campos = [
+            { 'db': 'fecha_ingreso', 'label': 'fecha_ingreso' },
+            { 'db': 'jefe', 'label': 'jefe' },
+            { 'db': 'sueldo', 'label': 'sueldo' },
+            { 'db': 'numero_meses', 'label': 'numero_meses' },
+            { 'db': 'fecha_vencimiento', 'label': 'fecha_vencimiento' },
+            { 'db': 'subtipo_trabajador', 'label': 'subtipo_trabajador' },
+            { 'db': 'fecha_retiro', 'label': 'fecha_retiro' },
+            { 'db': 'auxilio_transporte', 'label': 'auxilio_transporte' },
+            { 'db': 'alto_riesgo_pension', 'label': 'alto_riesgo_pension' },
+            { 'db': 'salario_integral', 'label': 'salario_integral' },
+            { 'db': 'salario_promedio', 'label': 'salario_promedio' },
+            { 'db': 'salario_minimo', 'label': 'salario_minimo' },
+            { 'db': 'estado', 'label': 'estado' },
+            { 'db': 'medio_auxilio_transporte', 'label': 'medio_auxilio_transporte' },
+            { 'db': 'contrato_medio_tiempo', 'label': 'contrato_medio_tiempo' },
+            { 'db': 'cargo_id', 'label': 'cargo', 'nombre_relacion': 'nombre' },
+            { 'db': 'centro_costo_id', 'label': 'centro_costo', 'nombre_relacion': 'nombre' },
+            { 'db': 'tipo_contrato_id', 'label': 'tipo_contrato', 'nombre_relacion': 'nombre' },
+            { 'db': 'tipo_trabajador_id', 'label': 'tipo_trabajador', 'nombre_relacion': 'nombre' },
+            { 'db': 'persona_id', 'label': 'persona', 'nombre_relacion': 'n_completo' },
+            { 'db': 'history_date', 'label': 'fecha_bitacora' }, { 'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion': 'username' }
+        ]
+
+        list_principal = getHistorymodel(obj, campos)
+
+        # DatosPago
+        campos_datos_pago = [
+            { 'db': 'numero_cuenta', 'label': 'numero_cuenta' },
+            { 'db': 'banco_id', 'label': 'banco', 'nombre_relacion': 'nombre' },
+            { 'db': 'tipo_cuenta_id', 'label': 'tipo_cuenta', 'nombre_relacion': 'nombre' },
+            { 'db': 'forma_pago_id', 'label': 'forma_pago', 'nombre_relacion': 'nombre' },
+            { 'db': 'medio_pago_id', 'label': 'medio_pago', 'nombre_relacion': 'nombre' },
+            { 'db': 'history_date', 'label': 'fecha_bitacora' }, { 'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion': 'username' }
+        ]
+
+        obj_datos_pago = DatosPago.objects.filter(contrato_id=obj.id).first()
+        if obj_datos_pago:
+            list_principal += getHistorymodel(obj_datos_pago, campos_datos_pago)
+
+        # DatosAportes
+        campos_datos_aportes = [
+            { 'db': 'porcentaje_salud', 'label': 'porcentaje_salud' },
+            { 'db': 'porcentaje_pension', 'label': 'porcentaje_pension' },
+            { 'db': 'porcentaje_arl', 'label': 'porcentaje_arl' },
+            { 'db': 'entidad_salud_id', 'label': 'entidad_salud', 'nombre_relacion': 'nombre' },
+            { 'db': 'entidad_pension_id', 'label': 'entidad_pension', 'nombre_relacion': 'nombre' },
+            { 'db': 'caja_compensacion_id', 'label': 'caja_compensacion', 'nombre_relacion': 'nombre' },
+            { 'db': 'arl_id', 'label': 'arl', 'nombre_relacion': 'nombre' },
+            { 'db': 'nivel_riesgo_id', 'label': 'nivel_riesgo', 'nombre_relacion': 'nombre' },
+            { 'db': 'history_date', 'label': 'fecha_bitacora' }, { 'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion': 'username' }
+        ]
+
+        obj_datos_aportes = DatosAportes.objects.filter(contrato_id=obj.id).first()
+        if obj_datos_aportes:
+            list_principal += getHistorymodel(obj_datos_aportes, campos_datos_aportes)
+
+        # DatosEmergencia
+        campos_datos_emergencia = [
+            { 'db': 'nombre', 'label': 'nombre' },
+            { 'db': 'celular', 'label': 'celular' },
+            { 'db': 'parentesco', 'label': 'parentesco' },
+            { 'db': 'eliminado', 'label': 'eliminado dato de emergencia' },
+            { 'db': 'history_date', 'label': 'fecha_bitacora' }, { 'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion': 'username' }
+        ]
+
+        for item in DatosEmergencia.objects.filter(contrato_id=obj.id):
+            list_principal += getHistorymodel(item, campos_datos_emergencia)
+
+        # ComposicionFamiliar
+        campos_composicion_familiar = [
+            { 'db': 'nombre', 'label': 'nombre' },
+            { 'db': 'edad', 'label': 'edad' },
+            { 'db': 'parentesco', 'label': 'parentesco' },
+            { 'db': 'eliminado', 'label': 'eliminado composicion familiar' },
+            { 'db': 'history_date', 'label': 'fecha_bitacora' }, { 'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion': 'username' }
+        ]
+
+        for item in ComposicionFamiliar.objects.filter(contrato_id=obj.id):
+            list_principal += getHistorymodel(item, campos_composicion_familiar)
+
+        return list_principal
+    
+    class Meta:
+        """Meta class."""
+        model = ContratoNomina
+        fields = (
+            "id",
+            "history",
+        )
+
+class ContratoNominaNovedadesHistorySerializer(serializers.ModelSerializer):
+    
+    history = serializers.SerializerMethodField('get_history', read_only=True)
+    def get_history(self, obj):
+        campos = [
+            { 'db': 'descripcion', 'label': 'descripcion' },
+            { 'db': 'fecha_inicial', 'label': 'fecha_inicial' },
+            { 'db': 'fecha_final', 'label': 'fecha_final' },
+            { 'db': 'valor', 'label': 'valor' },
+            { 'db': 'novedad_id', 'label': 'Novedad', 'nombre_relacion':'nombre' },
+            { 'db': 'eliminado', 'label': 'Novedad Eliminada' },
+            { 'db': 'history_date', 'label': 'fecha_bitacora'}, {'db': 'history_user_id', 'label': 'usuario_bitacora', 'nombre_relacion':'username' } # ESTOS DOS CAMPOS SON OBLIGATORIOS
+        ]
+
+        list_principal = getHistorymodel(obj, campos)
+
+        return list_principal
+    
+    class Meta:
+        """Meta class."""
+        model = ContratoNominaNovedades
+        fields = (
+            "id",
+            "history",
+        )
