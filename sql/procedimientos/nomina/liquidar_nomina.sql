@@ -1140,8 +1140,8 @@ begin
 			'persona_id', mov.persona_id,
 			'concepto_id', mov.concepto_id,
 			'detalle', mov.detalle,
-			'valordb', mov.valordb,
-			'valorcr', mov.valorcr,
+			'valor_db', mov.valordb,
+			'valor_cr', mov.valorcr,
 			'docref', mov.docref,
 			'base', mov.base,
 			'cc_id', mov.cc_id,
@@ -1159,7 +1159,8 @@ begin
 			empresa_id,
 			total_empleador,
 			in_usuario,
-			mov_empleador
+			mov_empleador, 
+			null
 		);
 
 		out_id_doc_empleador := out_documento_id;
@@ -1178,15 +1179,15 @@ begin
 			'persona_id', mov.persona_id,
 			'concepto_id', mov.concepto_id,
 			'detalle', mov.detalle,
-			'valordb', mov.valordb,
-			'valorcr', mov.valorcr,
+			'valor_db', mov.valordb,
+			'valor_cr', mov.valorcr,
 			'docref', mov.docref,
 			'base', mov.base,
 			'cc_id', mov.cc_id,
 			'tercero_id', mov.tercero_id,
 			'pago_id', mov.pago_id
 		)) into mov_empleado from temp_mov_empleado mov;
-	
+
 		select out_id, out_numero into out_documento_id, documento_num_empleado from addingresos (
 			0,
 			nota_contable_id,
