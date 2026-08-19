@@ -145,6 +145,7 @@ class ContratoNominaListSerializer(serializers.ModelSerializer):
             "persona",
             "foraneas",
             "estado",
+            "centro_costo_id",
         )
 
 class DatosEmergenciaSerializer(serializers.ModelSerializer):

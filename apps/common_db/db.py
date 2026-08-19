@@ -1,4 +1,4 @@
-import logging
+import logging, pdb
 from django.db import connection
 
 logger = logging.getLogger("database")

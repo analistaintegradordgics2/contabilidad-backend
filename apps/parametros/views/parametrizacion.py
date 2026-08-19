@@ -296,9 +296,10 @@ class ParametrosWhatsappViewSet(viewsets.ModelViewSet):
             return Response({
                 "status": 200,
             }, status=status.HTTP_200_OK)
-        except :
+        except Exception as e:
             return Response({
                 "status": 400,
+                "msg": str(e)
             }, status=status.HTTP_200_OK)
     
     @action(methods=['GET'], detail=False, url_path='bitacora')

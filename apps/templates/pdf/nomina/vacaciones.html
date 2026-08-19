@@ -1,0 +1,132 @@
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquidación de Vacaciones</title>
+</head>
+
+<body>
+    <table style="width: 100%;">
+        <tbody>
+            <tr>
+                <td style="width: 20%;">
+                    <img src="{{ empresa.logo }}" width="180px" height="82px">
+                </td>
+                <td style="width: 60%;">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style="text-align: center;"><strong>{{empresa.nombre}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: center;"><strong>{{empresa.nit}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: center;"><strong>{{empresa.direccion}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: center;"><label><strong>LIQUIDACIÓN DE VACACIONES</strong></label></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table style="width: 100%; margin-top: 30px;" class="table">
+        <tbody>
+            <tr>
+                <td style="width: 20%;"><strong>NOMBRE:</strong></td>
+                <td>{{ data.nombre }}</td>
+                <td style="width: 18%;"><strong>DOCUMENTO:</strong></td>
+                <td>{{ data.documento }}</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"><strong>FECHA INICIO CONTRATO:</strong></td>
+                <td>{{ data.fecha_ingreso }}</td>
+                <td style="width: 18%;"><strong>TIPO DE CONTRATO:</strong></td>
+                <td>{{ data.tipo_contrato|upper }}</td>
+            </tr>
+            <tr style="padding-top: 10px">
+                <td colspan="4" style="text-align: center;"><strong>PERIODO COMPRENDIDO</strong></td>
+            </tr>
+            <tr>
+                <td><strong>DESDE:</strong></td>
+                <td>{{ data.periodo_vacaciones.fecha_ini }}</td>
+                <td><strong>HASTA:</strong></td>
+                <td>{{ data.periodo_vacaciones.fecha_fin }}</td>
+            </tr>
+            <tr style=" padding-top: 10px">
+                <td colspan="2"><strong>FECHA INICIO VACACIONES:</strong></td>
+                <td colspan="2">{{ data.fecha_vacaciones.fecha_ini|upper }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>FECHA FIN VACACIONES:</strong></td>
+                <td colspan="2">{{ data.fecha_vacaciones.fecha_fin|upper }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>FECHA REINTEGRO DE LABORES:</strong></td>
+                <td colspan="2">{{ data.fecha_vacaciones.fecha_reintegro|upper }}</td>
+            </tr>
+            <tr>
+                <td><strong>DÍAS LABORADOS:</strong></td>
+                <td>{{ data.dias_laborados }}</td>
+                <td style="width: 30%;"><strong>DÍAS DISFRUTADOS DE VACACIONES:</strong></td>
+                <td>{{ data.dias }} DÍAS</td>
+            </tr>
+        </tbody>
+    </table>
+    <table style="width: 100%" class="table">
+        <tbody>
+            <tr>
+                <td style="width: 20%;"><strong>SALARIO:</strong></td>
+                <td style="width: 25%;">$ {{ data.sueldo|intcomma }}</td>
+                <td style="width: 30%;">VACACIONES {{ data.dias }} DÍAS</td>
+                <td style="width: 3%;"><strong>X</strong></td>
+                <td style="width: 11%; text-align: right; padding-right: 3px;">$ {{ data.valor_dia|intcomma }}</td>
+                <td style="text-align: right; padding-right: 3px;"><strong>$ {{ data.subtotal|intcomma }}</strong></td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"><strong>VALOR DÍA:</strong></td>
+                <td style="width: 25%;">$ {{ data.valor_dia|intcomma }}</td>
+                <td style="width: 30%;">SALUD {{ data.salud.dias }} DÍAS</td>
+                <td style="width: 3%;"><strong>X</strong></td>
+                <td style="width: 11%; text-align: right; padding-right: 3px;">$ {{ data.salud.valor_porcentaje|intcomma }}</td>
+                <td style="text-align: right; padding-right: 3px;">- $ {{ data.salud.total|intcomma }}</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"><strong>DÍAS A PAGAR:</strong></td>
+                <td style="width: 25%;">{{ data.dias }}</td>
+                <td style="width: 30%;">PENSIÓN {{ data.pension.dias }} DÍAS</td>
+                <td style="width: 3%;"><strong>X</strong></td>
+                <td style="width: 11%; text-align: right; padding-right: 3px;">$ {{ data.pension.valor_porcentaje|intcomma }}</td>
+                <td style="text-align: right; padding-right: 3px;">- $ {{ data.pension.total|intcomma }}</td>
+            </tr>
+            <tr>
+                <td colspan="4" style="border-right: 0px;"></td>
+                <td style="text-align: right; padding-right: 3px; border-left: 0px;"><strong>TOTAL:</strong></td>
+                <td style="text-align: right; padding-right: 3px;"><strong>$ {{ data.total|intcomma }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="text-align: center; margin-top: 80px;">
+        <label><strong>{{ data.nombre }}</strong></label><br />
+        <span>{{ data.documento }}</span>
+    </div>
+</body>
+<style>
+    .table td {
+        border: 1px solid lightgray;
+        border-collapse: collapse !important;
+        padding-left: 3px;
+        padding-top: 3px;
+        vertical-align: middle;
+    }
+</style>
+
+</html>
