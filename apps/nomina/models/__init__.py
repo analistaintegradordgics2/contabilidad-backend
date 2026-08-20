@@ -4,3 +4,4 @@ from .entidades import *
 from .contratos import *
 from .liquidacion import *
 from .vacaciones import *
+from .transmision import *

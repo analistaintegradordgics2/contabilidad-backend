@@ -377,11 +377,11 @@ class ContratoNominaSerializer(serializers.ModelSerializer):
 
     datos_pago = serializers.SerializerMethodField('get_datos_pago', read_only=True)
     def get_datos_pago(self, obj):
-        return DatosPagoSerializer(obj.datos_pago_contrato_nomina.first()).data
+        return DatosPagoSerializer(obj.datos_pago_contrato_nomina).data
 
     datos_aportes = serializers.SerializerMethodField('get_datos_aportes', read_only=True)
     def get_datos_aportes(self, obj):
-        return DatosAporteSerializer(obj.datos_aportes_contrato_nomina.first()).data
+        return DatosAporteSerializer(obj.datos_aportes_contrato_nomina).data
 
     data_persona = serializers.SerializerMethodField('get_data_persona', read_only=True)
     def get_data_persona(self, obj):

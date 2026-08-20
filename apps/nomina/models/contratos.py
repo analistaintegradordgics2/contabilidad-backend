@@ -49,7 +49,7 @@ class DatosPago(BaseModel):
     banco = models.ForeignKey(Banco, related_name='datos_pago_banco', on_delete=models.CASCADE)
     tipo_cuenta = models.ForeignKey(TipoCuenta, related_name='datos_pago_tipo_cuenta', on_delete=models.CASCADE)
     numero_cuenta = models.CharField(max_length=30)
-    contrato = models.ForeignKey(ContratoNomina, related_name='datos_pago_contrato_nomina', on_delete=models.CASCADE)
+    contrato = models.OneToOneField(ContratoNomina, related_name='datos_pago_contrato_nomina', on_delete=models.CASCADE)
     forma_pago = models.ForeignKey(FormaPagoElectro, related_name='datos_pago_forma_pago', on_delete=models.CASCADE)
     medio_pago = models.ForeignKey(MedioPagoElectro, related_name='datos_pago_medio_pago', on_delete=models.CASCADE)
 
@@ -63,7 +63,7 @@ class DatosAportes(BaseModel):
     arl = models.ForeignKey(Entidad, related_name='datos_aportes_entidad_arl', on_delete=models.CASCADE)
     porcentaje_arl = models.DecimalField(max_digits=12, decimal_places=3, default=0.0)
     nivel_riesgo = models.ForeignKey(NivelRiesgo, related_name='datos_aportes_nivel_riesgo', on_delete=models.CASCADE)
-    contrato = models.ForeignKey(ContratoNomina, related_name='datos_aportes_contrato_nomina', on_delete=models.CASCADE)
+    contrato = models.OneToOneField(ContratoNomina, related_name='datos_aportes_contrato_nomina', on_delete=models.CASCADE)
 
 class DatosEmergencia(BaseModel):
     history = HistoricalRecords()

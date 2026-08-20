@@ -32,7 +32,7 @@ class Persona(BaseModel):
     ciudad_expedicion = models.ForeignKey(Ciudad,on_delete=models.CASCADE, related_name='persona_ciudad_expedicion', blank=True, null=True)
     fecha_expedicion = models.DateField( help_text='Fecha de Expedición', blank=True, null=True)
     profesion = models.CharField(max_length=255, help_text="Profesión", blank=True, null=True)
-    estado =  models.ForeignKey(EstadoPersona,related_name='estado_persona', on_delete=models.CASCADE,blank=True,null=True)
+    estado =  models.ForeignKey(EstadoPersona,related_name='estado_persona', on_delete=models.CASCADE,blank=True,null=True, default=1)
     observacion = models.CharField(max_length=255, help_text="Observación de la Persona", blank=True, null=True)
 
     documento_representante_legal = models.CharField(max_length=20, blank=True, null=True)
