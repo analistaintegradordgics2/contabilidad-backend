@@ -47,6 +47,20 @@ class EntidadViewSet(viewsets.ModelViewSet):
     def imprimir(self, request, *args, **kwargs):
         return EntidadService.imprimir(request.data)
 
+    @action(methods=['GET'], detail=False, url_path='filtrar')
+    def filtrar(self, request, *args, **kwargs):
+        tipo_entidad = request.GET.get("tipo_entidad", "")
+        centro_costo = request.GET.get("centro_costo", "")
+        if tipo_entidad:
+            query = self.get_queryset().filter(tipo_entidad=tipo_entidad)
+        elif centro_costo:
+            query = self.get_queryset().filter(centro_costo=centro_costo)
+        else:
+            query = self.get_queryset()
+
+        data = self.serializer_class(query, many=True).data
+        return Response(data, status=status.HTTP_200_OK)
+
 class TipoEntidadViewSet(viewsets.ModelViewSet):
 
     queryset = TipoEntidad.objects.all().order_by('nombre')
