@@ -1,0 +1,126 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquidaciones</title>
+</head>
+
+<body>
+    <table class="encabezado" style="width: 100%;">
+        <tbody>
+            <tr>
+                <td style="width: 20%;">
+                    <img src="{{ empresa.logo }}" width="180px" height="82px">
+                </td>
+                <td style="width: 60%;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th colspan="2" style="width: 100%;">
+                                    <label><strong>{{empresa.nombre}}</strong></label><br>
+                                    <label>{{empresa.nit}}</label><br>
+                                    <label>SISTEMA DE LIQUIDACIÓN</label><br>
+                                    <label>{{periodo|upper}}</label>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="margin-top: 15px;">
+        <div>
+            EMPLEADOS TIEMPO COMPLETO
+        </div>
+        <table class="tdata" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <th colspan="4">INFORMACIÓN GENERAL DEL EMPLEADO</th>
+                    <th colspan="4">DEVENGADOS</th>
+                    <th colspan="4">DEDUCIDOS</th>
+                    <th colspan="2">NETO</th>
+                </tr>
+                <tr>
+                    <th style="background-color: #e9ecef;" width="6%">CEDULA</th>
+                    <th style="background-color: #e9ecef;" width="20%">EMPLEADO</th>
+                    <th style="background-color: #e9ecef;">SUELDO MES</th>
+                    <th style="background-color: #e9ecef;" width="4%">DIAS</th>
+                    <th style="background-color: #e9ecef;">SALARIO</th>
+                    <th style="background-color: #e9ecef;">AUX TRANSPORTE</th>
+                    <th style="background-color: #e9ecef;" width="6.5%">OTROS</th>
+                    <th style="background-color: #e9ecef;" width="6.5%">TOTAL</th>
+                    <th style="background-color: #e9ecef;" width="6.5%">I.S.S</th>
+                    <th style="background-color: #e9ecef;" width="6.5%">PENSIÓN</th>
+                    <th style="background-color: #e9ecef;" width="6.5%">OTROS</th>
+                    <th style="background-color: #e9ecef;" width="6.5%">TOTAL</th>
+                    <th colspan="2" style="background-color: #e9ecef;">NETO A PAGAR</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in liquidaciones%}
+                <tr>
+                    <td>{{item.documento}}</td>
+                    <td>{{item.nombre}}</td>
+                    <td style="text-align: right;">$ {{item.sueldo|intcomma}}</td>
+                    <td style="text-align: center;">{{item.dias_laborados}}</td>
+                    <td style="text-align: right;">$ {{item.sueldo_trabajado|intcomma}}</td>
+                    <td style="text-align: right;">$ {{item.auxilio_transporte|intcomma}}</td>
+                    <td style="text-align: right;">$ {{item.otros_devengados|intcomma}}</td>
+                    <td style="text-align: right;">$ {{item.total_devengados|intcomma}}</td>
+                    <td style="text-align: right;">$ {{item.salud|intcomma}}</td>
+                    <td style="text-align: right;">$ {{item.pension|intcomma}}</td>
+                    <td style="text-align: right;">$ {{item.otros_deducidos|intcomma}}</td>
+                    <td style="text-align: right;">$ {{item.total_deducidos|intcomma}}</td>
+                    <td colspan="2" style="text-align: right;">$ {{item.total|intcomma}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
+
+<style>
+    @page {
+        size: legal landscape;
+        margin-left: 1cm;
+        margin-top: 1cm;
+        margin-right: 1cm;
+        margin-bottom: 1cm;
+    }
+
+    .titulo {
+        text-align: center;
+        font-size: 16px;
+    }
+
+    table.tdata {
+        border: 1px solid lightgray;
+    }
+
+    /* table.tdata tr>th {
+        background-color: #e9ecef;
+    } */
+
+    tr>th {
+        padding-top: 5px;
+        vertical-align: center;
+    }
+
+    tr>td {
+        padding-top: 4px;
+        padding-left: 3px;
+        padding-right: 3px;
+    }
+
+    .encabezado label {
+        font-size: 12px;
+    }
+</style>

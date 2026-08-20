@@ -9,6 +9,7 @@ from apps.nomina.views.novedades import TipoNovedadViewSet, TipoValorNovedadView
 from apps.nomina.views.parametrizacion import BaseLiquidacionEmpleadoViewSet, PeriodoViewSet, NominaParametrosViewSet
 from apps.nomina.views.entidades import EntidadViewSet, TipoEntidadViewSet
 from apps.nomina.views.contratos import CargoViewSet, TipoContratoViewSet, TipoTrabajadorViewSet, NivelRiesgoViewSet, ContratoNominaViewSet
+from apps.nomina.views.liquidacion import LiquidacionesViewSet
 
 router = DefaultRouter()
 router.register(r'tipo_novedad', TipoNovedadViewSet, basename='tipo_novedad'),
@@ -25,6 +26,7 @@ router.register(r'tipo_contrato', TipoContratoViewSet, basename='tipo_contrato')
 router.register(r'tipo_trabajador', TipoTrabajadorViewSet, basename='tipo_trabajador'),
 router.register(r'nivel_riesgo', NivelRiesgoViewSet, basename='nivel_riesgo'),
 router.register(r'contrato', ContratoNominaViewSet, basename='contrato'),
+router.register(r'liquidaciones', LiquidacionesViewSet, basename='liquidaciones'),
 
 
 urlpatterns = [

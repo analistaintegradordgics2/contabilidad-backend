@@ -83,6 +83,7 @@ MEDIA_URL = '/media/'
 
 
 #Teplates
+TEMPLATES_DIR = str(APPS_DIR.path('templates'))
 DIR_CSS = str(APPS_DIR.path('templates/css/'))
 TEMPLATES = [
     {

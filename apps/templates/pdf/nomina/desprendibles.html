@@ -1,0 +1,206 @@
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desprendibles</title>
+</head>
+
+<body>
+    {%for data in liquidaciones%}
+    <table style="width: 100%; font-size: 10px">
+        <tbody>
+            <tr>
+                <td style="width: 20%;">
+                    <img src="{{ empresa.logo }}" width="180px" height="82px">
+                </td>
+                <td style="width: 60%;">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td style="text-align: center;"><strong>{{empresa.nombre}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: center;"><strong>{{empresa.nit}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: center;"><strong>{{empresa.direccion}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: center;"><label>DESPRENDIBLE DE PAGO</label></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: center;"><label>{{periodo|upper}}</label></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table" style="width: 100%; border: 1px solid lightgrey; margin-top: 20px">
+        <tbody>
+            <tr>
+                <td colspan="2">
+                    <table style="width: 100%;">
+                        <tbody>
+                            <tr>
+                                <td width="13%"><strong>EMPLEADO:</strong></td>
+                                <td>{{data.nombre}}</td>
+                                <td width="13%"><strong>DOCUMENTO:</strong></td>
+                                <td>{{data.documento}}</td>
+                            </tr>
+                            <tr>
+                                <td width="13%"><strong>CARGO:</strong></td>
+                                <td>{{data.cargo}}</td>
+                                <td width="13%"><strong>SUELDO MES:</strong></td>
+                                <td>$ {{data.sueldo|intcomma}}</td>
+                            </tr>
+                            <tr>
+                                <td width="13%"><strong>CONTRATO:</strong></td>
+                                <td>{{data.tipo_contrato_nombre|upper}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th colspan="3" style="text-align: center; border-bottom: 1px solid lightgrey;">
+                                    <strong>DEVENGADOS</strong>
+                                </th>
+                            </tr>
+                            <tr>
+                                <!-- <th width="8%"><strong>COD</strong></th> -->
+                                <th width="60%"><strong>NOVEDAD</strong></th>
+                                <th width="22%"><strong></strong></th>
+                                <th style="text-align: right;" width="18%"><strong>VALOR</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {%for item in data.empleado%}
+                                {% if item.tipo_novedad == 3%}
+                                    <tr style="font-size: 9px;">
+                                        <!-- <td>{{item.novedad_id}}</td> -->
+                                        <td style="vertical-align: top;">
+                                            {% if item.novedad_id == novedad_sueldo %}
+                                                {% if data.tipo_contrato != 5 and data.tipo_contrato != 6 %}
+                                                    {{item.descripcion|upper}}
+                                                {% else %}
+                                                    APOYO Y SOSTENIMIENTO
+                                                {% endif %}
+                                            {% else %}
+                                                {{item.descripcion|upper}}
+                                            {% endif %}
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            {%if item.tipo_valor_novedad_id == 3%}
+                                                <!-- Novedad de tipo valor -->
+                                                $ {{item.cantidad|intcomma}}
+                                            {%else%}
+                                                {{item.cantidad}} - {{item.tipo_valor_novedad|upper}}
+                                            {%endif%}
+                                        </td>
+                                        <td style="vertical-align: top; text-align: right;">$ {%if item.novedad_id in licencias_no_remuneradas %} - {%endif%} {{item.valor|intcomma}}</td>
+                                    </tr>
+                                {%endif%}
+                            {%endfor%}
+                        </tbody>
+                    </table>
+                </td>
+                <td style="vertical-align: top;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th colspan="3" style="text-align: center; border-bottom: 1px solid lightgrey;">
+                                    <strong>DEDUCIDOS</strong>
+                                </th>
+                            </tr>
+                            <tr>
+                                <!-- <th width="8%"><strong>COD</strong></th> -->
+                                <th width="60%"><strong>NOVEDAD</strong></th>
+                                <th width="22%"><strong></strong></th>
+                                <th style="text-align: right;" width="18%"><strong>VALOR</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {%for item in data.empleado%}
+                                {% if item.tipo_novedad == 1 or item.tipo_novedad == 2 %}
+                                    {%if item.valor > 0%}
+                                        <tr style="font-size: 9px;">
+                                            <!-- <td>{{item.novedad_id}}</td> -->
+                                            <td style="vertical-align: top;">{{item.descripcion|upper}}</td>
+                                            <td style="vertical-align: top;">
+                                                {%if item.tipo_valor_novedad_id == 3%}
+                                                    <!-- Novedad de tipo valor -->
+                                                    {{item.cantidad|intcomma}}
+                                                {%else%}
+                                                    {{item.cantidad}}
+                                                {%endif%} - {{item.tipo_valor_novedad|upper}}
+                                            </td>
+                                            <td style="vertical-align: top; text-align: right;">$ {{item.valor|intcomma}}</td>
+                                        </tr>
+                                    {%endif%}
+                                {%endif%}
+                            {%endfor%}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table>
+                        <tr>
+                            <td colspan="2"><strong>TOTAL DEVENGADOS:</strong></td>
+                            <td style="text-align: right;">$ {{data.total_devengados|intcomma}}</td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    <table>
+                        <tr>
+                            <td colspan="2"><strong>TOTAL DEDUCIDOS:</strong></td>
+                            <td style="text-align: right;">$ {{data.total_deducidos|intcomma}}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="font-size: 12px;">
+                    <strong>NETO PAGADO: </strong> $ {{data.total|intcomma}} <br>
+                    <strong>SON:</strong> {{data.total|numero_a_texto|upper}} PESOS MCTE
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="page-break-after: always;"></div>
+    {%endfor%}
+</body>
+
+</html>
+
+<style>
+    @page {
+        margin-left: 0.5cm;
+        margin-top: 0.5cm;
+        margin-right: 0.5cm;
+        margin-bottom: 0.5cm;
+    }
+
+    table.table th,
+    table.table td {
+        padding: 3px;
+    }
+
+    table.table th {
+        text-align: left;
+    }
+</style>
