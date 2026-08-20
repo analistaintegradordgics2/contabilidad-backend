@@ -48,5 +48,5 @@ class ParametrizacionService:
             else :
                 parametro.valor = item['valor']
             
-            parametro.valor2 = item.get('valor2', parametro.valor2)
+            # parametro.valor2 = item.get('valor2', parametro.valor2)
             parametro.save()
