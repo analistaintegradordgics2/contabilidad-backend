@@ -23,6 +23,7 @@ class EntidadService:
         entidad_centro_costo = validated_data.pop('centro_costos', [])
 
         persona_data['estado'] = 1 if validated_data.get('estado', False) else 2
+        persona_data['tipos_persona'] = persona_data['tipo_persona']
         persona = PersonaService.crear_o_actualizar({'persona': persona_data}, user.id)
         validated_data['personas'] = persona
 
