@@ -635,24 +635,22 @@ begin
 					'fecha_fin_liquidacion', nn.fecha_fin_liquidacion,
 					'dias_laborados', nn.dias_laborados,
 					'tipo_nomina', nn.tipo_nomina,
-					'tipo_nota', nn.tipo_nota,
 					'numero', nn.numero,
 					'prefijo', nn.prefijo,
-					'referencia', nn.referencia,
-					'sueldo', nn.sueldo,
-					'sueldo_trabajado', nn.sueldo_trabajado,
-					'auxilio_transporte', nn.auxilio_transporte,
-					'viaticos_salarriales', nn.viaticos_salarriales,
-					'viaticos_nosalariales', nn.viaticos_nosalariales,
-					'otros_devengados', nn.otros_devengados,
-					'total_devengados', nn.total_devengados,
-					'salud', nn.salud,
-					'pension', nn.pension,
-					'fondo', nn.fondo,
-					'arl', nn.arl,
-					'otros_deducidos', nn.otros_deducidos,
-					'total_deducido', nn.total_deducido,
-					'total', nn.total,
+					'sueldo', nnv.sueldo,
+					'sueldo_trabajado', nnv.sueldo_trabajado,
+					'auxilio_transporte', nnv.auxilio_transporte,
+					'viaticos_salarriales', nnv.viaticos_salarriales,
+					'viaticos_nosalariales', nnv.viaticos_nosalariales,
+					'otros_devengados', nnv.otros_devengados,
+					'total_devengados', nnv.total_devengados,
+					'salud', nnv.salud,
+					'pension', nnv.pension,
+					'fondo', nnv.fondo,
+					'arl', nnv.arl,
+					'otros_deducidos', nnv.otros_deducidos,
+					'total_deducido', nnv.total_deducido,
+					'total', nnv.total,
 					'estado', (select ce.nombre from contabilidad_estadofactelectro ce where ce.id = nn.estado_id),
 					'estado_id', nn.estado_id,
 					'respuesta', nn.respuesta,
@@ -668,7 +666,7 @@ begin
 						where nc.id = nn.contrato_id
 					),
 					'mes', (select cm.numero from parametros_mes cm where cm.id = nn.mes_id),
-					'uc', (select concat(au.first_name, ' ', au.last_name) from auth_user au where au.id = nn.uc_id),
+					'uc', (select concat(au.first_name, ' ', au.last_name) from accounts_usuario au where au.id = nn.uc_id),
 					'detalle', coalesce((
 						select
 							json_agg(json_build_object(
@@ -685,6 +683,7 @@ begin
 					), '[]')
 				)) into resultado
 			from nomina_nominaelectronica nn
+			join nomina_nominaelectronicavalores nnv on nnv.nomina_electronica_id = nn.id
 			where nn.mes_id = in_mes::integer
 			and nn.anio_id = in_anio_id
 			and nn.estado_id = 4;

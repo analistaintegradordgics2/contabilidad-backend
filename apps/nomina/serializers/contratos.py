@@ -14,6 +14,7 @@ from apps.nomina.models.parametrizacion import NivelRiesgo, NominaParametros, Pe
 from apps.contabilidad.models.pago import Banco, TipoCuenta, FormaPagoElectro, MedioPagoElectro
 from apps.nomina.models.entidades import Entidad
 from apps.public.models import Archivo
+from apps.nomina.models.transmision import NominaElectronica
 
 class CargoModelSerializer(serializers.ModelSerializer):
     
@@ -624,3 +625,118 @@ class ContratoNominaNovedadesHistorySerializer(serializers.ModelSerializer):
             "id",
             "history",
         )
+
+class ContratosFuncionalidadSerializer(serializers.ModelSerializer):
+    
+    persona = serializers.SerializerMethodField('get_persona', read_only=True)
+    def get_persona(self, obj):
+        direccion_persona = None
+        direccion = None
+        ciudad = None
+        direccion_persona = obj.persona.direcciones_personas.filter(incluir_a_factura=True).order_by("-id").first()
+        if direccion_persona != None :
+            direccion = direccion_persona.descripcion
+            ciudad = direccion_persona.ciudad.coddane if direccion_persona.ciudad_id != None else None
+        
+        return {
+            "id": obj.persona_id,
+            "tipo_documento": obj.persona.tipo_documento.codigo,
+            "documento": obj.persona.documento,
+            "p_nombre": obj.persona.p_nombre,
+            "s_nombre": obj.persona.s_nombre,
+            "p_apellido": obj.persona.p_apellido,
+            "s_apellido": obj.persona.s_apellido,
+            "n_completo": obj.persona.n_completo,
+            "email": obj.persona.email,
+            "direccion": direccion,
+            "ciudad": ciudad
+        }
+    
+    fecha_ingreso = serializers.SerializerMethodField('get_fecha_ingreso', read_only=True)
+    def get_fecha_ingreso(self, obj):
+        return obj.fecha_ingreso.strftime("%Y-%m-%d")
+    
+    fecha_retiro = serializers.SerializerMethodField('get_fecha_retiro', read_only=True)
+    def get_fecha_retiro(self, obj):
+        if obj.fecha_retiro != None :
+            return obj.fecha_retiro.strftime("%Y-%m-%d")
+        else :
+            return None
+    
+    foraneas = serializers.SerializerMethodField('get_foraneas', read_only=True)
+    def get_foraneas(self, obj):
+        return {
+            "datos_pago": {
+                "numero_cuenta": obj.datos_pago_contrato_nomina.numero_cuenta,
+                "banco": obj.datos_pago_contrato_nomina.banco.nombre if obj.datos_pago_contrato_nomina.banco_id != None else None,
+                "forma_pago": obj.datos_pago_contrato_nomina.forma_pago.nombre if obj.datos_pago_contrato_nomina.forma_pago_id != None else None,
+                "medio_pago": obj.datos_pago_contrato_nomina.medio_pago.codigo if obj.datos_pago_contrato_nomina.medio_pago_id != None else None,
+                "tipo_cuenta": obj.datos_pago_contrato_nomina.tipo_cuenta_id,
+            },
+            "cargo": obj.cargo.nombre if obj.cargo_id != None else None,
+            "codigo_sucursal": obj.centro_costo.cod_sucursal if obj.centro_costo_id != None else None,
+            "tipo_contrato": obj.tipo_contrato.cod_dian if obj.tipo_contrato_id != None else None,
+            "subtipo_trabajador": obj.subtipo_trabajador if obj.subtipo_trabajador != None else None,
+            "tipo_trabajador": obj.tipo_trabajador.cod_dian if obj.tipo_trabajador_id != None else None,
+        }
+    
+    devengados = serializers.SerializerMethodField('get_devengados', read_only=True)
+    def get_devengados(self, obj):
+        return []
+    
+    deducidos = serializers.SerializerMethodField('get_deducidos', read_only=True)
+    def get_deducidos(self, obj):
+        return []
+    
+    doc_nombre = serializers.SerializerMethodField('get_doc_nombre', read_only=True)
+    def get_doc_nombre(self, obj):
+        return "{} - {}".format(obj.persona.documento, obj.persona.n_completo)
+    
+    validar_contrato_conciliado = serializers.SerializerMethodField('get_validar_contrato_conciliado', read_only=True)
+    def get_validar_contrato_conciliado(self, obj):
+        nomina_elect = NominaElectronica.objects.filter(contrato_id=obj.id).order_by("-id").first()
+        if nomina_elect != None :
+            return {
+                "id": nomina_elect.id,
+                "mes": nomina_elect.mes.nombre,
+                "mes_numero": nomina_elect.mes.numero,
+                "anio": nomina_elect.anio.nombre
+            }
+        else :
+            return None
+
+    porcentaje_salud = serializers.SerializerMethodField('get_porcentaje_salud', read_only=True)
+    def get_porcentaje_salud(self, obj):
+        return obj.datos_aportes_contrato_nomina.porcentaje_salud
+
+    porcentaje_pension = serializers.SerializerMethodField('get_porcentaje_pension', read_only=True)
+    def get_porcentaje_pension(self, obj):
+        return obj.datos_aportes_contrato_nomina.porcentaje_pension
+
+    porcentaje_arl = serializers.SerializerMethodField('get_porcentaje_arl', read_only=True)
+    def get_porcentaje_arl(self, obj):
+        return obj.datos_aportes_contrato_nomina.porcentaje_arl
+
+    class Meta:
+        """Meta class."""
+        model = ContratoNomina
+        fields = [
+            "id",
+            "sueldo",
+            "auxilio_transporte",
+            "porcentaje_salud",
+            "porcentaje_pension",
+            "porcentaje_arl",
+            "tipo_contrato_id",
+            "alto_riesgo_pension",
+            "salario_integral",
+            "estado",
+            "persona",
+            "fecha_ingreso",
+            "fecha_retiro",
+            "foraneas",
+            "devengados",
+            "deducidos",
+            "doc_nombre",
+            "validar_contrato_conciliado"
+        ]

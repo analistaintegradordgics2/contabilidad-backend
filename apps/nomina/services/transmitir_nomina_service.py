@@ -158,13 +158,13 @@ class TransmitirNominaService:
             return self._procesar_registro(data, filtros)
         except NominaElectronicaTransmisionError as exc:
             return {"status": 400, "msg": exc.msg}
-        # except Exception as exc:
-        #     return {
-        #         "status": 400,
-        #         "msg": "Se presentó un error en el proceso, por favor comuníquese con soporte.",
-        #         "error": str(exc),
-        #         "server_error": True,
-        #     }
+        except Exception as exc:
+            return {
+                "status": 400,
+                "msg": "Se presentó un error en el proceso, por favor comuníquese con soporte.",
+                "error": str(exc),
+                "server_error": True,
+            }
 
     # ------------------------------------------------------------------
     # Procesamiento de un registro
@@ -770,9 +770,9 @@ class TransmitirNominaService:
         try:
             nomina_electronica_id = temp_data["nomina_electronica_id"]
             contrato_id = temp_data["id"]
-            arl = temp_data.get("Arl", 0)
-            novedades = temp_data.get("Novedades", [])
-            liquidaciones = temp_data.get("liquidaciones", [])
+            arl = temp_data["Arl"]
+            novedades = temp_data["Novedades"]
+            liquidaciones = temp_data["liquidaciones"]
         except (KeyError, TypeError):
             nomina_electronica_id = data["nomina_electronica_id"]
             contrato_id = data["id"]
@@ -1003,9 +1003,9 @@ class TransmitirNominaService:
                 else ""
             ),
             "Notas": "",
-            "TotalDevengados": int(float(nomi_elec.total_devengados)),
-            "TotalDeducciones": int(float(nomi_elec.total_deducido)),
-            "TotalDocumento": int(float(nomi_elec.total)),
+            "TotalDevengados": int(float(nomi_elec.nomina_electronica_valores.total_devengados)),
+            "TotalDeducciones": int(float(nomi_elec.nomina_electronica_valores.total_deducido)),
+            "TotalDocumento": int(float(nomi_elec.nomina_electronica_valores.total)),
             "Empleado": {
                 "Codigo": "C{}".format(data["id"]),
                 "TipoIdentificacion": data["persona"]["tipo_documento"],
