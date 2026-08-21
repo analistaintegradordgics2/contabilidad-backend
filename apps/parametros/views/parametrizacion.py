@@ -378,7 +378,6 @@ class ParametrosWhatsappViewSet(viewsets.ModelViewSet):
 
         params = {
             'empresa': empresa,
-            'filtro': data["model"],
             'data': data["data"]
         }
 
