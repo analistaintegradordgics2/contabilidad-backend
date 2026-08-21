@@ -98,7 +98,7 @@ begin
             where doc.tipo_documento_id = tipodoc
             and EXTRACT(month FROM doc.fecha) = in_mes
             and EXTRACT(year FROM doc.fecha) = in_anio
-            and COALESCE(cfe.estado_id, 1) = estadofact
+            and (case when estadofact > 0 then COALESCE(cfe.estado_id, 1) = estadofact else 1=1 end)
 
             order by solo_numero asc
 
