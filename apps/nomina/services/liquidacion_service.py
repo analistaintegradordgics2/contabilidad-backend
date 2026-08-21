@@ -141,15 +141,13 @@ class LiquidacionService:
         periodo = data["filtros"]["periodo"]
         descripcion = data["filtros"]["descripcion"]
         totales = data["totales"]
-        totales["fecha_doc"] = data["fecha_doc"]
+        totales["fecha_doc"] = datetime.strptime(data["fecha_doc"], "%Y-%m-%d").strftime("%d/%m/%Y")
         fecha_inicial = data["filtros"]["fecha_inicial"]
         fecha_final = data["filtros"]["fecha_final"]
     
         sql = "select * from liquidar_nomina(%s, %s, %s, %s, %s, %s, %s, %s, %s);"
-        params = [anio, mes, periodo, descripcion, json.dumps(totales), data["data"], fecha_inicial, fecha_final, user.id]
-
+        params = [anio, mes, periodo, descripcion, json.dumps(totales), json.dumps(data["data"]), fecha_inicial, fecha_final, user.id]
         resultado = execute_procedure(sql, params) 
-
         result = resultado[0][0]
 
         if result.get("out_id_doc_empleador"):
