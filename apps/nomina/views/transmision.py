@@ -53,7 +53,7 @@ class TransmisionViewSet(viewsets.ModelViewSet):
 
         return Response(resultado, status=status.HTTP_200_OK)
 
-    @action(methods=['GET'], detail=False, url_path='archivos_transmision')
+    @action(methods=['POST'], detail=False, url_path='archivos_transmision')
     def archivos_transmision(self, request):
         return TransmisionService.archivos_transmision()
 
