@@ -11,6 +11,7 @@ from apps.nomina.views.entidades import EntidadViewSet, TipoEntidadViewSet
 from apps.nomina.views.contratos import CargoViewSet, TipoContratoViewSet, TipoTrabajadorViewSet, NivelRiesgoViewSet, ContratoNominaViewSet
 from apps.nomina.views.liquidacion import LiquidacionesViewSet
 from apps.nomina.views.transmision import TransmisionViewSet
+from apps.nomina.views.pagos import PagoEmpleadosViewSet
 
 router = DefaultRouter()
 router.register(r'tipo_novedad', TipoNovedadViewSet, basename='tipo_novedad'),
@@ -29,6 +30,7 @@ router.register(r'nivel_riesgo', NivelRiesgoViewSet, basename='nivel_riesgo'),
 router.register(r'contrato', ContratoNominaViewSet, basename='contrato'),
 router.register(r'liquidaciones', LiquidacionesViewSet, basename='liquidaciones'),
 router.register(r'transmision', TransmisionViewSet, basename='transmision'),
+router.register(r'pago_empleados', PagoEmpleadosViewSet, basename='pago_empleados'),
 
 
 urlpatterns = [

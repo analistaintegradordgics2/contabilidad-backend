@@ -1,0 +1,145 @@
+{% load custom_filters %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% if tipo == 1 %}
+        PAGO EMPLEADOS LISTADO
+        {% else %}
+        PAGO EMPLEADOS DETALLADO
+        {% endif %}
+    </title>
+</head>
+
+<body>
+    <div>
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 25%;">
+                    <img src="{{ empresa.logo }}" width="180px" height="82px">
+                </td>
+                <td style="width: 50%; text-align: center;">
+                    <label><strong>{{empresa.nombre}}</strong></label><br>
+                    <label>{{empresa.nit}}</label><br>
+                    <label style="font-weight: bold;">
+                        {% if tipo == 1 %}
+                        PAGO EMPLEADOS LISTADO
+                        {% else %}
+                        PAGO EMPLEADOS DETALLADO
+                        {% endif %}
+                        {% if tab == 1 %}
+                        POR PAGAR
+                        {% else %}
+                        PAGADOS
+                        {% endif %}
+                    </label>
+                </td>
+                <td style="width: 25%;"></td>
+            </tr>
+        </table>
+        <table class="tdata" style="width: 100%; margin-top: 30px;">
+            <thead>
+                <th>IDENTIFICACIÓN</th>
+                <th>NOMBRE</th>
+                <th>TOTAL DEVENGADO</th>
+                <th>TOTAL DEDUCIDO</th>
+                <th>NETO</th>
+                {% if tab == 2 %}
+                <th>DOCUMENTO</th>
+                <th>FECHA PAGO</th>
+                <th>USUARIO PAGO</th>
+                {% endif %}
+            </thead>
+            <tbody>
+                {% for item in data%}
+                <tr>
+                    <td>{{ item.persona.documento }}</td>
+                    <td>{{ item.persona.nombre }}</td>
+                    <td style="text-align: right;">$ {{ item.total_devengado|intcomma }}</td>
+                    <td style="text-align: right;">$ {{ item.total_deducido|intcomma }}</td>
+                    <td style="text-align: right;">$ {{ item.neto|intcomma }}</td>
+                    {% if tab == 2 %}
+                    <td>{{ item.documento.numero }}</td>
+                    <td>{{ item.fecha_pago }}</td>
+                    <td>{{ item.usuario_pago.nombre }}</td>
+                    {% endif %}
+                </tr>
+                {% if tipo == 2 %}
+                <tr>
+                    {% if tab == 1 %}
+                    <td colspan="5">
+                    {% else %}
+                    <td colspan="8">
+                    {% endif %}
+                        <table class="tdata" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>NOVEDAD</th>
+                                    <th style="width: 12%;">CANTIDAD</th>
+                                    <th style="width: 10%;">BASE</th>
+                                    <th style="width: 12%;">VALOR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for det in item.detalle_liquidacion %}
+                                <tr>
+                                    <td>{{ det.descripcion }}</td>
+                                    <td style="text-align: right;">
+                                        {% if det.tipo_valor_novedad.id == 3 %}
+                                        $ {{ det.cantidad|intcomma }}
+                                        {% else %}
+                                        {{ det.cantidad }}
+                                        {% endif %}
+                                    </td>
+                                    <td style="text-align: center;">{{ det.tipo_valor_novedad.nombre }}</td>
+                                    <td style="text-align: right;">$ {{ det.valor|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td style="text-align: right;" colspan="3"><strong>TOTAL</strong></td>
+                                    <td style="text-align: right;">$ {{ item.neto|intcomma }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                {%endif%}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+<style>
+    @page {
+        size: letter landscape;
+        margin-left: 1cm;
+        margin-top: 1cm;
+        margin-right: 1cm;
+        margin-bottom: 1cm;
+    }
+    
+    table.tdata {
+        border: 1px solid lightgray;
+    }
+
+    table.tdata tr>th {
+        background-color: #e9ecef;
+    }
+
+    tr>th {
+        padding-top: 5px;
+        vertical-align: center;
+    }
+
+    tr>td {
+        padding-top: 4px;
+        padding-left: 3px;
+        padding-right: 3px;
+    }
+</style>
+</html>
