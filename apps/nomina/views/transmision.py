@@ -31,7 +31,7 @@ class TransmisionViewSet(viewsets.ModelViewSet):
                 return Response([], status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             # Funcionalidad
-            mes = Mes.objects.filter(numero=mes).first()
+            mes = Mes.objects.get(pk=mes)
             anio = Anio.objects.filter(nombre=anio).first()
             nomina_elect = NominaElectronica.objects.filter(mes_id=mes.id, anio_id=anio.id)
             nomina_elect = NominaElectronicaListSerializer(nomina_elect, many=True).data
