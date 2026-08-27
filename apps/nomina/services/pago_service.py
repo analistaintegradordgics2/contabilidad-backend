@@ -4,6 +4,7 @@ import errno
 from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
+import pdb
 
 from apps.common_db.db import execute_procedure
 from apps.nomina.models.novedades import NovedadesCentroCosto
@@ -138,10 +139,11 @@ class PagoService:
         """
         forma_pago = filtros.get("forma_pago")
 
-        if forma_pago == 2:
+        if forma_pago == 4:
             # Cheque - Generar archivo excel de cheques
             numero = NumeroA()
             array = []
+            # pdb.set_trace()
             num_cheque = int(filtros.get("num_cheque", 1)) - 1
 
             for item in data:
