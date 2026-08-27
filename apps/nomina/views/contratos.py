@@ -47,7 +47,7 @@ class CargoViewSet(viewsets.ModelViewSet):
         )
         return Response("OK", status=status.HTTP_200_OK)
 
-    @action(methods=['GET'], detail=False, url_path='imprimir')
+    @action(methods=['POST'], detail=False, url_path='imprimir')
     def imprimir(self, request, *args, **kwargs):
         data = self.serializer_class(self.get_queryset(), many=True).data
         return CargoService.imprimir(data)
