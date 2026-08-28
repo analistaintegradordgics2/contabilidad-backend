@@ -86,7 +86,7 @@ MENUS = [
                         "codigo": "parametros_nomina_parametrizacion",
                         "titulo": "Parametrización",
                         "permiso": "view_menu_parametrizacion_nomina_parametrizacion",
-                        "ruta": "parametrizacion",
+                        "ruta": "parametrizacion_nomina",
                         "orden": "4",
                         "acciones": CRUD
                     },
