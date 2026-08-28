@@ -9,6 +9,7 @@ from apps.nomina.models.novedades import NovedadesCentroCosto
 from apps.personas.models.persona import TipoPersona
 from apps.personas.services.persona_service import PersonaService
 from apps.parametros.services.empresa_service import EmpresaService
+from apps.parametros.models.parametrizacion import Parametros
 
 class ContratoNominaService:
 
@@ -25,7 +26,7 @@ class ContratoNominaService:
         datos_emergencia = validated_data.pop('datos_emergencia', [])
         composicion_familiar = validated_data.pop('composicion_familiar', [])
 
-        tipopersonas = [1]
+        tipopersonas = [Parametros.objects.get(parametro='tipo_persona_empleado').valor]
         if data_persona["id"] != None :
             tipopersonas += list(TipoPersona.objects.filter(personas_tipos_personas_tipo__persona_id=data_persona["id"]).values_list('id', flat=True))
 
