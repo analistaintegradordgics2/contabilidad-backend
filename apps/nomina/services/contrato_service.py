@@ -25,7 +25,7 @@ class ContratoNominaService:
         datos_emergencia = validated_data.pop('datos_emergencia', [])
         composicion_familiar = validated_data.pop('composicion_familiar', [])
 
-        tipopersonas = [1]
+        tipopersonas = [3]
         if data_persona["id"] != None :
             tipopersonas += list(TipoPersona.objects.filter(personas_tipos_personas_tipo__persona_id=data_persona["id"]).values_list('id', flat=True))
 
