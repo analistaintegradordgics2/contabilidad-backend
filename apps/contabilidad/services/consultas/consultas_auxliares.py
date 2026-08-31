@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from apps.common_db.db import execute_procedure
 from django.db import transaction
 from apps.contabilidad.models.cuenta import Mayor
-
+import pdb, json
 class IConsultaAuxliar(ABC):
     @abstractmethod
     def ejecutar(self, model: dict, filtro: dict = None) -> list:
@@ -24,9 +24,9 @@ class ConsultaCodigoPorNit(IConsultaAuxliar):
 
         with transaction.atomic():
             resultado = execute_procedure(sql=sql, params=params)
-        
         if resultado and resultado[0][0] is not None:
-            return resultado[0][0][0]
+            datos = json.loads(resultado[0][0])
+            return datos[0]
         return []
         
 class ConsultaCodigoYNit(IConsultaAuxliar):

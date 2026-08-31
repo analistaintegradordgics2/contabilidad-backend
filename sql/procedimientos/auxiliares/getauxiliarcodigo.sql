@@ -161,7 +161,6 @@ BEGIN
 				mov.color as color,
 				mov.fuentes_id as fuentes_id,
 				curdatos1.nombre as orden,
-				mov.fecha as fecha,
 				mov.base as base
 			FROM cur_mov AS mov 
 			WHERE personas_id = curdatos1.id
@@ -226,7 +225,7 @@ BEGIN
 			sumacr := sumacr + curdatos2.valor_cr;
 		end loop;
 		
-		SELECT SUM(mov.base) INTO sumbase FROM cur_mov AS mov WHERE mov.persona_id = curdatos1.id;
+		SELECT SUM(mov.base) INTO sumbase FROM cur_mov AS mov WHERE mov.personas_id = curdatos1.id;
 	
 		INSERT INTO cur_aux (id, detalle, valor_db, valor_cr, color, saldo, orden, ordenf, base) VALUES (
 			99,
