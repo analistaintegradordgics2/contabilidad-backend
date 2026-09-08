@@ -233,14 +233,14 @@ class InformeService:
     def filtro_estado_resultados(model):
         if model.get("estado_resultado_anual", False) :
             sql = """select * from getestadoresultados_anual (%s,%s,%s,%s,%s);"""
-            
             params = [
                 model['tipo'],
-                model['año'],
+                int(model['año']),
                 1,
                 1 if model['ver_nits'] == True else 0,
                 2 if model['mesacu'] == True else 2,
             ]
+            # pdb.set_trace()
         else:
             sql = """
                 select json_agg(json_build_object(
@@ -273,7 +273,6 @@ class InformeService:
         
         with transaction.atomic():
             resultado = execute_procedure(sql=sql, params=params)
-
         # Consulta para movimientos por centros de costo
         sql = "select * from getestadoresultadoscc (%s,%s)"
         params= [model['año'], model['mesini'] if model['mesini'] else 1]
@@ -282,25 +281,47 @@ class InformeService:
             resultado_cc = execute_procedure(sql=sql, params=params)
 
         query = []
-        if resultado[0][0] != None:
-            if resultado_cc[0][0] != None :
-                for item1 in resultado[0][0]:
-                    for item in resultado_cc[0][0]:
-                        if item1['codigo'] == item['codigo']:
-                            centros_cc = CentroCostos.objects.filter(estado=True).order_by('id')
+        try:
+            datos = resultado[0][0]
+            datos_cc = resultado_cc[0][0]
+
+            # Convertir JSON string a lista/dict
+            if isinstance(datos, str):
+                datos = json.loads(datos)
+
+            if isinstance(datos_cc, str):
+                datos_cc = json.loads(datos_cc)
+
+            if datos is not None and datos_cc is not None:
+
+                centros_cc = CentroCostos.objects.filter(
+                    estado=True
+                ).order_by('id')
+
+                for item1 in datos:
+                    for item in datos_cc:
+
+                        if item1.get('codigo') == item.get('codigo'):
+
                             for cc in centros_cc:
-                                if cc.id == item['cc_id']:
-                                    item1['CC_' + cc.nombre] = item['valor']
-                                    if 'CC_' + cc.nombre in query:
-                                        print('')
-                                    else:
-                                        query.append('CC_' + cc.nombre)
+
+                                if cc.id == item.get('cc_id'):
+
+                                    campo = 'CC_' + cc.nombre
+
+                                    item1[campo] = item.get('valor')
+
+                                    if campo not in query:
+                                        query.append(campo)
+
                                     item1['CC'] = query
-            if isinstance(resultado[0][0], str):
-                return json.loads(resultado[0][0])
-            return resultado[0][0]
-        else:
+
+            return datos if datos is not None else []
+
+        except Exception as e:
+            print(f'Error: {e}')
             return []
+
         
     @staticmethod
     def imprimir_consulta_estado_resultados(model):

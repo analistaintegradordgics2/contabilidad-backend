@@ -190,7 +190,7 @@ begin
 					curdatos1.nombre AS orden,
 					mov.fecha as fecha,
 					mov.base as base
-				FROM cur_mov AS mov WHERE mov.persona_id = curdatos1.id
+				FROM cur_mov AS mov WHERE mov.personas_id = curdatos1.id
 				order by mov.fecha, mov.numero asc
 			loop
 				
@@ -250,7 +250,7 @@ begin
 			end loop;
 	
 		
-			SELECT SUM(mov.base) INTO sumbase FROM cur_mov AS mov WHERE mov.persona_id = curdatos1.id;
+			SELECT SUM(mov.base) INTO sumbase FROM cur_mov AS mov WHERE mov.personas_id = curdatos1.id;
 
 			saldo_cero := CASE WHEN curdatos1.saldof::int <> 0 THEN false ELSE true END;
 		
