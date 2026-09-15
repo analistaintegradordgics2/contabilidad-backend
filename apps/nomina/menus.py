@@ -14,7 +14,7 @@ MENUS = [
         "icono": "afiliados.png",
         "permiso": "view_menu_nomina",
         "ruta": "nomina_novedades",
-        "orden": "6",
+        "orden": "5",
 
         "children": [
 

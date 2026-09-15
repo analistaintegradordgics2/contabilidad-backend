@@ -11,7 +11,7 @@ MENUS = [
     {
         "codigo": "afiliados",
         "titulo": "Afiliados",
-        "icono": "afiliados.png",
+        "icono": "pagosrecaudos.png",
         "permiso": "view_menu_afiliados",
         "ruta": "afiliados",
         "orden": "3",
