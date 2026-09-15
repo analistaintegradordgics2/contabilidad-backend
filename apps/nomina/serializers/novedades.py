@@ -70,7 +70,7 @@ class NovedadSerializer(serializers.ModelSerializer):
             for item in NovedadesCentroCosto.objects.filter(novedades_id=obj.id) :
                 model.append({
                     "id": item.id,
-                    "centro_costos": item.centro_costos_id,
+                    "centro_costos": item.entidades_centro_costos.centro_costos.id,
                     "entidades_centro_costos": item.entidades_centro_costos_id,
                     "mayor_cta_credito": item.mayor_cta_credito_id,
                     "mayor_cta_debito": item.mayor_cta_debito_id,

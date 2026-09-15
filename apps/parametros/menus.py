@@ -13,7 +13,7 @@ MENUS = [
         "titulo": "Parametrización",
         "icono": "parametrizacion.png",
         "permiso": "view_menu_parametrizacion",
-        "orden": "5",
+        "orden": "6",
         "ruta": "parametrizacion",
 
         "children": [
