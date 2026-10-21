@@ -44,4 +44,4 @@ class PermisosMenuAccionesSerializer(serializers.ModelSerializer):
     class Meta:
         model = PermisosMenuAcciones
         """Meta class."""
-        fields = ('id', 'accion', 'menu','permiso_accion','permiso_menu', 'menu_nombre')
+        fields = ('id', 'accion', 'menu', 'permiso', 'menu_nombre')

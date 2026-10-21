@@ -6,9 +6,11 @@ CRUD = [
     {"codigo": "eliminar", "nombre": "Eliminar"},
 ]
 
+GRUPO = "Parametrización"
 
 MENUS = [
     {
+        "grupo": "Parametrización",
         "codigo": "parametrizacion",
         "titulo": "Parametrización",
         "icono": "parametrizacion.png",
@@ -98,5 +100,3 @@ MENUS = [
     },
 
 ]
-
-

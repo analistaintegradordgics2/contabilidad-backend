@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from apps.utils.ModelViewSetClass import ModelViewSetClass
 from apps.personas.serializers.clasificacion import *
-from apps.accounts.serializers import UserFindSerializer
+from apps.accounts.serializers.usuario import UserFindSerializer
 # from apps.accounts.serializers import User
 User = get_user_model()
 

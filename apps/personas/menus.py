@@ -6,11 +6,13 @@ CRUD = [
     {"codigo": "eliminar", "nombre": "Eliminar"},
 ]
 
+GRUPO = "Directorio de personas"
 
 MENUS = [
     {
         "codigo": "directorio_personas",
         "titulo": "Directorio de Personas",
+        "grupo": "Directorio de personas",
         "icono": "gestionarchivos.png",
         "permiso": "view_menu_directorio_personas",
         "ruta": "PersonaListar",
@@ -33,5 +35,3 @@ MENUS = [
     
 
 ]
-
-

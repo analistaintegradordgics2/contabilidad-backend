@@ -6,11 +6,13 @@ CRUD = [
     {"codigo": "eliminar", "nombre": "Eliminar"},
 ]
 
+GRUPO = "Afiliados"
 
 MENUS = [
     {
         "codigo": "afiliados",
         "titulo": "Afiliados",
+        "grupo": "Afiliados",
         "icono": "pagosrecaudos.png",
         "permiso": "view_menu_afiliados",
         "ruta": "afiliados",
@@ -53,5 +55,3 @@ MENUS = [
     
 
 ]
-
-

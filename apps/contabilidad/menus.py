@@ -20,8 +20,8 @@ DOCUMENTO = [
 
 FACTURA = [
     *DOCUMENTO,
-    {"codigo": "nota_credito", "nombre": "Generar Nota Crédito"},
-    {"codigo": "nota_debito", "nombre": "Generar Nota Débito"},
+    {"codigo": "nota_credito", "nombre": "Generar Nota CrÃƒÂ©dito"},
+    {"codigo": "nota_debito", "nombre": "Generar Nota DÃƒÂ©bito"},
 ]
 
 CONSULTA = [
@@ -31,9 +31,12 @@ CONSULTA = [
 ]
 
 
+GRUPO = "GestiÃ³n Contable"
+
 MENUS = [{
+    "grupo": "GestiÃ³n Contable",
     "codigo": "contabilidad",
-    "titulo": "Gestión Contable",
+    "titulo": "GestiÃƒÂ³n Contable",
     "icono": "gestioncontable.png",
     "permiso": "view_menu_gestion_contable",
     "orden": "4",
@@ -51,7 +54,7 @@ MENUS = [{
 
                 {
                     "codigo": "documentos",
-                    "titulo": "Generación de Documentos",
+                    "titulo": "GeneraciÃƒÂ³n de Documentos",
                     "permiso": "view_menu_gestion_contable_gastos_administrativos_documentos",
                     "ruta": "documentos",
                     "orden": "1",
@@ -67,7 +70,7 @@ MENUS = [{
                 },
                 {
                     "codigo": "configuracion_plantillas",
-                    "titulo": "Configuración de Plantillas",
+                    "titulo": "ConfiguraciÃƒÂ³n de Plantillas",
                     "permiso": "view_menu_gestion_contable_gastos_administrativos_configuracion_plantillas",
                     "ruta": "configuracion_plantillas",
                     "orden": "3",
@@ -88,7 +91,7 @@ MENUS = [{
 
                 {
                     "codigo": "plandecuentas",
-                    "titulo": "Plan Único de Cuentas",
+                    "titulo": "Plan ÃƒÅ¡nico de Cuentas",
                     "permiso": "view_menu_gestion_contable_directorio_contable_plan_cuentas",
                     "ruta": "plandecuentas",
                     "orden": "1",
@@ -187,7 +190,7 @@ MENUS = [{
         },
         {
             "codigo": "transmision_facturas",
-            "titulo": "Transmisión de Facturas",
+            "titulo": "TransmisiÃƒÂ³n de Facturas",
             "permiso": "view_menu_transmision_facturas",
             "orden": "5",
             "ruta": "transmision_facturas",
