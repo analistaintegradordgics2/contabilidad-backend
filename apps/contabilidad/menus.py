@@ -1,4 +1,3 @@
-
 CRUD = [
     {"codigo": "ver", "nombre": "Ver"},
     {"codigo": "crear", "nombre": "Crear"},
@@ -20,8 +19,8 @@ DOCUMENTO = [
 
 FACTURA = [
     *DOCUMENTO,
-    {"codigo": "nota_credito", "nombre": "Generar Nota CrÃƒÂ©dito"},
-    {"codigo": "nota_debito", "nombre": "Generar Nota DÃƒÂ©bito"},
+    {"codigo": "nota_credito", "nombre": "Generar Nota Crédito"},
+    {"codigo": "nota_debito", "nombre": "Generar Nota Débito"},
 ]
 
 CONSULTA = [
@@ -31,12 +30,12 @@ CONSULTA = [
 ]
 
 
-GRUPO = "GestiÃ³n Contable"
+GRUPO = "Gestión Contable"
 
 MENUS = [{
-    "grupo": "GestiÃ³n Contable",
+    "grupo": "Gestión Contable",
     "codigo": "contabilidad",
-    "titulo": "GestiÃƒÂ³n Contable",
+    "titulo": "Gestión Contable",
     "icono": "gestioncontable.png",
     "permiso": "view_menu_gestion_contable",
     "orden": "4",
@@ -54,7 +53,7 @@ MENUS = [{
 
                 {
                     "codigo": "documentos",
-                    "titulo": "GeneraciÃƒÂ³n de Documentos",
+                    "titulo": "Generación de Documentos",
                     "permiso": "view_menu_gestion_contable_gastos_administrativos_documentos",
                     "ruta": "documentos",
                     "orden": "1",
@@ -62,7 +61,7 @@ MENUS = [{
                 },
                 {
                     "codigo": "plantillas_contables",
-                    "titulo": "Contabilizacion Automatica",
+                    "titulo": "Contabilización Automática",
                     "permiso": "view_menu_gestion_contable_gastos_administrativos_plantillas",
                     "ruta": "ejecutar_plantilla",
                     "orden": "2",
@@ -70,7 +69,7 @@ MENUS = [{
                 },
                 {
                     "codigo": "configuracion_plantillas",
-                    "titulo": "ConfiguraciÃƒÂ³n de Plantillas",
+                    "titulo": "Configuración de Plantillas",
                     "permiso": "view_menu_gestion_contable_gastos_administrativos_configuracion_plantillas",
                     "ruta": "configuracion_plantillas",
                     "orden": "3",
@@ -91,7 +90,7 @@ MENUS = [{
 
                 {
                     "codigo": "plandecuentas",
-                    "titulo": "Plan ÃƒÅ¡nico de Cuentas",
+                    "titulo": "Plan Único de Cuentas",
                     "permiso": "view_menu_gestion_contable_directorio_contable_plan_cuentas",
                     "ruta": "plandecuentas",
                     "orden": "1",
@@ -190,7 +189,7 @@ MENUS = [{
         },
         {
             "codigo": "transmision_facturas",
-            "titulo": "TransmisiÃƒÂ³n de Facturas",
+            "titulo": "Transmisión de Facturas",
             "permiso": "view_menu_transmision_facturas",
             "orden": "5",
             "ruta": "transmision_facturas",
@@ -199,5 +198,3 @@ MENUS = [{
 
     ]
 }]
-
-

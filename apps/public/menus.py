@@ -12,7 +12,7 @@ MENUS = [
     {
         "codigo": "tablerointeligente",
         "titulo": "Tablero Inteligente",
-        "grupo": "Tablero Inteligente",
+        # "grupo": "Tablero Inteligente",
         "icono": "tablero.png",
         "permiso": "view_menu_tablero_inteligente",
         "orden": "1",

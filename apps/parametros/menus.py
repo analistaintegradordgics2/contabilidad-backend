@@ -36,7 +36,7 @@ MENUS = [
 
                     {
                         "codigo": "parametros_administrativos_conceptos_causacion",
-                        "titulo": "Conceptos Causacion",
+                        "titulo": "Conceptos Causación",
                         "permiso": "view_menu_parametrizacion_administrativos_conceptos_causacion",
                         "ruta": "conceptos_causacion",
                         "orden": "1",

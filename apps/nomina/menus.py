@@ -12,7 +12,7 @@ MENUS = [
     {
         "grupo": "Nómina",
         "codigo": "nomina",
-        "titulo": "Nomina",
+        "titulo": "Nómina",
         "icono": "afiliados.png",
         "permiso": "view_menu_nomina",
         "ruta": "nomina_novedades",
