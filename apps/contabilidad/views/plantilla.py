@@ -70,7 +70,8 @@ class PlantillaDocumentoViewSet(ModelViewSet):
         """
         try:
             valor = request.data.get('valor', 0)
-            simulacion = PlantillaService.preview(plantilla_id=pk, valor=valor)
+            modo_valor = request.data.get('modo_valor', 'BASE')
+            simulacion = PlantillaService.preview(plantilla_id=pk, valor=valor, modo_valor=modo_valor)
             return Response(simulacion, status=status.HTTP_200_OK)
         except ValueError as ve:
             return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
