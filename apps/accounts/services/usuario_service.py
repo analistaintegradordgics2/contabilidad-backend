@@ -44,7 +44,7 @@ class UsuarioService:
         # ------------------------------------------------------------------ #
         # 3. Tipos de persona (ids 11 y 6 fijos para usuarios del sistema)   #
         # ------------------------------------------------------------------ #
-        for tipo_id in [11, 6]:
+        for tipo_id in [3]:
             PersonaTipoPersona.objects.get_or_create(
                 persona_id=query_persona.id,
                 tipo_persona_id=tipo_id

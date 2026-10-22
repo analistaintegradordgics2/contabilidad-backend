@@ -124,7 +124,9 @@ class GrupoService:
                     if es_edicion:
                         # Seleccionado si el usuario tiene el permiso directo
                         # O si el usuario pertenece al grupo
-                        if (acc["permiso"] in user_perm_ids) or grupo_select:
+                        # if (acc["permiso"] in user_perm_ids) or grupo_select:
+                        ## PROBANDO SIN ACTIVAR TODAS LAS DEL GRUPO
+                        if (acc["permiso"] in user_perm_ids):
                             acc_select = True
                             menu_select = True
 
