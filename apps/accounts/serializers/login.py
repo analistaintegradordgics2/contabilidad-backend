@@ -2,18 +2,15 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from apps.accounts.models import RegistroIngreso
 
+from apps.accounts.serializers.usuario import UserFindSerializer
+
 class CustomTokenSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         data = super().validate(attrs)
 
         # Agregar info del usuario
-        data['user'] = {
-            "id": self.user.id,
-            "username": self.user.username,
-            "first_name": self.user.first_name,
-            "last_name": self.user.last_name,
-        }
+        data['user'] = UserFindSerializer(self.user).data
 
         data['status'] = 200
 
