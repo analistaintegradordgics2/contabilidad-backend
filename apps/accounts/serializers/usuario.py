@@ -38,20 +38,20 @@ class UserFindSerializer(serializers.ModelSerializer):
                 "fecha_nacimiento": 'Sin Asignar'
             }
 
-        archivo = persona.archivos.filter(
-            delete=None,
-            tipo="PERFIL"
-        ).annotate(
-            url=Concat(Value(settings.MEDIA_URL), F('src'))
-        ).values(
-            "content_type_id", "id", "name", "object_id", "tipo", "src", "url"
-        ).first()
+        # archivo = persona.archivos.filter(
+        #     delete=None,
+        #     tipo="PERFIL"
+        # ).annotate(
+        #     url=Concat(Value(settings.MEDIA_URL), F('src'))
+        # ).values(
+        #     "content_type_id", "id", "name", "object_id", "tipo", "src", "url"
+        # ).first()
 
         return {
             "id": persona.id,
             "documento": persona.documento,
             "fecha_nacimiento": persona.fecha_nacimiento or 'Sin Asignar',
-            "archivo": archivo
+            # "archivo": archivo
         }
 
     def get_logoempresa(self, obj):
