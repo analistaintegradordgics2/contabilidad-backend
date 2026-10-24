@@ -6,6 +6,46 @@ CRUD = [
     {"codigo": "eliminar", "nombre": "Eliminar"},
 ]
 
+ACCIONES_GENERALES = [
+    {"codigo": "guardar", "nombre": "Guardar"},
+]
+
+ACCIONES_ACCESO = [
+    {"codigo": "ver", "nombre": "Ver"},
+    {"codigo": "crear", "nombre": "Crear"},
+    {"codigo": "editar", "nombre": "Editar"},
+]
+
+ACCIONES_CENTRO_COSTOS = [
+    {"codigo": "ver", "nombre": "Ver"},
+    {"codigo": "crear", "nombre": "Crear"},
+    {"codigo": "editar", "nombre": "Editar"},
+    {"codigo": "eliminar", "nombre": "Eliminar"},
+    {"codigo": "imprimir", "nombre": "Imprimir"},
+]
+
+ACCIONES_ENTIDADES = [
+    {"codigo": "ver", "nombre": "Ver"},
+    {"codigo": "crear", "nombre": "Crear"},
+    {"codigo": "editar", "nombre": "Editar"},
+    {"codigo": "eliminar", "nombre": "Eliminar"},
+    {"codigo": "imprimir", "nombre": "Imprimir"},
+    {"codigo": "exportar", "nombre": "Exportar"},
+]
+
+ACCIONES_CARGOS = [
+    {"codigo": "ver", "nombre": "Ver"},
+    {"codigo": "crear", "nombre": "Crear"},
+    {"codigo": "editar", "nombre": "Editar"},
+    {"codigo": "eliminar", "nombre": "Eliminar"},
+    {"codigo": "imprimir", "nombre": "Imprimir"},
+]
+
+ACCIONES_NOMINA_PARAMETRIZACION = [
+    {"codigo": "ver", "nombre": "Ver"},
+    {"codigo": "guardar", "nombre": "Guardar"},
+]
+
 GRUPO = "Parametrización"
 
 MENUS = [
@@ -25,6 +65,7 @@ MENUS = [
                 "permiso": "view_menu_parametrizacion_generales",
                 "ruta": "parametrizacion",
                 "orden": "1",
+                "acciones": ACCIONES_GENERALES,
             },
             {
                 "codigo": "parametros_administrativos",
@@ -51,6 +92,7 @@ MENUS = [
                 "permiso": "view_menu_parametrizacion_acceso",
                 "ruta": "usuarios",
                 "orden": "3",
+                "acciones": ACCIONES_ACCESO,
             },
             {
                 "codigo": "parametros_nomina",
@@ -66,7 +108,7 @@ MENUS = [
                         "permiso": "view_menu_parametrizacion_nomina_centro_costos",
                         "ruta": "centros_costos",
                         "orden": "1",
-                        "acciones": CRUD
+                        "acciones": ACCIONES_CENTRO_COSTOS
                     },
                     {
                         "codigo": "parametros_nomina_entidades",
@@ -74,7 +116,7 @@ MENUS = [
                         "permiso": "view_menu_parametrizacion_nomina_entidades",
                         "ruta": "entidades",
                         "orden": "2",
-                        "acciones": CRUD
+                        "acciones": ACCIONES_ENTIDADES
                     },
                     {
                         "codigo": "parametros_nomina_cargos",
@@ -82,7 +124,7 @@ MENUS = [
                         "permiso": "view_menu_parametrizacion_nomina_cargos",
                         "ruta": "cargos",
                         "orden": "3",
-                        "acciones": CRUD
+                        "acciones": ACCIONES_CARGOS
                     },
                     {
                         "codigo": "parametros_nomina_parametrizacion",
@@ -90,7 +132,7 @@ MENUS = [
                         "permiso": "view_menu_parametrizacion_nomina_parametrizacion",
                         "ruta": "parametrizacion_nomina",
                         "orden": "4",
-                        "acciones": CRUD
+                        "acciones": ACCIONES_NOMINA_PARAMETRIZACION
                     },
 
                 ]
