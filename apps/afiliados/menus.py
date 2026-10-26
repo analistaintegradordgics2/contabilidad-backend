@@ -7,6 +7,7 @@ CRUD = [
 ]
 
 AFILIADOS_ACCIONES = [
+    {"codigo": "ver", "nombre": "Ver"},
     {"codigo": "editar", "nombre": "Parametrizar / Editar"},
     {"codigo": "cambio_estado", "nombre": "Cambio de Estado"},
     {"codigo": "bitacora", "nombre": "Bitácora"},
